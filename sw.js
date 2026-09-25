@@ -1,7 +1,5 @@
-/* sw.js — دو کار مهم:
-   1) تزریق هدرهای COOP/COEP تا استاک‌فیش (SharedArrayBuffer) روی هر هاستی کار کند
-   2) کش‌کردن فایل‌ها برای اجرای آفلاین (PWA) */
-const CACHE = 'chess-cache-v5';
+/* sw.js — نسخه ۶: همیشه آخرین نسخه را از شبکه می‌گیرد، آفلاین هم کار می‌کند */
+const CACHE = 'chess-cache-v6';
 const PRECACHE = ['./', './chess.html', './coach.js', './openings-data.js',
   './learn-data-1.js', './learn-data-2.js', './learn-data-3.js',
   './learn-data-4.js', './learn-data-5.js', './learn-data-6.js',
@@ -19,6 +17,16 @@ self.addEventListener('activate', e => {
   );
 });
 
+function withCOI(res){
+  try{
+    const h = new Headers(res.headers);
+    h.set('Cross-Origin-Embedder-Policy', 'require-corp');
+    h.set('Cross-Origin-Opener-Policy', 'same-origin');
+    h.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    return new Response(res.body, {status: res.status, statusText: res.statusText, headers: h});
+  }catch(e){ return res; }
+}
+
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -27,23 +35,18 @@ self.addEventListener('fetch', e => {
 
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    let res = await cache.match(req);
-    if (!res) {
-      try { res = await fetch(req); }
-      catch (err) {
-        return new Response('آفلاین است و این فایل در کش نیست.', {
-          status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-      }
-      if (res && res.ok) cache.put(req, res.clone()); // کش خودکار (از جمله wasm 90 مگابایتی)
+    if (url.pathname.endsWith('.wasm')) {
+      const hit = await cache.match(req);
+      if (hit) return withCOI(hit);
     }
-    // هدرهای لازم برای استاک‌فیش:
     try {
-      const h = new Headers(res.headers);
-      h.set('Cross-Origin-Embedder-Policy', 'require-corp');
-      h.set('Cross-Origin-Opener-Policy', 'same-origin');
-      h.set('Cross-Origin-Resource-Policy', 'cross-origin');
-      return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
-    } catch (err) { return res; }
+      const res = await fetch(req);
+      if (res && res.ok) cache.put(req, res.clone());
+      return withCOI(res);
+    } catch (err) {
+      const hit = await cache.match(req);
+      if (hit) return withCOI(hit);
+      return new Response('آفلاین است و این فایل در کش نیست.', {status: 503, headers: {'Content-Type': 'text/plain; charset=utf-8'}});
+    }
   })());
 });
