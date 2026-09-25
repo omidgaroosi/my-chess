@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#20222b"/>
+  <rect x="26" y="26" width="460" height="460" rx="80" fill="none" stroke="#c9973c" stroke-width="14"/>
+  <text x="256" y="352" font-size="320" text-anchor="middle" fill="#ffd54f"
+        font-family="Segoe UI Symbol, Noto Sans Symbols 2, sans-serif">♞</text>
+</svg>

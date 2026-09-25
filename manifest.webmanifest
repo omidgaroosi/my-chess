@@ -1,0 +1,17 @@
+{
+  "name": "شطرنج با استاک‌فیش",
+  "short_name": "شطرنج",
+  "description": "بازی شطرنج در برابر موتور استاک‌فیش ۱۹",
+  "dir": "rtl",
+  "lang": "fa",
+  "start_url": "./chess.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14151b",
+  "theme_color": "#14151b",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#14151b">
+<meta http-equiv="cross-origin-opener-policy" content="same-origin">
+<meta http-equiv="cross-origin-embedder-policy" content="require-corp">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>♞ شطرنج با استاک‌فیش — بازی، آکادمی، گشایش‌ها</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--size:min(96vw,520px);--lsize:min(92vw,400px)}
+body{background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);color:#e9e7e2;
+  font-family:"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding:12px;touch-action:manipulation}
+h1{text-align:center;font-size:22px;margin-bottom:8px}
+.hidden{display:none!important}
+/* ---------- تب‌ها ---------- */
+.tabs{display:flex;gap:6px;max-width:760px;margin:0 auto 16px;background:#20222b;border:1px solid #313444;border-radius:14px;padding:6px}
+.tbtn{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:46px;border:none;border-radius:10px;background:transparent;color:#9aa0ae;cursor:pointer}
+.tbtn.active{background:#c9973c;color:#fff}
+/* ---------- صفحه‌های شطرنج (مشترک) ---------- */
+#board,#lboard,#quizBoard,#mini-board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;
+  border-radius:10px;overflow:hidden;direction:ltr;user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;touch-action:manipulation}
+#board{width:var(--size);--cell:calc(var(--size)/8)}
+#lboard,#mini-board{width:var(--lsize);--cell:calc(var(--lsize)/8)}
+#quizBoard{width:min(80vw,300px);--cell:calc(min(80vw,300px)/8)}
+.cell{position:relative}
+.cell.light{background:#efd9b4}.cell.dark{background:#b28356}
+.cell.last::before,.cell.llast::before{content:'';position:absolute;inset:0;background:rgba(255,213,79,.42)}
+.cell.coach::before{content:'';position:absolute;inset:0;background:rgba(76,175,80,.5)}
+.cell.coach{box-shadow:inset 0 0 0 3px #4caf50}
+.cell.sel{box-shadow:inset 0 0 0 3px #ffd54f}
+.cell.check::after{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,60,60,.8) 12%,rgba(255,60,60,0) 72%)}
+.cell.hl::after{content:'';position:absolute;inset:8%;border-radius:50%;border:calc(var(--cell)*.07) solid rgba(76,175,80,.95)}
+.piece{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell)*.82);line-height:1;pointer-events:none;
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif}
+.piece.w{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.piece.b{color:#141414;text-shadow:0 1px 2px rgba(255,255,255,.22)}
+.dot{position:absolute;left:50%;top:50%;width:34%;height:34%;transform:translate(-50%,-50%);
+  border-radius:50%;background:rgba(25,25,25,.35);pointer-events:none}
+.dot.cap{width:88%;height:88%;background:transparent;border:calc(var(--cell)*.06) solid rgba(25,25,25,.4)}
+.coord{position:absolute;font-size:calc(var(--cell)*.2);font-weight:700;opacity:.85;pointer-events:none}
+.coord.rank{top:3%;left:6%}.coord.file{bottom:2%;right:6%}
+.cell.light .coord{color:#b28356}.cell.dark .coord{color:#efd9b4}
+/* ---------- تب بازی ---------- */
+#engineBadge{display:block;width:max-content;margin:0 auto 10px;padding:4px 14px;border-radius:20px;
+  font-size:12px;background:#2b2e3b;border:1px solid #3a3e50;color:#ffd54f}
+.app{display:flex;gap:18px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+.stage{display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:calc(var(--size) + 60px)}
+.pbar{display:flex;align-items:center;gap:8px;background:#20222b;border:1px solid #313444;
+  border-radius:12px;padding:8px 12px;width:100%;font-size:13px;min-height:44px}
+.pbar .caps{font-size:18px;letter-spacing:-3px;direction:ltr}
+.pbar .mat{color:#ffd54f;font-weight:700;min-width:26px}
+.badge-check{background:#e53935;color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;display:none}
+.dots{display:inline-flex;gap:3px;margin-inline-start:2px;visibility:hidden}
+.dots.on{visibility:visible}
+.dots i{width:5px;height:5px;border-radius:50%;background:#ffd54f;animation:blink 1s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
+.frame-wrap{display:flex;gap:6px}
+.evalcol{display:flex;flex-direction:column;align-items:center;gap:4px}
+.evalbar{width:13px;height:var(--size);border-radius:8px;background:#262626;overflow:hidden;position:relative;border:1px solid #313444}
+#evalFill{position:absolute;bottom:0;left:0;right:0;height:50%;background:linear-gradient(#fff,#d8d8d8);transition:height .5s}
+#evalLabel{font-size:10px;color:#9aa0ae;direction:ltr}
+.board-frame{position:relative;padding:8px;background:#2c2f3a;border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.55)}
+#status{min-height:26px;font-size:14px;color:#cfd3dd;text-align:center;padding:0 6px}
+.panel{width:360px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
+  padding:14px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:14px;color:#ffd54f}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row label{font-size:12px;color:#9aa0ae;display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+select,button{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b;
+  color:#fff;padding:10px 12px;min-height:46px}
+button{cursor:pointer;transition:.15s;flex:1}
+button:hover{background:#3d4157}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:#c9973c;border-color:#c9973c;font-weight:700}
+button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
+#moves{max-height:130px;overflow:auto;background:#191b22;border-radius:10px;padding:8px;font-size:13px}
+.mrow{display:grid;grid-template-columns:30px 1fr 1fr;padding:2px 8px;border-radius:6px}
+.mrow:nth-child(odd){background:#22242e}
+.mn{color:#8a8f9c}
+.empty{color:#666;text-align:center;padding:10px;font-size:12px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#9aa0ae}
+.hint{font-size:11px;color:#6f7480;line-height:2}
+#coachLog{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px;background:#191b22;border-radius:10px;padding:10px}
+.msg{background:#20222b;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:2;border-inline-start:3px solid #4caf50}
+.msg.analyst{border-inline-start-color:#64b5f6}
+.msg.sys{border-inline-start-color:#c9973c}
+.msg b{color:#ffd54f}
+.overlay{position:absolute;inset:0;background:rgba(13,14,20,.85);backdrop-filter:blur(3px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  border-radius:14px;z-index:5;text-align:center;padding:20px}
+.loadbar{width:70%;height:10px;border-radius:6px;background:#333;overflow:hidden}
+#loadFill{height:100%;width:0%;background:linear-gradient(90deg,#c9973c,#ffd54f);transition:width .2s}
+#loadText{font-size:12px;color:#cfd3dd;direction:ltr}
+#endEmoji{font-size:52px}
+#promoBox{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.55);border-radius:14px;z-index:6}
+#promoBox .pcard{background:#262833;padding:16px;border-radius:14px;display:flex;gap:12px;align-items:center;flex-direction:column}
+#promoBox .btns{display:flex;gap:10px}
+.promoBtn{font-size:40px;width:60px;height:60px;min-height:0;line-height:1;flex:none;cursor:pointer;
+  font-family:"Segoe UI Symbol",sans-serif;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b}
+.promoBtn.pw{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.7)}
+.promoBtn.pb{color:#141414;background:#d9c49a;text-shadow:0 1px 2px rgba(255,255,255,.35)}
+#promoBox .cancelBtn{font-size:13px;min-height:40px;padding:8px 18px;flex:none}
+/* ---------- آکادمی و گشایش‌ها ---------- */
+.layout{display:flex;gap:16px;max-width:1200px;margin:0 auto;align-items:flex-start;flex-wrap:wrap}
+.side{width:320px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
+  padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.prog{font-size:12.5px;color:#cfd3dd}
+.pbar2{height:9px;border-radius:5px;background:#2b2e3b;overflow:hidden;margin-top:6px}
+.pfill{height:100%;width:0%;background:linear-gradient(90deg,#2e7d32,#81c784);transition:width .4s}
+.side input[type=text]{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;
+  background:#2b2e3b;color:#fff;padding:10px 12px;min-height:44px;width:100%}
+.slist{max-height:65vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+details{background:#191b22;border-radius:10px;padding:8px 10px}
+summary{cursor:pointer;font-size:13px;font-weight:700;color:#ffd54f;line-height:1.9}
+summary small{display:block;color:#6f7480;font-weight:400;font-size:11px}
+summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
+.lsn,.op-item{display:flex;align-items:center;gap:6px;width:100%;text-align:right;background:transparent;
+  border:none;color:#e9e7e2;font:inherit;font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px;line-height:1.7}
+.lsn:hover,.op-item:hover{background:#2b2e3b}
+.lsn.active,.op-item.active{background:#3a3f52;color:#ffd54f;font-weight:700}
+.lsn small,.op-item small{margin-inline-start:auto;color:#6f7480;white-space:nowrap}
+.done{color:#4caf50}
+.reset-link{background:none;border:none;color:#6f7480;font-size:11px;cursor:pointer;text-align:center;min-height:auto;padding:4px;flex:none}
+.reset-link:hover{color:#e57373}
+.content{flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px}
+.card{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px}
+.card h3{font-size:14px;color:#ffd54f;margin-bottom:8px}
+.card ul{padding-inline-start:20px;font-size:13px;line-height:2.2;color:#cfd3dd}
+.lesson-head{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px 16px}
+.sec-badge{display:inline-block;background:#2b2e3b;border:1px solid #3a3e50;color:#ffd54f;
+  font-size:11.5px;border-radius:20px;padding:3px 12px;margin-bottom:8px}
+.lesson-head h2{font-size:19px;color:#fff;line-height:1.9}
+.lesson-head .meta{font-size:12px;color:#9aa0ae;margin-top:4px}
+.done-tag{color:#81c784}
+.intro{background:#20222b;border-inline-start:4px solid #64b5f6;border-radius:12px;padding:12px 14px;
+  font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.part{background:#20222b;border:1px solid #313444;border-radius:12px;padding:12px 14px}
+.part h3{font-size:14px;color:#ffd54f;margin-bottom:6px}
+.part p{font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.board-card{display:flex;flex-direction:column;align-items:center;gap:8px}
+.caption{font-size:12.5px;color:#9aa0ae;text-align:center;line-height:2}
+.step-controls{display:flex;gap:6px;width:100%}
+.step-controls button{flex:1;font-size:15px}
+.step-text{background:#191b22;border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.1;color:#cfd3dd;width:100%;min-height:44px}
+.coach-bubble{background:#20222b;border-inline-start:4px solid #4caf50;border-radius:12px;
+  padding:12px 14px;font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.coach-bubble b{color:#81c784}
+.quiz-card{border-color:#c9973c}
+.qtext{font-size:14px;line-height:2.1;color:#fff;margin-bottom:10px;font-weight:700}
+#quizBoard{margin:0 auto 10px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.opt{font:inherit;font-size:13px;text-align:right;border-radius:10px;cursor:pointer;line-height:2;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:10px 12px;min-height:46px}
+.opt:hover{background:#3d4157}
+.opt.correct{background:#2e7d32;border-color:#4caf50;font-weight:700}
+.opt.wrong{background:#8d3b3b;border-color:#e57373}
+.hint-btn{font:inherit;font-size:12.5px;border-radius:10px;cursor:pointer;min-height:40px;
+  border:1px solid #3b5f8d;background:#26364d;color:#90caf9;padding:8px 14px;flex:none}
+.hintbox,.explain{border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.2;margin-top:8px}
+.hintbox{background:#26364d;color:#90caf9}
+.explain{background:#1e3325;color:#a5d6a7;border:1px solid #2e7d32}
+.nav-btns{display:flex;gap:8px}
+.nav-btns button{flex:1;font-weight:700}
+.nav-btns button:last-child{background:#c9973c;border-color:#c9973c}
+.info-top{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px 16px}
+.info-top h2{font-size:20px;color:#fff}
+.info-top .meta{font-size:12px;color:#9aa0ae;margin-top:4px;line-height:2}
+.info-top .meta b{color:#cfd3dd}
+.main-row{display:flex;gap:14px;flex-wrap:wrap}
+.board-col{display:flex;flex-direction:column;gap:8px;align-items:center}
+.comment-col{flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px}
+#openMoves{background:#191b22;border-radius:12px;padding:10px;max-height:260px;overflow:auto;
+  display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.mv{display:flex;gap:8px;padding:5px 10px;border-radius:8px;cursor:pointer;line-height:1.8}
+.mv:hover{background:#2b2e3b}
+.mv.cur{background:#3a3f52;color:#ffd54f;font-weight:700}
+.mv .n{color:#6f7480;min-width:24px}
+.cols{display:flex;gap:12px;flex-wrap:wrap}
+.cols .card{flex:1;min-width:250px}
+.card.green{border-color:#2e7d32}.card.green h3{color:#81c784}
+.card.red{border-color:#8d3b3b}.card.red h3{color:#e57373}
+.card.blue{border-color:#3b5f8d}.card.blue h3{color:#64b5f6}
+@media(max-width:700px){.side{width:100%}.slist{max-height:300px}.panel{padding:10px}
+  #moves{max-height:110px}#coachLog{max-height:200px}}
+</style>
+</head>
+<body>
+<h1>♞ شطرنج با استاک‌فیش 🎓</h1>
+
+<div class="tabs">
+  <button class="tbtn active" id="tbtn-game" onclick="switchTab('game')">🎮 بازی با مربی</button>
+  <button class="tbtn" id="tbtn-learn" onclick="switchTab('learn')">📚 آکادمی</button>
+  <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش‌ها</button>
+</div>
+
+<!-- ================= تب بازی ================= -->
+<div id="tab-game">
+  <span id="engineBadge">⏳ در حال شناسایی موتور…</span>
+  <div class="app">
+    <div class="stage">
+      <div class="pbar">
+        <span id="topName">🤖 موتور</span>
+        <span class="dots" id="topDots"><i></i><i></i><i></i></span>
+        <span class="badge-check" id="topCheck">کیش!</span>
+        <span style="flex:1"></span>
+        <span class="mat" id="topMat"></span>
+        <span class="caps" id="topCaps"></span>
+      </div>
+      <div class="frame-wrap">
+        <div class="evalcol">
+          <div class="evalbar"><div id="evalFill"></div></div>
+          <span id="evalLabel">0.0</span>
+        </div>
+        <div class="board-frame">
+          <div id="board"></div>
+          <div class="overlay" id="overlayLoad">
+            <div style="font-size:40px">♟️</div>
+            <div>در حال بارگذاری استاک‌فیش…</div>
+            <div class="loadbar"><div id="loadFill"></div></div>
+            <div id="loadText"></div>
+          </div>
+          <div class="overlay hidden" id="overlayEnd">
+            <div id="endEmoji">🏆</div>
+            <div id="endText" style="font-size:17px;font-weight:700"></div>
+            <div class="row" style="width:auto">
+              <button class="primary" onclick="newGame()">🔄 بازی دوباره</button>
+              <button onclick="hideEnd()">بستن</button>
+            </div>
+          </div>
+          <div id="promoBox" class="hidden">
+            <div class="pcard">
+              <div>سرباز به آخر رسید! مهرهٔ جدید را انتخاب کن:</div>
+              <div class="btns" id="promoBtns"></div>
+              <button class="cancelBtn" onclick="closePromo()">انصراف ✖</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pbar">
+        <span id="botName">🧑 شما</span>
+        <span class="badge-check" id="botCheck">کیش!</span>
+        <span style="flex:1"></span>
+        <span class="mat" id="botMat"></span>
+        <span class="caps" id="botCaps"></span>
+      </div>
+      <div id="status">در حال آماده‌سازی…</div>
+    </div>
+    <div class="panel">
+      <h3>⚙️ تنظیمات</h3>
+      <div class="row">
+        <label>رنگ شما
+          <select id="selSide" onchange="onSideChange(this.value)">
+            <option value="w">⚪ سفید</option>
+            <option value="b">⚫ مشکی</option>
+          </select>
+        </label>
+        <label>سختی حریف
+          <select id="selLevel" onchange="onLevelChange(this.value)">
+            <option value="0">خیلی آسان</option>
+            <option value="1">آسان</option>
+            <option value="2" selected>متوسط</option>
+            <option value="3">سخت</option>
+            <option value="4">خیلی سخت</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" onclick="newGame()">🔄 جدید</button>
+        <button onclick="undo()">↩️ برگشت</button>
+        <button onclick="flip()">🔃 چرخش</button>
+        <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
+      <h3>🎓 مربی شما (همیشه قوی‌تر از حریف)</h3>
+      <div class="row">
+        <button id="btnCoach" class="coachbtn">🎓 راهنمایی مربی</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="chkAutoCoach" checked> راهنمایی خودکار بعد از هر حرکت حریف</label>
+      <div id="coachLog"></div>
+      <div class="hint" id="strengthInfo"></div>
+      <h3>📜 حرکات</h3>
+      <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>
+      <div class="hint">💡 حرکت پیشنهادی مربی با رنگ <b style="color:#4caf50">سبز</b> روی صفحه مشخص می‌شود. در تب «گشایش‌ها» می‌توانی هر گشایش را مستقیم وارد بازی کنی.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= تب آکادمی ================= -->
+<div id="tab-learn" class="hidden">
+  <div class="layout">
+    <aside class="side">
+      <div class="prog">
+        <span id="progressText"></span>
+        <div class="pbar2"><div id="progressFill" class="pfill"></div></div>
+      </div>
+      <input id="search" type="text" placeholder="🔍 جستجوی درس…">
+      <div id="lessonList" class="slist"></div>
+      <button class="reset-link" onclick="resetLearn()">🗑 پاک کردن پیشرفت</button>
+    </aside>
+    <main class="content" id="lessonView"></main>
+  </div>
+</div>
+
+<!-- ================= تب گشایش‌ها ================= -->
+<div id="tab-open" class="hidden">
+  <div class="layout">
+    <aside class="side">
+      <div class="prog">
+        <span id="openProgressText"></span>
+        <div class="pbar2"><div id="openProgressFill" class="pfill"></div></div>
+      </div>
+      <input id="searchOpen" type="text" placeholder="🔍 جستجوی گشایش…">
+      <div id="openList" class="slist"></div>
+    </aside>
+    <main class="content" id="openView">
+      <div class="info-top">
+        <h2 id="opName"></h2>
+        <div class="meta">
+          <span>🌍 <b id="opEn"></b></span> &nbsp;|&nbsp;
+          <span>📋 ECO: <b id="opEco" style="direction:ltr;display:inline-block"></b></span> &nbsp;|&nbsp;
+          <span>🎯 سطح: <b id="opLevel"></b></span>
+        </div>
+      </div>
+      <div class="main-row">
+        <div class="board-col card board-card">
+          <div id="mini-board"></div>
+          <div class="caption" id="openCaption"></div>
+          <div class="step-controls">
+            <button onclick="goTo(0)">⏮</button>
+            <button onclick="goTo(openPly-1)">◀</button>
+            <button id="btnPlayOpen" onclick="togglePlay()">▶️ پخش</button>
+            <button onclick="goTo(openPly+1)">▶</button>
+            <button onclick="goTo(curOp?curOp.moves.length:0)">⏭</button>
+          </div>
+          <div class="step-text" id="openStepText"></div>
+        </div>
+        <div class="comment-col">
+          <div class="coach-bubble" id="coachBubble"></div>
+          <div id="openMoves"></div>
+        </div>
+      </div>
+      <div class="intro" id="opDesc"></div>
+      <div class="cols">
+        <div class="card green"><h3>✅ نقاط قوت</h3><ul id="pros"></ul></div>
+        <div class="card red"><h3>⚠️ نقاط ضعف</h3><ul id="cons"></ul></div>
+      </div>
+      <div class="card blue"><h3>🧭 نقشه‌های معمول</h3>
+        <p id="plans" style="font-size:13px;line-height:2.2;color:#cfd3dd"></p>
+      </div>
+      <div class="coach-bubble" id="opTip"></div>
+      <button class="primary" onclick="practice()">🎮 تمرین این گشایش در بازی</button>
+    </main>
+  </div>
+</div>
+
+<!-- فایل‌های داده و مربی -->
+<script src="coach.js"></script>
+<script src="learn-data-1.js"></script>
+<script src="learn-data-2.js"></script>
+<script src="learn-data-3.js"></script>
+<script src="learn-data-4.js"></script>
+<script src="learn-data-5.js"></script>
+<script src="learn-data-6.js"></script>
+<script src="openings-data.js"></script>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+
+/* ================= هستهٔ مشترک شطرنج ================= */
+const FILES='abcdefgh';
+const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const N_OFF=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+const K_OFF=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const B_DIRS=[[-1,-1],[-1,1],[1,-1],[1,1]],R_DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
+const isW=p=>p&&p===p.toUpperCase();
+const colorOf=p=>isW(p)?'w':'b';
+const sqName=sq=>FILES[sq&7]+(8-(sq>>3));
+function parseSq(s){const f=FILES.indexOf(s[0]);if(f<0)return -1;return (8-(+s[1]))*8+f;}
+function initialBoard(){
+  const fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',b=new Array(64).fill(null);
+  let sq=0;for(const ch of fen){if(ch==='/')continue;if(/\d/.test(ch)){sq+=+ch;continue;}b[sq++]=ch;}
+  return b;
+}
+const initialState=()=>({board:initialBoard(),turn:'w',castling:{K:1,Q:1,k:1,q:1},ep:-1,half:0,full:1});
+function attacked(s,sq,byWhite){
+  const r=sq>>3,c=sq&7,P=byWhite?'P':'p',Nn=byWhite?'N':'n',Kk=byWhite?'K':'k',
+        Bb=byWhite?'B':'b',Rr=byWhite?'R':'r',Qq=byWhite?'Q':'q';
+  const pr=byWhite?r+1:r-1;
+  if(pr>=0&&pr<8){
+    if(c>0&&s.board[pr*8+c-1]===P)return true;
+    if(c<7&&s.board[pr*8+c+1]===P)return true;
+  }
+  for(const[dr,dc]of N_OFF){const rr=r+dr,cc=c+dc;
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Nn)return true;}
+  for(const[dr,dc]of K_OFF){const rr=r+dr,cc=c+dc;
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Kk)return true;}
+  for(const[dr,dc]of B_DIRS){let rr=r+dr,cc=c+dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+      if(p){if(p===Bb||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
+  for(const[dr,dc]of R_DIRS){let rr=r+dr,cc=c+dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+      if(p){if(p===Rr||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
+  return false;
+}
+const kingSq=(s,w)=>s.board.indexOf(w?'K':'k');
+const inCheck=(s,c)=>attacked(s,kingSq(s,c==='w'),c!=='w');
+function addPawn(ms,from,to,promoR){
+  if((to>>3)===promoR)for(const pr of['q','r','b','n'])ms.push({from,to,promo:pr});
+  else ms.push({from,to});
+}
+function pseudoMoves(s){
+  const ms=[],white=s.turn==='w';
+  for(let sq=0;sq<64;sq++){
+    const p=s.board[sq];if(!p||isW(p)!==white)continue;
+    const r=sq>>3,c=sq&7,t=p.toLowerCase();
+    if(t==='p'){
+      const dir=white?-1:1,startR=white?6:1,promoR=white?0:7,rr=r+dir;
+      if(rr>=0&&rr<8&&!s.board[rr*8+c]){
+        addPawn(ms,sq,rr*8+c,promoR);
+        if(r===startR&&!s.board[(r+2*dir)*8+c])ms.push({from:sq,to:(r+2*dir)*8+c});
+      }
+      for(const dc of[-1,1]){const cc=c+dc;
+        if(cc<0||cc>7||rr<0||rr>7)continue;
+        const to=rr*8+cc,q=s.board[to];
+        if(q&&isW(q)!==white)addPawn(ms,sq,to,promoR);
+        else if(to===s.ep&&!q)ms.push({from:sq,to,ep:true});
+      }
+    }else if(t==='n'||t==='k'){
+      for(const[dr,dc]of(t==='n'?N_OFF:K_OFF)){const rr=r+dr,cc=c+dc;
+        if(rr<0||rr>7||cc<0||cc>7)continue;
+        const to=rr*8+cc,q=s.board[to];
+        if(!q||isW(q)!==white)ms.push({from:sq,to});}
+    }else{
+      const dirs=t==='b'?B_DIRS:t==='r'?R_DIRS:B_DIRS.concat(R_DIRS);
+      for(const[dr,dc]of dirs){let rr=r+dr,cc=c+dc;
+        while(rr>=0&&rr<8&&cc>=0&&cc<8){const to=rr*8+cc,q=s.board[to];
+          if(!q)ms.push({from:sq,to});
+          else{if(isW(q)!==white)ms.push({from:sq,to});break;}
+          rr+=dr;cc+=dc;}}
+    }
+  }
+  if(white){
+    if(s.castling.K&&!s.board[61]&&!s.board[62]&&s.board[63]==='R'
+      &&!attacked(s,60,false)&&!attacked(s,61,false)&&!attacked(s,62,false))
+      ms.push({from:60,to:62,castle:'K'});
+    if(s.castling.Q&&!s.board[59]&&!s.board[58]&&!s.board[57]&&s.board[56]==='R'
+      &&!attacked(s,60,false)&&!attacked(s,59,false)&&!attacked(s,58,false))
+      ms.push({from:60,to:58,castle:'Q'});
+  }else{
+    if(s.castling.k&&!s.board[5]&&!s.board[6]&&s.board[7]==='r'
+      &&!attacked(s,4,true)&&!attacked(s,5,true)&&!attacked(s,6,true))
+      ms.push({from:4,to:6,castle:'k'});
+    if(s.castling.q&&!s.board[3]&&!s.board[2]&&!s.board[1]&&s.board[0]==='r'
+      &&!attacked(s,4,true)&&!attacked(s,3,true)&&!attacked(s,2,true))
+      ms.push({from:4,to:2,castle:'q'});
+  }
+  return ms;
+}
+function makeMove(s,m){
+  const b=s.board.slice();
+  const ns={board:b,turn:s.turn==='w'?'b':'w',castling:{...s.castling},ep:-1,
+            half:s.half+1,full:s.full+(s.turn==='b'?1:0)};
+  const p=b[m.from],white=isW(p),cap=b[m.to];
+  if(p.toLowerCase()==='p'||cap)ns.half=0;
+  b[m.to]=m.promo?(white?m.promo.toUpperCase():m.promo):p;
+  b[m.from]=null;
+  if(m.ep)b[m.to+(white?8:-8)]=null;
+  if(m.castle==='K'){b[61]=b[63];b[63]=null;}
+  if(m.castle==='Q'){b[59]=b[56];b[56]=null;}
+  if(m.castle==='k'){b[5]=b[7];b[7]=null;}
+  if(m.castle==='q'){b[3]=b[0];b[0]=null;}
+  if(p==='K')ns.castling.K=ns.castling.Q=0;
+  if(p==='k')ns.castling.k=ns.castling.q=0;
+  if(m.from===63||m.to===63)ns.castling.K=0;
+  if(m.from===56||m.to===56)ns.castling.Q=0;
+  if(m.from===7||m.to===7)ns.castling.k=0;
+  if(m.from===0||m.to===0)ns.castling.q=0;
+  if(p.toLowerCase()==='p'&&Math.abs(m.to-m.from)===16)ns.ep=(m.from+m.to)/2;
+  return ns;
+}
+const legalMoves=s=>pseudoMoves(s).filter(m=>!inCheck(makeMove(s,m),s.turn));
+const keyOf=s=>s.board.map(p=>p||'-').join('')+s.turn+
+  (s.castling.K?'K':'')+(s.castling.Q?'Q':'')+(s.castling.k?'k':'')+(s.castling.q?'q':'')+s.ep;
+function insufficient(s){
+  const minors=[];
+  for(const p of s.board)if(p){const t=p.toLowerCase();
+    if(t==='p'||t==='r'||t==='q')return false;
+    if(t==='n'||t==='b')minors.push(p);}
+  return minors.length<=1||(minors.length===2&&colorOf(minors[0])!==colorOf(minors[1]));
+}
+function sanOf(s,m,legal){
+  if(m.castle)return(m.castle==='K'||m.castle==='k')?'O-O':'O-O-O';
+  const p=s.board[m.from],t=p.toLowerCase(),capture=!!s.board[m.to]||m.ep;
+  let san='';
+  if(t==='p'){
+    if(capture)san+=FILES[m.from&7]+'x';
+    san+=sqName(m.to);
+    if(m.promo)san+='='+m.promo.toUpperCase();
+  }else{
+    san+=t.toUpperCase();
+    const rivals=legal.filter(x=>x.to===m.to&&x.from!==m.from&&s.board[x.from]===p);
+    if(rivals.length){
+      const sameFile=rivals.some(x=>(x.from&7)===(m.from&7));
+      const sameRank=rivals.some(x=>(x.from>>3)===(m.from>>3));
+      if(!sameFile)san+=FILES[m.from&7];
+      else if(!sameRank)san+=String(8-(m.from>>3));
+      else san+=sqName(m.from);
+    }
+    if(capture)san+='x';
+    san+=sqName(m.to);
+  }
+  const ns=makeMove(s,m);
+  if(inCheck(ns,ns.turn))san+=legalMoves(ns).length?'+':'#';
+  return san;
+}
+function parseFEN(fen){
+  const b=new Array(64).fill(null);
+  let sq=0;
+  for(const row of fen.split(' ')[0].split('/')){
+    for(const ch of row){
+      if(/\d/.test(ch))sq+=+ch;
+      else b[sq++]=ch;
+    }
+  }
+  return b;
+}
+function applyUci(board,uci){
+  const from=parseSq(uci.slice(0,2)),to=parseSq(uci.slice(2,4)),promo=uci[4]||null;
+  const p=board[from];
+  if(!p)return board;
+  const isEp=p.toLowerCase()==='p'&&board[to]===null&&(from&7)!==(to&7);
+  board[to]=promo?(isW(p)?promo.toUpperCase():promo):p;
+  board[from]=null;
+  if(p.toLowerCase()==='k'&&Math.abs((to&7)-(from&7))===2){
+    if(to>from){board[from+1]=board[from+3];board[from+3]=null;}
+    else{board[from-1]=board[from-4];board[from-4]=null;}
+  }
+  if(isEp)board[(to&7)|(from&56)]=null;
+  return board;
+}
+function renderBoardEl(el,board,highlights,last){
+  let html='';
+  for(let i=0;i<64;i++){
+    const r=i>>3,c=i&7;
+    let cls='cell '+(((r+c)%2===1)?'dark':'light');
+    if(highlights&&highlights.includes(sqName(i)))cls+=' hl';
+    if(last&&(last.from===i||last.to===i))cls+=' llast';
+    const p=board[i];
+    html+='<div class="'+cls+'">'
+      +(c===0?'<span class="coord rank">'+(8-r)+'</span>':'')
+      +(r===7?'<span class="coord file">'+FILES[c]+'</span>':'')
+      +(p?'<span class="piece '+(isW(p)?'w':'b')+'">'+GLYPH[p.toLowerCase()]+'</span>':'')
+      +'</div>';
+  }
+  el.innerHTML=html;
+}
+
+/* ================= موتور سادهٔ داخلی (جایگزین آفلاین) ================= */
+const VALC={p:100,n:320,b:330,r:500,q:900,k:0};
+const PST={
+p:[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,20,20,0,0,0,5,-5,-10,0,0,-10,-5,5,5,10,10,-20,-20,10,10,5,0,0,0,0,0,0,0,0],
+n:[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,15,15,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],
+b:[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],
+r:[0,0,0,0,0,0,0,0,5,10,10,10,10,10,10,5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,0,0,0,5,5,0,0,0],
+q:[-20,-10,-10,-5,-5,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,5,5,5,0,-10,-5,0,5,5,5,5,0,-5,0,0,5,5,5,5,0,-5,-10,5,5,5,5,5,0,-10,-10,0,5,0,0,0,0,-10,-20,-10,-10,-5,-5,-10,-10,-20],
+k:[-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-20,-30,-30,-40,-40,-30,-30,-20,-10,-20,-20,-20,-20,-20,-20,-10,20,20,0,0,0,0,20,20,20,30,10,0,0,10,30,20]};
+function evalBoard(s){
+  let sc=0;
+  for(let sq=0;sq<64;sq++){const p=s.board[sq];if(!p)continue;
+    const t=p.toLowerCase(),v=VALC[t]+PST[t][isW(p)?sq:(sq^56)];
+    sc+=isW(p)?v:-v;}
+  return s.turn==='w'?sc:-sc;
+}
+function capVal(s,m){const q=s.board[m.to];if(q)return VALC[q.toLowerCase()];return m.ep?100:0;}
+function abSearch(s,depth,alpha,beta){
+  if(depth===0)return evalBoard(s);
+  const ms=pseudoMoves(s);
+  ms.sort((a,b)=>capVal(s,b)-capVal(s,a));
+  let legal=0;
+  for(const m of ms){
+    const ns=makeMove(s,m);
+    if(inCheck(ns,s.turn))continue;
+    legal++;
+    const v=-abSearch(ns,depth-1,-beta,-alpha);
+    if(v>alpha){alpha=v;if(alpha>=beta)break;}
+  }
+  if(!legal)return inCheck(s,s.turn)?-(99999+depth):0;
+  return alpha;
+}
+function chooseAiMove(s,depth,jitter){
+  const ms=legalMoves(s);
+  if(!ms.length)return null;
+  ms.sort((a,b)=>capVal(s,b)-capVal(s,a));
+  let alpha=-999999,best=ms[0];
+  for(const m of ms){
+    const ns=makeMove(s,m);
+    let v=-abSearch(ns,depth-1,-999999,-alpha);
+    if(jitter)v+=(Math.random()*2-1)*jitter;
+    if(v>alpha){alpha=v;best=m;}
+  }
+  return {m:best,v:alpha};
+}
+
+/* ================= وضعیت بازی ================= */
+let S=initialState(),hist=[],keys=[keyOf(S)];
+let humanColor='w',flipped=false,gameOver=null,selected=null,pendingPromo=null;
+let thinking=false,searchRole=null,gameId=0,searchGen=-1;
+let lastEval=null,lastDepth=0,searchSide='w';
+let engine='ai',sf=null,engineReady=false,pendingGo=false;
+let level=2;
+const LEVELS_SF=[{skill:0,depth:4},{skill:5,depth:6},{skill:10,depth:9},{skill:16,depth:12},{skill:20,depth:15}];
+const engineName=()=>engine==='stockfish'?'🤖 استاک‌فیش ۱۹':'🧠 موتور ساده';
+let audioCtx=null;
+function playSound(type){
+  if(!$('chkSound').checked)return;
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';
+    o.frequency.value=type==='capture'?300:type==='end'?660:500;
+    g.gain.setValueAtTime(.18,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.14);
+    o.connect(g).connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+.15);
+  }catch(e){}
+}
+
+/* ================= رسم تب بازی ================= */
+function render(){
+  const legal=(!gameOver&&S.turn===humanColor)?legalMoves(S):[];
+  const last=hist.length?hist[hist.length-1].m:null;
+  const checkSq=inCheck(S,S.turn)?kingSq(S,S.turn==='w'):-1;
+  let html='';
+  for(let i=0;i<64;i++){
+    const sq=flipped?63-i:i,r=sq>>3,c=sq&7;
+    let cls='cell '+(((r+c)%2===1)?'dark':'light');
+    if(sq===selected)cls+=' sel';
+    if(last&&(sq===last.from||sq===last.to))cls+=' last';
+    if(sq===checkSq)cls+=' check';
+    if(Coach.move&&(sq===Coach.move.from||sq===Coach.move.to))cls+=' coach';
+    const p=S.board[sq];
+    const hint=selected!=null&&legal.some(m=>m.from===selected&&m.to===sq);
+    html+='<div class="'+cls+'" data-sq="'+sq+'">'
+      +(c===(flipped?7:0)?'<span class="coord rank">'+(8-r)+'</span>':'')
+      +(r===(flipped?0:7)?'<span class="coord file">'+FILES[c]+'</span>':'')
+      +(p?'<span class="piece '+(isW(p)?'w':'b')+'">'+GLYPH[p.toLowerCase()]+'</span>':'')
+      +(hint?'<span class="dot'+(p?' cap':'')+'"></span>':'')
+      +'</div>';
+  }
+  $('board').innerHTML=html;
+  renderPlayers();renderMoves();updateEvalBar();
+  Coach.updateButton();
+}
+function capsBy(color){return hist.filter(h=>h.captured&&colorOf(h.captured)!==color).map(h=>h.captured);}
+function renderPlayers(){
+  const eng=humanColor==='w'?'b':'w';
+  $('topName').textContent=engineName()+' (حریف) — '+(eng==='w'?'⚪ سفید':'⚫ مشکی');
+  $('botName').textContent='🧑 شما + 🎓 مربی — '+(humanColor==='w'?'⚪ سفید':'⚫ مشکی');
+  $('topCaps').textContent=capsBy(eng).map(p=>GLYPH[p.toLowerCase()]).join('');
+  $('botCaps').textContent=capsBy(humanColor).map(p=>GLYPH[p.toLowerCase()]).join('');
+  const VAL={p:1,n:3,b:3,r:5,q:9};
+  const diff=capsBy('w').reduce((a,p)=>a+VAL[p.toLowerCase()],0)
+            -capsBy('b').reduce((a,p)=>a+VAL[p.toLowerCase()],0);
+  const topAdv=eng==='w'?diff:-diff;
+  $('topMat').textContent=topAdv>0?'+'+topAdv:'';
+  $('botMat').textContent=topAdv>0?'+'+topAdv:'';
+  $('topDots').classList.toggle('on',thinking);
+  $('topCheck').style.display=inCheck(S,eng)?'inline-block':'none';
+  $('botCheck').style.display=inCheck(S,humanColor)?'inline-block':'none';
+}
+function renderMoves(){
+  if(!hist.length){$('moves').innerHTML='<div class="empty">هنوز حرکتی ثبت نشده</div>';return;}
+  let html='';
+  for(let i=0;i<hist.length;i+=2)
+    html+='<div class="mrow"><span class="mn">'+(i/2+1)+'</span><span>'+hist[i].san+'</span><span>'
+         +(hist[i+1]?hist[i+1].san:'')+'</span></div>';
+  $('moves').innerHTML=html;
+  $('moves').scrollTop=$('moves').scrollHeight;
+}
+function updateEvalBar(){
+  let pct=50,label='0.0';
+  if(lastEval){
+    const w=lastEval.white;
+    pct=50+50*(2/(1+Math.exp(-w/400))-1);
+    if(lastEval.mate)label=(w>0?'+':'−')+'M'+Math.abs(Math.round((10000-Math.abs(w))));
+    else label=(w>=0?'+':'')+(w/100).toFixed(1);
+  }
+  $('evalFill').style.height=pct+'%';
+  $('evalLabel').textContent=label;
+}
+function setStatus(t){$('status').textContent=t;}
+function updateBadge(){
+  $('engineBadge').textContent=engine==='stockfish'
+    ?'🤖 موتور: استاک‌فیش ۱۹ (حریف + مربی)'
+    :'🧠 موتور: سادهٔ داخلی (استاک‌فیش در دسترس نبود)';
+}
+
+/* ================= جریان بازی ================= */
+function applyMove(m){
+  const mover=S.turn;
+  const legal=legalMoves(S);
+  const captured=S.board[m.to]||(m.ep?(S.turn==='w'?'p':'P'):null);
+  const before=S;
+  const san=sanOf(S,m,legal);
+  S=makeMove(S,m);
+  hist.push({m,uci:sqName(m.from)+sqName(m.to)+(m.promo||''),san,before,captured});
+  keys.push(keyOf(S));
+  playSound(captured?'capture':'move');
+  afterMove(mover);
+}
+function afterMove(mover){
+  selected=null;render();
+  const legal=legalMoves(S);
+  if(!legal.length){
+    if(inCheck(S,S.turn))endGame('mate',S.turn==='w'?'b':'w');
+    else endGame('stalemate');
+    return;
+  }
+  if(S.half>=100)return endGame('fifty');
+  if(insufficient(S))return endGame('material');
+  if(keys.filter(x=>x===keys[keys.length-1]).length>=3)return endGame('repeat');
+  if(S.turn!==humanColor){opponentGo();}
+  else{
+    setStatus('نوبت شماست ♙');
+    if(mover&&mover!==humanColor)Coach.afterOpponentMove();
+  }
+}
+function endGame(type,winner){
+  gameOver={type,winner};thinking=false;Coach.busy=false;render();
+  let txt,emoji='🤝';
+  if(type==='mate'){
+    if(winner===humanColor){txt='مات شد! شما برنده شدید 🎉';emoji='🏆';}
+    else{txt='مات شدید! حریف برد';emoji='🤖';}
+  }
+  else if(type==='stalemate')txt='پات — بازی مساوی شد';
+  else if(type==='fifty')txt='تساوی — قانون پنجاه حرکت';
+  else if(type==='repeat')txt='تساوی — تکرار سه‌گانهٔ وضعیت';
+  else if(type==='material')txt='تساوی — مهره‌های ناکافی';
+  $('endEmoji').textContent=emoji;$('endText').textContent=txt;
+  $('overlayEnd').classList.remove('hidden');
+  setStatus(txt);playSound('end');
+  Coach.say((winner===humanColor)?'🎓 مربی: عالی بود! با هم بردیم 🏆':'🎓 مربی: اشکالی ندارد، دوباره تلاش می‌کنیم. از اشتباه‌ها یاد بگیر 💪','sys');
+}
+function hideEnd(){$('overlayEnd').classList.add('hidden');}
+function abortAllSearches(){
+  if(thinking||Coach.busy){
+    gameId++;sfSend('stop');
+    thinking=false;Coach.busy=false;searchRole=null;
+  }
+}
+function newGame(){
+  abortAllSearches();gameId++;
+  S=initialState();hist=[];keys=[keyOf(S)];
+  gameOver=null;selected=null;lastEval=null;lastDepth=0;
+  pendingGo=false;
+  hideEnd();closePromo();
+  if(engine==='stockfish')sfSend('ucinewgame');
+  render();
+  Coach.reset();
+  if(humanColor==='b'){opponentGo();}
+  else{setStatus('بازی جدید — نوبت شماست ♙');}
+}
+function undo(){
+  abortAllSearches();
+  if(!hist.length)return;
+  pop1();
+  if(S.turn!==humanColor&&hist.length)pop1();
+  gameOver=null;selected=null;lastEval=null;
+  Coach.stop();Coach.move=null;
+  hideEnd();render();setStatus('حرکت برگشت — نوبت شماست');
+}
+function pop1(){const h=hist.pop();keys.pop();S=h.before;}
+function flip(){flipped=!flipped;render();}
+function onSideChange(v){humanColor=v;flipped=(v==='b');newGame();}
+function onLevelChange(v){level=+v;Coach.updateStrengthInfo();setStatus('سختی حریف تغییر کرد ✅ (مربی همچنان قوی‌تر می‌ماند)');}
+
+/* ================= تعامل کاربر ================= */
+$('board').addEventListener('click',e=>{
+  const cell=e.target.closest('[data-sq]');
+  if(!cell)return;
+  if(pendingPromo){closePromo();return;}
+  if(gameOver||thinking||S.turn!==humanColor)return;
+  const sq=+cell.dataset.sq;
+  const legal=legalMoves(S);
+  if(selected!=null){
+    const cands=legal.filter(m=>m.from===selected&&m.to===sq);
+    if(cands.length){
+      if(cands[0].promo){openPromo(cands);return;}
+      humanMove(cands[0],legal);return;
+    }
+  }
+  const p=S.board[sq];
+  selected=(p&&colorOf(p)===humanColor)?sq:null;
+  render();
+});
+function humanMove(m,legal){
+  const humanSan=sanOf(S,m,legal);
+  const humanUci=sqName(m.from)+sqName(m.to)+(m.promo||'');
+  Coach.onHumanMove(m,humanSan,humanUci);
+  gameId++;
+  applyMove(m);
+  Coach.afterHumanMove();
+}
+function openPromo(cands){
+  pendingPromo=cands;
+  const white=humanColor==='w';
+  $('promoBtns').innerHTML=cands.map(m=>
+    '<button data-p="'+m.promo+'" class="promoBtn '+(white?'pw':'pb')+'">'+GLYPH[m.promo]+'</button>').join('');
+  $('promoBox').classList.remove('hidden');
+}
+$('promoBtns').addEventListener('click',e=>{
+  const b=e.target.closest('[data-p]');
+  if(!b||!pendingPromo)return;
+  const m=pendingPromo.find(x=>x.promo===b.dataset.p);
+  closePromo();
+  if(m)humanMove(m,legalMoves(S));
+});
+$('promoBox').addEventListener('click',e=>{
+  if(!e.target.closest('.pcard'))closePromo();
+});
+function closePromo(){pendingPromo=null;$('promoBox').classList.add('hidden');}
+
+/* ================= موتور حریف ================= */
+function opponentGo(){if(engine==='stockfish')sfOpponentGo();else aiOpponentGo();}
+function sfOpponentGo(){
+  if(!engineReady){pendingGo=true;return;}
+  thinking=true;searchGen=gameId;searchSide=S.turn;searchRole='opponent';
+  lastEval=null;lastDepth=0;
+  render();setStatus('🤖 حریف فکر می‌کند…');
+  sfSend('setoption name Skill Level value '+LEVELS_SF[level].skill);
+  sfSend('position startpos'+(hist.length?' moves '+hist.map(h=>h.uci).join(' '):''));
+  sfSend('go depth '+LEVELS_SF[level].depth);
+}
+function aiOpponentGo(){
+  thinking=true;searchGen=gameId;searchSide=S.turn;searchRole='opponent';render();
+  setStatus('🤖 حریف فکر می‌کند…');
+  setTimeout(()=>{
+    if(searchGen!==gameId||gameOver){thinking=false;render();return;}
+    const depths=[1,2,3,4,4],jitters=[90,35,15,10,10];
+    const res=chooseAiMove(S,depths[level],jitters[level]);
+    thinking=false;
+    if(searchGen!==gameId||gameOver){render();return;}
+    if(res){lastEval={mate:false,white:S.turn==='w'?res.v:-res.v};updateEvalBar();applyMove(res.m);}
+  },250);
+}
+
+/* ================= اتصال به استاک‌فیش ================= */
+function sfSend(t){if(sf)sf.postMessage(t);}
+function switchToAI(msg){
+  engine='ai';engineReady=true;
+  $('overlayLoad').classList.add('hidden');
+  updateBadge();Coach.updateStrengthInfo();
+  if(msg)setStatus(msg);
+  if(pendingGo){pendingGo=false;opponentGo();}
+  else if(Coach.pending){Coach.onEngineReady();}
+}
+function initStockfish(){
+  try{
+    sf=new Worker('stockfish-19.js');
+    const ch=new MessageChannel();
+    ch.port1.onmessage=ev=>{
+      const d=ev.data;
+      if(d&&typeof d.percent==='number'){
+        $('loadFill').style.width=Math.round(d.percent*100)+'%';
+        $('loadText').textContent=Math.round(d.percent*100)+'% — '+(d.speedText||'')+' '+(d.etaText||'');
+      }
+    };
+    sf.postMessage({progressPort:ch.port1},[ch.port1]);
+    sf.onmessage=e=>{if(typeof e.data==='string')handleLine(e.data.trim());};
+    sf.onerror=e=>{
+      if(!engineReady)switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.');
+      console.error('stockfish worker error:',e);
+    };
+    sfSend('uci');
+  }catch(err){
+    switchToAI('ساخت ورکر ممکن نشد؛ موتور ساده جایگزین شد.');
+  }
+}
+function handleLine(line){
+  if(!line)return;
+  if(line==='uciok'){sfSend('isready');return;}
+  if(line==='readyok'){
+    engineReady=true;
+    $('overlayLoad').classList.add('hidden');
+    updateBadge();Coach.updateStrengthInfo();
+    if(pendingGo){pendingGo=false;sfOpponentGo();}
+    else Coach.onEngineReady();
+    if(!pendingGo&&S.turn===humanColor&&!Coach.busy)setStatus('استاک‌فیش آماده است — نوبت شماست ♙');
+    return;
+  }
+  if(line.startsWith('bestmove')){onBestmove(line.split(' ')[1]);return;}
+  if(line.startsWith('info'))parseInfo(line);
+}
+function onBestmove(token){
+  const role=searchRole;searchRole=null;
+  if(searchGen!==gameId||gameOver){Coach.busy=false;thinking=false;render();return;}
+  if(role==='coach'){Coach.bestmove(token);return;}
+  thinking=false;
+  const from=parseSq(token.slice(0,2)),to=parseSq(token.slice(2,4)),promo=token[4]||null;
+  const m=legalMoves(S).find(x=>x.from===from&&x.to===to&&(x.promo||null)===(promo||null));
+  if(!m){setStatus('⚠️ حرکت نامعتبر از موتور');render();return;}
+  applyMove(m);
+}
+function parseInfo(line){
+  if(searchGen!==gameId)return;
+  const ms=line.match(/ score (cp|mate) (-?\d+)/);if(!ms)return;
+  const md=line.match(/ depth (\d+)/);if(md)lastDepth=+md[1];
+  let v=ms[1]==='cp'?+ms[2]:(+ms[2]>0?10000-(+ms[2]):-(10000-(+ms[2])));
+  lastEval={mate:ms[1]==='mate',white:searchSide==='w'?v:-v};
+  updateEvalBar();
+  if(searchRole==='coach'){Coach.parseInfo(line);return;}
+  if(thinking){
+    const ev=lastEval.mate?'مات در '+Math.abs(Math.round((10000-Math.abs(lastEval.white))))
+             :((lastEval.white>=0?'+':'')+(lastEval.white/100).toFixed(2));
+    setStatus('🤖 حریف فکر می‌کند… عمق '+lastDepth+' | '+ev);
+  }
+}
+
+/* ================= تمرین گشایش در بازی ================= */
+function practiceOpening(id){
+  const op=(typeof OPENINGS_DB!=='undefined')?OPENINGS_DB.find(o=>o.id===id):null;
+  switchTab('game');
+  if(!op)return;
+  abortAllSearches();gameId++;
+  S=initialState();hist=[];keys=[keyOf(S)];
+  gameOver=null;selected=null;lastEval=null;lastDepth=0;
+  Coach.stop();Coach.move=null;
+  for(const mv of op.moves){
+    const legal=legalMoves(S);
+    const from=parseSq(mv.uci.slice(0,2)),to=parseSq(mv.uci.slice(2,4)),promo=mv.uci[4]||null;
+    const m=legal.find(x=>x.from===from&&x.to===to&&(x.promo||null)===(promo||null));
+    if(!m)break;
+    const captured=S.board[m.to]||(m.ep?(S.turn==='w'?'p':'P'):null);
+    const before=S;
+    S=makeMove(S,m);
+    hist.push({m,uci:mv.uci,san:mv.san,before,captured});
+    keys.push(keyOf(S));
+  }
+  hideEnd();closePromo();
+  if(engine==='stockfish')sfSend('ucinewgame');
+  render();
+  Coach.say('📖 گشایش «'+op.name+'» بارگذاری شد — از اینجا ادامه بده!','sys');
+  if(S.turn!==humanColor)opponentGo();
+  else if($('chkAutoCoach').checked)Coach.go();
+}
+
+/* ================= تب آکادمی ================= */
+let curIdx=0,answered=false,learnInited=false;
+let lBoards=[],lCur=0,lData=null;
+let completed=JSON.parse(localStorage.getItem('learn-completed')||'[]');
+function secOf(l){return LEARN_SECTIONS.find(s=>s.id===l.sec);}
+function renderLearnList(filter){
+  filter=(filter||'').trim();
+  let html='';
+  for(const sec of LEARN_SECTIONS){
+    const items=LEARN_DB.map((l,i)=>({l,i})).filter(x=>x.l.sec===sec.id&&(!filter||x.l.title.includes(filter)));
+    if(!items.length&&filter)continue;
+    const done=items.filter(x=>completed.includes(x.l.id)).length;
+    html+='<details open><summary>'+sec.icon+' '+sec.name+'<span class="cnt">'+done+'/'+items.length+'</span>'
+      +'<small>'+sec.desc+'</small></summary>';
+    for(const x of items){
+      html+='<button class="lsn'+(x.i===curIdx?' active':'')+'" onclick="openLesson('+x.i+')">'
+        +(completed.includes(x.l.id)?'<span class="done">✔</span> ':'')
+        +x.l.title+'<small>'+x.l.minutes+' دقیقه</small></button>';
+    }
+    html+='</details>';
+  }
+  $('lessonList').innerHTML=html||'<div style="color:#6f7480;font-size:13px;padding:10px">درسی پیدا نشد 🔍</div>';
+  updateLearnProgress();
+}
+function updateLearnProgress(){
+  const total=LEARN_DB.length;
+  const done=LEARN_DB.filter(l=>completed.includes(l.id)).length;
+  $('progressText').textContent=(done===total&&total>0)
+    ?'🎓 تبریک! همهٔ '+total+' درس را کامل کردی!'
+    :'پیشرفت دوره: '+done+' از '+total+' درس';
+  $('progressFill').style.width=(total?Math.round(done/total*100):0)+'%';
+}
+function resetLearn(){
+  if(!confirm('تمام پیشرفت دوره پاک شود؟'))return;
+  completed=[];
+  localStorage.removeItem('learn-completed');
+  renderLearnList($('search').value);
+  openLesson(curIdx);
+}
+function openLesson(idx){
+  if(idx<0||idx>=LEARN_DB.length)return;
+  curIdx=idx;
+  const L=LEARN_DB[idx];
+  const sec=secOf(L);
+  let html='<div class="lesson-head">'
+    +'<span class="sec-badge">'+sec.icon+' '+sec.name+'</span>'
+    +'<h2>'+L.title+'</h2>'
+    +'<div class="meta">⏱ حدود '+L.minutes+' دقیقه '
+    +(completed.includes(L.id)?' • <span class="done-tag">✅ کامل شد</span>':'')+'</div></div>'
+    +'<div class="intro">'+L.intro+'</div>';
+  for(const p of L.parts)html+='<div class="part"><h3>'+p.h+'</h3><p>'+p.p+'</p></div>';
+  if(L.board){
+    html+='<div class="card board-card"><div id="lboard"></div>'
+      +'<div class="caption">'+(L.board.caption||'')+'</div>';
+    if(L.board.steps&&L.board.steps.length){
+      html+='<div class="step-controls">'
+        +'<button onclick="stepGo(0)">⏮</button>'
+        +'<button onclick="stepGo(lCur-1)">◀</button>'
+        +'<button onclick="stepGo(lCur+1)">▶</button>'
+        +'<button onclick="stepGo(999)">⏭</button></div>'
+        +'<div class="step-text" id="stepText"></div>';
+    }
+    html+='</div>';
+  }
+  if(L.coach)html+='<div class="coach-bubble">🎓 <b>نکتهٔ مربی:</b> '+L.coach+'</div>';
+  if(L.points&&L.points.length){
+    html+='<div class="card"><h3>📌 نکات کلیدی</h3><ul>'
+      +L.points.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>';
+  }
+  if(L.quiz){
+    html+='<div class="card quiz-card"><h3>🧩 آزمون درس</h3>'
+      +'<div class="qtext">'+L.quiz.q+'</div>'
+      +(L.quiz.fen?'<div id="quizBoard"></div>':'')
+      +'<div class="opts" id="opts"></div>'
+      +'<button class="hint-btn" onclick="showHintBox()">💡 نمایش راهنمایی</button>'
+      +'<div class="hintbox hidden" id="hintBox">'+L.quiz.hint+'</div>'
+      +'<div class="explain hidden" id="explainBox"><b>توضیح پاسخ:</b> '+L.quiz.explain+'</div></div>';
+  }
+  html+='<div class="nav-btns">'
+    +'<button '+(idx===0?'disabled':'')+' onclick="openLesson('+(idx-1)+')">درس قبلی</button>'
+    +'<button '+(idx===LEARN_DB.length-1?'disabled':'')+' onclick="openLesson('+(idx+1)+')">درس بعدی</button></div>';
+  $('lessonView').innerHTML=html;
+  if(L.board)initLearnSteps(L);
+  if(L.quiz&&L.quiz.fen)renderBoardEl($('quizBoard'),parseFEN(L.quiz.fen),[],null);
+  renderQuizOptions();
+  renderLearnList($('search').value);
+  $('lessonView').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function initLearnSteps(L){
+  lData=L.board;
+  const base=parseFEN(L.board.fen);
+  lBoards=[base.slice()];
+  if(L.board.steps){
+    let b=base.slice();
+    for(const st of L.board.steps){b=applyUci(b.slice(),st.uci);lBoards.push(b);}
+  }
+  lCur=0;
+  drawLearnStep();
+}
+function stepGo(n){
+  if(!lData)return;
+  lCur=Math.max(0,Math.min(lBoards.length-1,n));
+  drawLearnStep();
+}
+function drawLearnStep(){
+  const last=(lCur>0&&lData.steps)
+    ?{from:parseSq(lData.steps[lCur-1].uci.slice(0,2)),to:parseSq(lData.steps[lCur-1].uci.slice(2,4))}
+    :null;
+  renderBoardEl($('lboard'),lBoards[lCur],(lCur===0)?(lData.highlights||[]):[],last);
+  if(lData.steps&&lData.steps.length){
+    const st=lCur>0?lData.steps[lCur-1]:null;
+    $('stepText').innerHTML=st
+      ?('🎬 <b>حرکت '+lCur+' از '+lData.steps.length+':</b> '+st.text)
+      :'🎬 برای دیدن حرکات این مثال، دکمهٔ ▶ را بزن.';
+  }
+}
+function renderQuizOptions(){
+  const L=LEARN_DB[curIdx];
+  if(!L.quiz)return;
+  answered=false;
+  $('opts').innerHTML=L.quiz.options.map((o,i)=>'<button class="opt" onclick="answer('+i+')">'+o+'</button>').join('');
+  $('hintBox').classList.add('hidden');
+  $('explainBox').classList.add('hidden');
+}
+function answer(i){
+  if(answered)return;
+  const L=LEARN_DB[curIdx];
+  const btns=[...$('opts').children];
+  if(i===L.quiz.answer){
+    answered=true;
+    btns[i].classList.add('correct');
+    btns.forEach((b,j)=>{if(j!==i)b.disabled=true;});
+    $('explainBox').classList.remove('hidden');
+    markComplete(L.id);
+  }else{
+    btns[i].classList.add('wrong');
+    btns[i].disabled=true;
+    $('hintBox').classList.remove('hidden');
+  }
+}
+function showHintBox(){$('hintBox').classList.remove('hidden');}
+function markComplete(id){
+  if(!completed.includes(id)){
+    completed.push(id);
+    localStorage.setItem('learn-completed',JSON.stringify(completed));
+  }
+  const meta=document.querySelector('.lesson-head .meta');
+  if(meta&&!meta.querySelector('.done-tag'))
+    meta.insertAdjacentHTML('beforeend',' • <span class="done-tag">✅ کامل شد</span>');
+  renderLearnList($('search').value);
+}
+
+/* ================= تب گشایش‌ها ================= */
+let curOp=null,openPly=0,openTimer=null,openInited=false,openBoards=[];
+let seen=JSON.parse(localStorage.getItem('seen-openings')||'[]');
+function renderOpenList(filter){
+  filter=(filter||'').trim();
+  let html='';
+  for(const cat of CATEGORIES){
+    const items=OPENINGS_DB.filter(o=>o.cat===cat.id&&(!filter||o.name.includes(filter)||o.en.toLowerCase().includes(filter)));
+    if(!items.length&&filter)continue;
+    const done=items.filter(o=>seen.includes(o.id)).length;
+    html+='<details open><summary>'+cat.name+'<span class="cnt">'+done+'/'+items.length+'</span>'
+      +'<small>'+cat.desc+'</small></summary>';
+    for(const o of items){
+      html+='<button class="op-item'+(curOp&&curOp.id===o.id?' active':'')+'" onclick="selectOpening(\''+o.id+'\')">'
+        +(seen.includes(o.id)?'<span class="done">✔</span> ':'')
+        +o.name+'<small>'+o.en+'</small></button>';
+    }
+    html+='</details>';
+  }
+  $('openList').innerHTML=html||'<div style="color:#6f7480;font-size:13px;padding:10px">چیزی پیدا نشد 🔍</div>';
+  const total=OPENINGS_DB.length,done=OPENINGS_DB.filter(o=>seen.includes(o.id)).length;
+  $('openProgressText').textContent='گشایش‌های دیده‌شده: '+done+' از '+total;
+  $('openProgressFill').style.width=(total?Math.round(done/total*100):0)+'%';
+}
+function selectOpening(id){
+  curOp=OPENINGS_DB.find(o=>o.id===id);
+  if(!curOp)return;
+  stopPlay();
+  $('opName').textContent=curOp.name;
+  $('opEn').textContent=curOp.en;
+  $('opEco').textContent=curOp.eco;
+  $('opLevel').textContent=curOp.level;
+  $('opDesc').textContent=curOp.desc;
+  $('pros').innerHTML=curOp.strengths.map(x=>'<li>'+x+'</li>').join('');
+  $('cons').innerHTML=curOp.weaknesses.map(x=>'<li>'+x+'</li>').join('');
+  $('plans').innerHTML='<b>نقشهٔ سفید:</b> '+curOp.plansW+'<br><b>نقشهٔ مشکی:</b> '+curOp.plansB;
+  $('opTip').innerHTML='💡 <b>نکتهٔ مربی:</b> '+curOp.tip;
+  openBoards=[initialBoard()];
+  let b=openBoards[0].slice();
+  for(const mv of curOp.moves){b=applyUci(b.slice(),mv.uci);openBoards.push(b);}
+  openPly=0;
+  drawOpen();renderOpenMoves();renderBubble();
+  renderOpenList($('searchOpen').value);
+  $('openView').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function goTo(n){
+  if(!curOp)return;
+  openPly=Math.max(0,Math.min(curOp.moves.length,n));
+  drawOpen();renderOpenMoves();renderBubble();
+  if(openPly===curOp.moves.length)markSeen();
+}
+function drawOpen(){
+  const last=openPly>0
+    ?{from:parseSq(curOp.moves[openPly-1].uci.slice(0,2)),
+      to:parseSq(curOp.moves[openPly-1].uci.slice(2,4))}
+    :null;
+  renderBoardEl($('mini-board'),openBoards[openPly],[],last);
+  $('openCaption').textContent=openPly===0
+    ?'🏁 وضعیت شروع گشایش'
+    :'🎬 حرکت '+openPly+' از '+curOp.moves.length+' — '+curOp.moves[openPly-1].san;
+  $('openStepText').innerHTML=openPly===0
+    ?'برای دیدن حرکت‌به‌حرکت گشایش، دکمهٔ ▶ یا «▶️ پخش» را بزن.'
+    :('🎓 <b>'+curOp.moves[openPly-1].san+':</b> '+curOp.moves[openPly-1].c);
+}
+function renderOpenMoves(){
+  let html='';
+  for(let i=0;i<curOp.moves.length;i++){
+    html+='<div class="mv'+(openPly===i+1?' cur':'')+'" onclick="goTo('+(i+1)+')">'
+      +'<span class="n">'+(Math.floor(i/2)+1)+(i%2===0?'.':'…')+'</span>'
+      +'<span>'+curOp.moves[i].san+'</span></div>';
+  }
+  $('openMoves').innerHTML=html||'<div class="empty">حرکتی ندارد</div>';
+  $('openMoves').scrollTop=0;
+}
+function renderBubble(){
+  $('coachBubble').innerHTML=openPly===0
+    ?('🎓 <b>مربی:</b> این گشایش «'+curOp.name+'» است. حرکت‌به‌حرکت جلو برو و توضیح هر حرکت را بخوان. در پایان می‌توانی آن را مستقیم در بازی تمرین کنی!')
+    :('🎓 <b>مربی:</b> '+curOp.moves[openPly-1].c);
+}
+function markSeen(){
+  if(!seen.includes(curOp.id)){
+    seen.push(curOp.id);
+    localStorage.setItem('seen-openings',JSON.stringify(seen));
+    renderOpenList($('searchOpen').value);
+  }
+}
+function togglePlay(){
+  if(openTimer){stopPlay();return;}
+  if(!curOp)return;
+  if(openPly>=curOp.moves.length)goTo(0);
+  $('btnPlayOpen').textContent='⏸ توقف';
+  openTimer=setInterval(()=>{
+    if(openPly>=curOp.moves.length){stopPlay();return;}
+    goTo(openPly+1);
+  },1200);
+}
+function stopPlay(){
+  if(openTimer){clearInterval(openTimer);openTimer=null;}
+  $('btnPlayOpen').textContent='▶️ پخش';
+}
+function practice(){if(curOp)practiceOpening(curOp.id);}
+
+/* ================= تب‌ها و شروع ================= */
+let learnInited=false,openInited=false;
+function switchTab(name){
+  ['game','learn','open'].forEach(t=>{
+    $('tab-'+t).classList.toggle('hidden',t!==name);
+    $('tbtn-'+t).classList.toggle('active',t===name);
+  });
+  if(name==='learn'&&!learnInited){learnInited=true;renderLearnList('');openLesson(0);}
+  if(name==='open'&&!openInited){openInited=true;renderOpenList('');selectOpening(OPENINGS_DB[0].id);}
+}
+$('search').addEventListener('input',e=>renderLearnList(e.target.value));
+$('searchOpen').addEventListener('input',e=>renderOpenList(e.target.value));
+
+/* شروع */
+render();
+const wantSF=(window.crossOriginIsolated===true)
+             &&(typeof Worker!=='undefined')
+             &&(!/[?&]ai\b/.test(location.search));
+if(wantSF){engine='stockfish';updateBadge();initStockfish();}
+else{switchToAI();setStatus('در حال آماده‌سازی…');}
+Coach.init();
+Coach.updateStrengthInfo();
+switchTab('game');
+</script>
+
+<script>
+/* ================= PWA ================= */
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    if (window.crossOriginIsolated) return;
+    if (sessionStorage.getItem('sw-reloaded')) return;
+    const reloadOnce = () => {
+      if (sessionStorage.getItem('sw-reloaded')) return;
+      sessionStorage.setItem('sw-reloaded', '1');
+      setTimeout(() => location.reload(), 400);
+    };
+    if (reg.active && !navigator.serviceWorker.controller) reloadOnce();
+    else reg.addEventListener('updatefound', reloadOnce);
+  }).catch(() => {});
+}
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const b = document.getElementById('btnInstall');
+  if (b) b.classList.remove('hidden');
+});
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt = null;
+    document.getElementById('btnInstall').classList.add('hidden');
+  } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    alert('در سافاری: دکمهٔ Share 🔼 را بزن و «Add to Home Screen» را انتخاب کن.');
+  }
+}
+</script>
+</body>
+</html>
