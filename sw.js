@@ -3,7 +3,7 @@ const CACHE = 'chess-cache-v7';
 const PRECACHE = ['./chess.html', './coach.js', './openings-data.js',
   './learn-data-1.js', './learn-data-2.js', './learn-data-3.js',
   './learn-data-4.js', './learn-data-5.js', './learn-data-6.js',
-  './stockfish-19.js', './stockfish.wasm', './manifest.webmanifest', './icon.svg'];
+  './stockfish-19.js', './stockfish-19.wasm', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
