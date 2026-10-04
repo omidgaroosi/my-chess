@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#14151b">
+<title>🎓 آموزش گشایش‌های شطرنج</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);color:#e9e7e2;
+  font-family:"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding:12px;touch-action:manipulation}
+h1{text-align:center;font-size:22px;margin-bottom:4px}
+.sub{text-align:center;color:#9aa0ae;font-size:13px;margin-bottom:14px}
+.layout{display:flex;gap:16px;max-width:1200px;margin:0 auto;align-items:flex-start;flex-wrap:wrap}
+
+/* ---------- سایدبار ---------- */
+.side{width:300px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
+  padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+#search{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b;
+  color:#fff;padding:10px 12px;min-height:44px;width:100%}
+#progressBox{font-size:12px;color:#9aa0ae}
+#progressBar{height:8px;border-radius:5px;background:#2b2e3b;overflow:hidden;margin-top:5px}
+#progressFill{height:100%;width:0%;background:linear-gradient(90deg,#c9973c,#ffd54f);transition:width .4s}
+details{background:#191b22;border-radius:10px;padding:8px 10px;margin-bottom:6px}
+summary{cursor:pointer;font-size:13px;font-weight:700;color:#ffd54f;line-height:2}
+summary small{display:block;color:#6f7480;font-weight:400;font-size:11px}
+.op-item{display:flex;align-items:center;gap:8px;width:100%;text-align:right;background:transparent;
+  border:none;color:#e9e7e2;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px}
+.op-item:hover{background:#2b2e3b}
+.op-item.active{background:#3a3f52;color:#ffd54f;font-weight:700}
+.op-item .seen{color:#4caf50;font-size:12px}
+.op-item small{color:#6f7480;margin-inline-start:auto;direction:ltr}
+
+/* ---------- محتوای اصلی ---------- */
+.content{flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px}
+.info-top{background:#20222b;border:1px solid #313444;border-radius:14px;padding:12px 16px}
+.info-top h2{font-size:20px;color:#ffd54f}
+.info-top .meta{font-size:12px;color:#9aa0ae;margin-top:4px;line-height:2}
+.info-top .meta b{color:#cfd3dd}
+.main-row{display:flex;gap:14px;flex-wrap:wrap}
+.board-col{display:flex;flex-direction:column;gap:8px}
+:root{--bs:min(92vw,400px);--bc:calc(var(--bs)/8)}
+#mini-board{display:grid;grid-template-columns:repeat(8,1fr);width:var(--bs);aspect-ratio:1;
+  border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5);direction:ltr;user-select:none}
+.mcell{position:relative}
+.mcell.light{background:#efd9b4}.mcell.dark{background:#b28356}
+.mcell.last::before{content:'';position:absolute;inset:0;background:rgba(100,181,246,.5)}
+.mpiece{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--bc)*.8);line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif}
+.mpiece.w{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.mpiece.b{color:#141414;text-shadow:0 1px 2px rgba(255,255,255,.22)}
+.mcoord{position:absolute;font-size:calc(var(--bc)*.22);font-weight:700;opacity:.85;pointer-events:none}
+.mcoord.rank{top:3%;left:6%}.mcoord.file{bottom:2%;right:6%}
+.mcell.light .mcoord{color:#b28356}.mcell.dark .mcoord{color:#efd9b4}
+.controls{display:flex;gap:6px;flex-wrap:wrap;width:var(--bs)}
+.controls button{font:inherit;font-size:14px;flex:1;min-height:46px;border-radius:10px;cursor:pointer;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:8px}
+.controls button:hover{background:#3d4157}
+.controls button.playing{background:#2e7d32;border-color:#2e7d32}
+.ply-indicator{text-align:center;font-size:13px;color:#9aa0ae}
+
+.comment-col{flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px}
+.bubble{background:#20222b;border-inline-start:4px solid #4caf50;border-radius:12px;padding:12px 14px;
+  font-size:13.5px;line-height:2.1;min-height:90px}
+.bubble b{color:#ffd54f}
+#movesList{background:#191b22;border-radius:12px;padding:10px;max-height:260px;overflow:auto;
+  display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.mv{display:flex;gap:10px;padding:5px 10px;border-radius:8px;cursor:pointer;line-height:1.8}
+.mv:hover{background:#2b2e3b}
+.mv.cur{background:#3a3f52;color:#ffd54f;font-weight:700}
+.mv .n{color:#6f7480;min-width:24px}
+.mv .w,.mv .b{min-width:64px;direction:ltr;text-align:left}
+
+.card{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px}
+.card h3{font-size:14px;margin-bottom:8px}
+.cols{display:flex;gap:12px;flex-wrap:wrap}
+.cols .card{flex:1;min-width:250px}
+.card.green{border-color:#2e7d32}.card.green h3{color:#81c784}
+.card.red{border-color:#8d3b3b}.card.red h3{color:#e57373}
+.card.blue{border-color:#3b5f8d}.card.blue h3{color:#64b5f6}
+.card ul{padding-inline-start:20px;font-size:13px;line-height:2.1;color:#cfd3dd}
+.card p{font-size:13px;line-height:2.1;color:#cfd3dd}
+.card p b{color:#ffd54f}
+.desc-box{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px;
+  font-size:13.5px;line-height:2.2;color:#cfd3dd}
+#btnPractice{font:inherit;font-size:15px;min-height:50px;border-radius:12px;cursor:pointer;
+  border:1px solid #c9973c;background:#c9973c;color:#fff;font-weight:700;padding:10px}
+@media(max-width:700px){
+  .side{width:100%}
+  #movesList{max-height:180px}
+}
+</style>
+</head>
+<body>
+<h1>🎓 آکادمی گشایش‌ها</h1>
+<div class="sub">مربی، گشایش‌ها را قدم‌به‌قدم به تو یاد می‌دهد — با نقاط قوت، ضعف و نقشه‌های بازی</div>
+
+<div class="layout">
+  <aside class="side">
+    <input id="search" type="text" placeholder="🔍 جستجوی گشایش…" oninput="renderList(this.value)">
+    <div id="progressBox">
+      <span id="progressText"></span>
+      <div id="progressBar"><div id="progressFill"></div></div>
+    </div>
+    <div id="list"></div>
+  </aside>
+
+  <main class="content">
+    <div class="info-top">
+      <h2 id="opName"></h2>
+      <div class="meta">
+        <span>🌍 <b id="opEn"></b></span> &nbsp;|&nbsp;
+        <span>📋 کد ECO: <b id="opEco" style="direction:ltr;display:inline-block"></b></span> &nbsp;|&nbsp;
+        <span>🎯 سطح: <b id="opLevel"></b></span>
+      </div>
+    </div>
+
+    <div class="main-row">
+      <div class="board-col">
+        <div id="mini-board"></div>
+        <div class="ply-indicator" id="plyText"></div>
+        <div class="controls">
+          <button onclick="goTo(0)" title="شروع">⏮</button>
+          <button onclick="goTo(ply-1)" title="قبلی">◀ قبلی</button>
+          <button id="btnPlay" onclick="togglePlay()">▶️ پخش</button>
+          <button onclick="goTo(ply+1)" title="بعدی">بعدی ▶</button>
+          <button onclick="goTo(cur?cur.moves.length:0)" title="انتها">⏭</button>
+        </div>
+      </div>
+      <div class="comment-col">
+        <div class="bubble" id="coachBubble"></div>
+        <div id="movesList"></div>
+      </div>
+    </div>
+
+    <div class="desc-box" id="opDesc"></div>
+
+    <div class="cols">
+      <div class="card green">
+        <h3>✅ نقاط قوت</h3>
+        <ul id="pros"></ul>
+      </div>
+      <div class="card red">
+        <h3>⚠️ نقاط ضعف</h3>
+        <ul id="cons"></ul>
+      </div>
+    </div>
+
+    <div class="card blue">
+      <h3>🧭 نقشه‌های معمول</h3>
+      <p><b>نقشهٔ سفید:</b> <span id="plansW"></span></p>
+      <p style="margin-top:6px"><b>نقشهٔ مشکی:</b> <span id="plansB"></span></p>
+    </div>
+
+    <div class="card" style="border-color:#c9973c">
+      <h3 style="color:#ffd54f">💡 نکتهٔ مربی</h3>
+      <p id="opTip"></p>
+    </div>
+
+    <button id="btnPractice" onclick="practice()">🎮 تمرین این گشایش در بازی اصلی</button>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ================= هستهٔ شطرنج (برای بازپخش حرکات) ================= */
+const FILES='abcdefgh';
+const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const N_OFF=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+const K_OFF=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const B_DIRS=[[-1,-1],[-1,1],[1,-1],[1,1]],R_DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
+const isW=p=>p&&p===p.toUpperCase();
+const sqName=sq=>FILES[sq&7]+(8-(sq>>3));
+function parseSq(s){const f=FILES.indexOf(s[0]);if(f<0)return -1;return (8-(+s[1]))*8+f;}
+function initialBoard(){
+  const fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',b=new Array(64).fill(null);
+  let sq=0;for(const ch of fen){if(ch==='/')continue;if(/\d/.test(ch)){sq+=+ch;continue;}b[sq++]=ch;}
+  return b;
+}
+const initialState=()=>({board:initialBoard(),turn:'w',castling:{K:1,Q:1,k:1,q:1},ep:-1,half:0,full:1});
+function attacked(s,sq,byWhite){
+  const r=sq>>3,c=sq&7,P=byWhite?'P':'p',Nn=byWhite?'N':'n',Kk=byWhite?'K':'k',
+        Bb=byWhite?'B':'b',Rr=byWhite?'R':'r',Qq=byWhite?'Q':'q';
+  const pr=byWhite?r+1:r-1;
+  if(pr>=0&&pr<8){
+    if(c>0&&s.board[pr*8+c-1]===P)return true;
+    if(c<7&&s.board[pr*8+c+1]===P)return true;
+  }
+  for(const[dr,dc]of N_OFF){const rr=r+dr,cc=c+dc;
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Nn)return true;}
+  for(const[dr,dc]of K_OFF){const rr=r+dr,cc=c+dc;
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Kk)return true;}
+  for(const[dr,dc]of B_DIRS){let rr=r+dr,cc=c+dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+      if(p){if(p===Bb||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
+  for(const[dr,dc]of R_DIRS){let rr=r+dr,cc=c+dc;
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+      if(p){if(p===Rr||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
+  return false;
+}
+const inCheck=(s,c)=>attacked(s,s.board.indexOf(c==='w'?'K':'k'),c!=='w');
+function addPawn(ms,from,to,promoR){
+  if((to>>3)===promoR)for(const pr of['q','r','b','n'])ms.push({from,to,promo:pr});
+  else ms.push({from,to});
+}
+function pseudoMoves(s){
+  const ms=[],white=s.turn==='w';
+  for(let sq=0;sq<64;sq++){
+    const p=s.board[sq];if(!p||isW(p)!==white)continue;
+    const r=sq>>3,c=sq&7,t=p.toLowerCase();
+    if(t==='p'){
+      const dir=white?-1:1,startR=white?6:1,promoR=white?0:7,rr=r+dir;
+      if(rr>=0&&rr<8&&!s.board[rr*8+c]){
+        addPawn(ms,sq,rr*8+c,promoR);
+        if(r===startR&&!s.board[(r+2*dir)*8+c])ms.push({from:sq,to:(r+2*dir)*8+c});
+      }
+      for(const dc of[-1,1]){const cc=c+dc;
+        if(cc<0||cc>7||rr<0||rr>7)continue;
+        const to=rr*8+cc,q=s.board[to];
+        if(q&&isW(q)!==white)addPawn(ms,sq,to,promoR);
+        else if(to===s.ep&&!q)ms.push({from:sq,to,ep:true});
+      }
+    }else if(t==='n'||t==='k'){
+      for(const[dr,dc]of(t==='n'?N_OFF:K_OFF)){const rr=r+dr,cc=c+dc;
+        if(rr<0||rr>7||cc<0||cc>7)continue;
+        const to=rr*8+cc,q=s.board[to];
+        if(!q||isW(q)!==white)ms.push({from:sq,to});}
+    }else{
+      const dirs=t==='b'?B_DIRS:t==='r'?R_DIRS:B_DIRS.concat(R_DIRS);
+      for(const[dr,dc]of dirs){let rr=r+dr,cc=c+dc;
+        while(rr>=0&&rr<8&&cc>=0&&cc<8){const to=rr*8+cc,q=s.board[to];
+          if(!q)ms.push({from:sq,to});
+          else{if(isW(q)!==white)ms.push({from:sq,to});break;}
+          rr+=dr;cc+=dc;}}
+    }
+  }
+  if(white){
+    if(s.castling.K&&!s.board[61]&&!s.board[62]&&s.board[63]==='R'
+      &&!attacked(s,60,false)&&!attacked(s,61,false)&&!attacked(s,62,false))
+      ms.push({from:60,to:62,castle:'K'});
+    if(s.castling.Q&&!s.board[59]&&!s.board[58]&&!s.board[57]&&s.board[56]==='R'
+      &&!attacked(s,60,false)&&!attacked(s,59,false)&&!attacked(s,58,false))
+      ms.push({from:60,to:58,castle:'Q'});
+  }else{
+    if(s.castling.k&&!s.board[5]&&!s.board[6]&&s.board[7]==='r'
+      &&!attacked(s,4,true)&&!attacked(s,5,true)&&!attacked(s,6,true))
+      ms.push({from:4,to:6,castle:'k'});
+    if(s.castling.q&&!s.board[3]&&!s.board[2]&&!s.board[1]&&s.board[0]==='r'
+      &&!attacked(s,4,true)&&!attacked(s,3,true)&&!attacked(s,2,true))
+      ms.push({from:4,to:2,castle:'q'});
+  }
+  return ms;
+}
+function makeMove(s,m){
+  const b=s.board.slice();
+  const ns={board:b,turn:s.turn==='w'?'b':'w',castling:{...s.castling},ep:-1,
+            half:s.half+1,full:s.full+(s.turn==='b'?1:0)};
+  const p=b[m.from],white=isW(p),cap=b[m.to];
+  if(p.toLowerCase()==='p'||cap)ns.half=0;
+  b[m.to]=m.promo?(white?m.promo.toUpperCase():m.promo):p;
+  b[m.from]=null;
+  if(m.ep)b[m.to+(white?8:-8)]=null;
+  if(m.castle==='K'){b[61]=b[63];b[63]=null;}
+  if(m.castle==='Q'){b[59]=b[56];b[56]=null;}
+  if(m.castle==='k'){b[5]=b[7];b[7]=null;}
+  if(m.castle==='q'){b[3]=b[0];b[0]=null;}
+  if(p==='K')ns.castling.K=ns.castling.Q=0;
+  if(p==='k')ns.castling.k=ns.castling.q=0;
+  if(m.from===63||m.to===63)ns.castling.K=0;
+  if(m.from===56||m.to===56)ns.castling.Q=0;
+  if(m.from===7||m.to===7)ns.castling.k=0;
+  if(m.from===0||m.to===0)ns.castling.q=0;
+  if(p.toLowerCase()==='p'&&Math.abs(m.to-m.from)===16)ns.ep=(m.from+m.to)/2;
+  return ns;
+}
+const legalMoves=s=>pseudoMoves(s).filter(m=>!inCheck(makeMove(s,m),s.turn));
+const $=id=>document.getElementById(id);
+
+/* ================= منطق آموزش ================= */
+let cur=null,ply=0,timer=null;
+const seen=JSON.parse(localStorage.getItem('seen-openings')||'[]');
+
+function renderList(filter){
+  filter=(filter||'').trim().toLowerCase();
+  let html='';
+  for(const cat of CATEGORIES){
+    const items=OPENINGS_DB.filter(o=>o.cat===cat.id&&(
+      !filter||o.name.includes(filter)||o.en.toLowerCase().includes(filter)));
+    if(!items.length&&filter)continue;
+    html+='<details open><summary>'+cat.name+' <small>'+cat.desc+'</small></summary>';
+    for(const o of items){
+      html+='<button class="op-item'+(cur&&cur.id===o.id?' active':'')+'" onclick="selectOpening(\''+o.id+'\')">'
+        +o.name
+        +(seen.includes(o.id)?'<span class="seen">✔ دیده‌شده</span>':'')
+        +'<small>'+o.en+'</small></button>';
+    }
+    html+='</details>';
+  }
+  $('list').innerHTML=html||'<div style="color:#6f7480;font-size:13px;padding:10px">چیزی پیدا نشد 🔍</div>';
+  updateProgress();
+}
+function updateProgress(){
+  const total=OPENINGS_DB.length,s=seen.filter(id=>OPENINGS_DB.some(o=>o.id===id)).length;
+  $('progressText').textContent='📈 پیشرفت یادگیری: '+s+' از '+total+' گشایش';
+  $('progressFill').style.width=(total?Math.round(s/total*100):0)+'%';
+}
+function selectOpening(id){
+  stopPlay();
+  cur=OPENINGS_DB.find(o=>o.id===id);
+  ply=0;
+  $('opName').textContent=cur.name;
+  $('opEn').textContent=cur.en;
+  $('opEco').textContent=cur.eco;
+  $('opLevel').textContent=cur.level;
+  $('opDesc').textContent=cur.desc;
+  $('pros').innerHTML=cur.strengths.map(x=>'<li>'+x+'</li>').join('');
+  $('cons').innerHTML=cur.weaknesses.map(x=>'<li>'+x+'</li>').join('');
+  $('plansW').textContent=cur.plansW;
+  $('plansB').textContent=cur.plansB;
+  $('opTip').textContent=cur.tip;
+  renderList($('search').value);
+  goTo(0);
+}
+function applyPly(n){
+  let s=initialState();
+  for(let i=0;i<n;i++){
+    const t=cur.moves[i].uci;
+    const from=parseSq(t.slice(0,2)),to=parseSq(t.slice(2,4)),promo=t[4]||null;
+    const m=legalMoves(s).find(x=>x.from===from&&x.to===to&&(x.promo||null)===(promo||null));
+    if(!m)break;
+    s=makeMove(s,m);
+  }
+  return s;
+}
+function goTo(n){
+  if(!cur)return;
+  ply=Math.max(0,Math.min(cur.moves.length,n));
+  renderBoard();renderMoves();renderBubble();
+  if(ply===cur.moves.length)markSeen();
+}
+function renderBoard(){
+  const s=applyPly(ply);
+  const last=ply>0?cur.moves[ply-1]:null;
+  let lf=-1,lt=-1;
+  if(last){lf=parseSq(last.uci.slice(0,2));lt=parseSq(last.uci.slice(2,4));}
+  let html='';
+  for(let sq=0;sq<64;sq++){
+    const r=sq>>3,c=sq&7;
+    let cls='mcell '+(((r+c)%2===1)?'dark':'light');
+    if(sq===lf||sq===lt)cls+=' last';
+    const p=s.board[sq];
+    html+='<div class="'+cls+'">'
+      +(c===0?'<span class="mcoord rank">'+(8-r)+'</span>':'')
+      +(r===7?'<span class="mcoord file">'+FILES[c]+'</span>':'')
+      +(p?'<span class="mpiece '+(isW(p)?'w':'b')+'">'+GLYPH[p.toLowerCase()]+'</span>':'')
+      +'</div>';
+  }
+  $('mini-board').innerHTML=html;
+  $('plyText').textContent=ply===0?'🏁 وضعیت شروع':
+    'حرکت '+Math.ceil(ply/2)+' — '+(ply%2===1?'سفید بازی کرد':'مشکی بازی کرد');
+}
+function renderBubble(){
+  const b=$('coachBubble');
+  if(ply===0){
+    b.innerHTML='🎓 <b>مربی:</b> این گشایش «'+cur.name+'» است. '+
+      'برای شروع آموزش، دکمهٔ «بعدی ▶» یا «▶️ پخش» را بزن تا حرکات را قدم‌به‌قدم با توضیح ببینی.';
+  }else{
+    const mv=cur.moves[ply-1];
+    const who=(ply%2===1)?'⚪ سفید':'⚫ مشکی';
+    b.innerHTML='🎓 <b>'+who+' — حرکت '+mv.san+':</b> '+mv.c;
+    if(ply===cur.moves.length){
+      b.innerHTML+='<br><br>✅ <b>مربی:</b> خط اصلی را کامل دیدی! حالا نقاط قوت و ضعف را بخوان و بعد «🎮 تمرین» را بزن.';
+    }
+  }
+}
+function renderMoves(){
+  let html='';
+  for(let i=0;i<cur.moves.length;i+=2){
+    const w=cur.moves[i],b=cur.moves[i+1];
+    html+='<div class="mv">'
+      +'<span class="n">'+(i/2+1)+'.</span>'
+      +'<span class="w'+(ply===i+1?' cur':'')+'" onclick="goTo('+(i+1)+')">'+w.san+'</span>'
+      +(b?'<span class="b'+(ply===i+2?' cur':'')+'" onclick="goTo('+(i+2)+')">'+b.san+'</span>':'<span class="b"></span>')
+      +'</div>';
+  }
+  $('movesList').innerHTML=html;
+}
+function markSeen(){
+  if(!seen.includes(cur.id)){
+    seen.push(cur.id);
+    localStorage.setItem('seen-openings',JSON.stringify(seen));
+    renderList($('search').value);
+  }
+}
+function togglePlay(){
+  if(timer){stopPlay();return;}
+  if(ply>=cur.moves.length)goTo(0);
+  $('btnPlay').textContent='⏸ توقف';
+  $('btnPlay').classList.add('playing');
+  timer=setInterval(()=>{
+    if(ply>=cur.moves.length){stopPlay();return;}
+    goTo(ply+1);
+  },1300);
+}
+function stopPlay(){
+  if(timer){clearInterval(timer);timer=null;}
+  $('btnPlay').textContent='▶️ پخش';
+  $('btnPlay').classList.remove('playing');
+}
+function practice(){
+  // در نسخهٔ نهایی، بازی اصلی این مقدار را می‌خواند و از این گشایش شروع می‌کند
+  localStorage.setItem('practice-opening',cur.id);
+  location.href='chess.html';
+}
+/* شروع */
+renderList('');
+selectOpening(OPENINGS_DB[0].id);
+</script>
+</body>
+</html>

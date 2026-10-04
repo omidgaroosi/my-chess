@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#14151b">
+<title>🎓 آکادمی شطرنج — صفر تا صد</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);color:#e9e7e2;
+  font-family:"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding:12px;touch-action:manipulation}
+h1{text-align:center;font-size:22px;margin-bottom:4px}
+.sub{text-align:center;color:#9aa0ae;font-size:13px;margin-bottom:14px}
+.layout{display:flex;gap:16px;max-width:1200px;margin:0 auto;align-items:flex-start;flex-wrap:wrap}
+
+/* ---------- سایدبار ---------- */
+.side{width:320px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
+  padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.prog{font-size:12.5px;color:#cfd3dd}
+.pbar2{height:9px;border-radius:5px;background:#2b2e3b;overflow:hidden;margin-top:6px}
+#progressFill{height:100%;width:0%;background:linear-gradient(90deg,#2e7d32,#81c784);transition:width .4s}
+#search{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b;
+  color:#fff;padding:10px 12px;min-height:44px;width:100%}
+#lessonList{max-height:65vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+details{background:#191b22;border-radius:10px;padding:8px 10px}
+summary{cursor:pointer;font-size:13px;font-weight:700;color:#ffd54f;line-height:1.9}
+summary small{display:block;color:#6f7480;font-weight:400;font-size:11px}
+summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
+.lsn{display:flex;align-items:center;gap:6px;width:100%;text-align:right;background:transparent;border:none;
+  color:#e9e7e2;font:inherit;font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px;line-height:1.7}
+.lsn:hover{background:#2b2e3b}
+.lsn.active{background:#3a3f52;color:#ffd54f;font-weight:700}
+.lsn small{margin-inline-start:auto;color:#6f7480;white-space:nowrap}
+.lsn .done{color:#4caf50}
+.reset-link{background:none;border:none;color:#6f7480;font-size:11px;cursor:pointer;text-align:center;min-height:auto;padding:4px}
+.reset-link:hover{color:#e57373}
+
+/* ---------- محتوای درس ---------- */
+.content{flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px}
+.lesson-head{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px 16px}
+.sec-badge{display:inline-block;background:#2b2e3b;border:1px solid #3a3e50;color:#ffd54f;
+  font-size:11.5px;border-radius:20px;padding:3px 12px;margin-bottom:8px}
+.lesson-head h2{font-size:19px;color:#fff;line-height:1.9}
+.lesson-head .meta{font-size:12px;color:#9aa0ae;margin-top:4px}
+.done-tag{color:#81c784}
+.intro{background:#20222b;border-inline-start:4px solid #64b5f6;border-radius:12px;padding:12px 14px;
+  font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.part{background:#20222b;border:1px solid #313444;border-radius:12px;padding:12px 14px}
+.part h3{font-size:14px;color:#ffd54f;margin-bottom:6px}
+.part p{font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.card{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px}
+.card h3{font-size:14px;color:#ffd54f;margin-bottom:8px}
+.card ul{padding-inline-start:20px;font-size:13px;line-height:2.2;color:#cfd3dd}
+
+/* ---------- صفحهٔ شطرنج ---------- */
+:root{--lsize:min(92vw,400px);--lc:calc(var(--lsize)/8)}
+.board-card{display:flex;flex-direction:column;align-items:center;gap:8px}
+#lboard,#quizBoard{display:grid;grid-template-columns:repeat(8,1fr);width:var(--lsize);aspect-ratio:1;
+  border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);direction:ltr;user-select:none}
+#quizBoard{--lsize:min(80vw,300px)}
+.lcell{position:relative}
+.lcell.light{background:#efd9b4}.lcell.dark{background:#b28356}
+.lcell.hl::after{content:'';position:absolute;inset:8%;border-radius:50%;border:calc(var(--lc)*.07) solid rgba(76,175,80,.95)}
+.lcell.llast::before{content:'';position:absolute;inset:0;background:rgba(255,213,79,.45)}
+.lpiece{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--lc)*.8);line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif}
+.lpiece.w{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.lpiece.b{color:#141414;text-shadow:0 1px 2px rgba(255,255,255,.22)}
+.lc{position:absolute;font-size:calc(var(--lc)*.22);font-weight:700;opacity:.85;pointer-events:none}
+.lc.rank{top:3%;left:6%}.lc.file{bottom:2%;right:6%}
+.lcell.light .lc{color:#b28356}.lcell.dark .lc{color:#efd9b4}
+.caption{font-size:12.5px;color:#9aa0ae;text-align:center;line-height:2}
+.step-controls{display:flex;gap:6px}
+.step-controls button{font:inherit;font-size:15px;flex:1;min-height:44px;border-radius:10px;cursor:pointer;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff}
+.step-controls button:hover{background:#3d4157}
+.step-text{background:#191b22;border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.1;color:#cfd3dd;width:100%;min-height:44px}
+
+/* ---------- مربی ---------- */
+.coach-bubble{background:#20222b;border-inline-start:4px solid #4caf50;border-radius:12px;
+  padding:12px 14px;font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.coach-bubble b{color:#81c784}
+
+/* ---------- آزمون ---------- */
+.quiz-card{border-color:#c9973c}
+.qtext{font-size:14px;line-height:2.1;color:#fff;margin-bottom:10px;font-weight:700}
+#quizBoard{margin:0 auto 10px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.opt{font:inherit;font-size:13px;text-align:right;border-radius:10px;cursor:pointer;line-height:2;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:10px 12px;min-height:46px}
+.opt:hover{background:#3d4157}
+.opt.correct{background:#2e7d32;border-color:#4caf50;font-weight:700}
+.opt.wrong{background:#8d3b3b;border-color:#e57373}
+.opt:disabled{cursor:default}
+.hint-btn{font:inherit;font-size:12.5px;border-radius:10px;cursor:pointer;min-height:40px;
+  border:1px solid #3b5f8d;background:#26364d;color:#90caf9;padding:8px 14px}
+.hint,.explain{border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.2;margin-top:8px}
+.hint{background:#26364d;color:#90caf9}
+.explain{background:#1e3325;color:#a5d6a7;border:1px solid #2e7d32}
+.hidden{display:none!important}
+
+/* ---------- ناوبری ---------- */
+.nav-btns{display:flex;gap:8px}
+.nav-btns button{font:inherit;font-size:14px;flex:1;min-height:48px;border-radius:12px;cursor:pointer;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;font-weight:700}
+.nav-btns button:hover:not(:disabled){background:#3d4157}
+.nav-btns button:disabled{opacity:.35;cursor:not-allowed}
+.nav-btns button:last-child{background:#c9973c;border-color:#c9973c}
+@media(max-width:700px){
+  .side{width:100%}
+  #lessonList{max-height:300px}
+}
+</style>
+</head>
+<body>
+<h1>🎓 آکادمی شطرنج</h1>
+<div class="sub">صفر تا صد شطرنج با مربی — ۶ بخش، ده‌ها درس تعاملی و آزمون</div>
+
+<div class="layout">
+  <aside class="side">
+    <div class="prog">
+      <span id="progressText"></span>
+      <div class="pbar2"><div id="progressFill"></div></div>
+    </div>
+    <input id="search" type="text" placeholder="🔍 جستجوی درس…">
+    <div id="lessonList"></div>
+    <button class="reset-link" onclick="resetProgress()">🗑 پاک کردن پیشرفت</button>
+  </aside>
+
+  <main class="content" id="lessonView"></main>
+</div>
+
+<!-- فایل‌های دادهٔ دوره -->
+<script src="learn-data-1.js"></script>
+<script src="learn-data-2.js"></script>
+<script src="learn-data-3.js"></script>
+<script src="learn-data-4.js"></script>
+<script src="learn-data-5.js"></script>
+<script src="learn-data-6.js"></script>
+
+<script>
+"use strict";
+/* ================= ابزار شطرنج (برای نمایش) ================= */
+const FILES='abcdefgh';
+const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+const isW=p=>p&&p===p.toUpperCase();
+const sqName=sq=>FILES[sq&7]+(8-(sq>>3));
+function parseSq(s){const f=FILES.indexOf(s[0]);if(f<0)return -1;return (8-(+s[1]))*8+f;}
+function parseFEN(fen){
+  const b=new Array(64).fill(null);
+  const rows=fen.split(' ')[0].split('/');
+  let sq=0;
+  for(const row of rows){
+    for(const ch of row){
+      if(/\d/.test(ch))sq+=+ch;
+      else b[sq++]=ch;
+    }
+  }
+  return b;
+}
+function applyUci(board,uci){
+  const from=parseSq(uci.slice(0,2)),to=parseSq(uci.slice(2,4)),promo=uci[4]||null;
+  const p=board[from];
+  if(!p)return board;
+  const isEp=p.toLowerCase()==='p'&&board[to]===null&&(from&7)!==(to&7);
+  board[to]=promo?(isW(p)?promo.toUpperCase():promo):p;
+  board[from]=null;
+  if(p.toLowerCase()==='k'&&Math.abs((to&7)-(from&7))===2){
+    if(to>from){board[from+1]=board[from+3];board[from+3]=null;}
+    else{board[from-1]=board[from-4];board[from-4]=null;}
+  }
+  if(isEp)board[(to&7)|(from&56)]=null;
+  return board;
+}
+function renderBoardEl(el,board,highlights,last){
+  let html='';
+  for(let i=0;i<64;i++){
+    const r=i>>3,c=i&7;
+    let cls='lcell '+(((r+c)%2===1)?'dark':'light');
+    if(highlights.includes(sqName(i)))cls+=' hl';
+    if(last&&(last.from===i||last.to===i))cls+=' llast';
+    const p=board[i];
+    html+='<div class="'+cls+'">'
+      +(c===0?'<span class="lc rank">'+(8-r)+'</span>':'')
+      +(r===7?'<span class="lc file">'+FILES[c]+'</span>':'')
+      +(p?'<span class="lpiece '+(isW(p)?'w':'b')+'">'+GLYPH[p.toLowerCase()]+'</span>':'')
+      +'</div>';
+  }
+  el.innerHTML=html;
+}
+const $=id=>document.getElementById(id);
+
+/* ================= وضعیت ================= */
+let curIdx=0,answered=false;
+let stepBoards=[],curStep=0,stepData=null;
+let completed=JSON.parse(localStorage.getItem('learn-completed')||'[]');
+
+function secOf(lesson){return LEARN_SECTIONS.find(s=>s.id===lesson.sec);}
+
+/* ================= فهرست دروس ================= */
+function renderList(filter){
+  filter=(filter||'').trim();
+  let html='';
+  for(const sec of LEARN_SECTIONS){
+    const items=LEARN_DB.map((l,i)=>({l,i})).filter(x=>x.l.sec===sec.id&&(!filter||x.l.title.includes(filter)));
+    if(!items.length&&filter)continue;
+    const done=items.filter(x=>completed.includes(x.l.id)).length;
+    html+='<details open><summary>'+sec.icon+' '+sec.name+'<span class="cnt">'+done+'/'+items.length+'</span>'
+      +'<small>'+sec.desc+'</small></summary>';
+    for(const x of items){
+      html+='<button class="lsn'+(x.i===curIdx?' active':'')+'" onclick="openLesson('+x.i+')">'
+        +(completed.includes(x.l.id)?'<span class="done">✔</span> ':'')
+        +x.l.title+'<small>'+x.l.minutes+' دقیقه</small></button>';
+    }
+    html+='</details>';
+  }
+  $('lessonList').innerHTML=html||'<div style="color:#6f7480;font-size:13px;padding:10px">درسی پیدا نشد 🔍</div>';
+  updateProgress();
+}
+function updateProgress(){
+  const total=LEARN_DB.length;
+  const done=LEARN_DB.filter(l=>completed.includes(l.id)).length;
+  $('progressText').textContent=(done===total&&total>0)
+    ?'🎓 تبریک! همهٔ '+total+' درس را کامل کردی!'
+    :'پیشرفت دوره: '+done+' از '+total+' درس';
+  $('progressFill').style.width=(total?Math.round(done/total*100):0)+'%';
+}
+function resetProgress(){
+  if(!confirm('تمام پیشرفت دوره پاک شود؟'))return;
+  completed=[];
+  localStorage.removeItem('learn-completed');
+  renderList($('search').value);
+  openLesson(curIdx);
+}
+
+/* ================= نمایش درس ================= */
+function openLesson(idx){
+  if(idx<0||idx>=LEARN_DB.length)return;
+  curIdx=idx;
+  const L=LEARN_DB[idx];
+  const sec=secOf(L);
+  let html='<div class="lesson-head">'
+    +'<span class="sec-badge">'+sec.icon+' '+sec.name+'</span>'
+    +'<h2>'+L.title+'</h2>'
+    +'<div class="meta">⏱ حدود '+L.minutes+' دقیقه '
+    +(completed.includes(L.id)?' • <span class="done-tag">✅ کامل شد</span>':'')+'</div></div>'
+    +'<div class="intro">'+L.intro+'</div>';
+  for(const p of L.parts){
+    html+='<div class="part"><h3>'+p.h+'</h3><p>'+p.p+'</p></div>';
+  }
+  if(L.board){
+    html+='<div class="card board-card"><div id="lboard"></div>'
+      +'<div class="caption">'+(L.board.caption||'')+'</div>';
+    if(L.board.steps&&L.board.steps.length){
+      html+='<div class="step-controls">'
+        +'<button onclick="stepGo(0)">⏮</button>'
+        +'<button onclick="stepGo(curStep-1)">◀</button>'
+        +'<button onclick="stepGo(curStep+1)">▶</button>'
+        +'<button onclick="stepGo(999)">⏭</button></div>'
+        +'<div class="step-text" id="stepText"></div>';
+    }
+    html+='</div>';
+  }
+  if(L.coach){
+    html+='<div class="coach-bubble">🎓 <b>نکتهٔ مربی:</b> '+L.coach+'</div>';
+  }
+  if(L.points&&L.points.length){
+    html+='<div class="card"><h3>📌 نکات کلیدی</h3><ul>'
+      +L.points.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>';
+  }
+  if(L.quiz){
+    html+='<div class="card quiz-card"><h3>🧩 آزمون درس</h3>'
+      +'<div class="qtext">'+L.quiz.q+'</div>'
+      +(L.quiz.fen?'<div id="quizBoard"></div>':'')
+      +'<div class="opts" id="opts"></div>'
+      +'<button class="hint-btn" onclick="showHint()">💡 نمایش راهنمایی</button>'
+      +'<div class="hint hidden" id="hintBox">'+L.quiz.hint+'</div>'
+      +'<div class="explain hidden" id="explainBox"><b>توضیح پاسخ:</b> '+L.quiz.explain+'</div></div>';
+  }
+  html+='<div class="nav-btns">'
+    +'<button '+(idx===0?'disabled':'')+' onclick="openLesson('+(idx-1)+')">درس قبلی</button>'
+    +'<button '+(idx===LEARN_DB.length-1?'disabled':'')+' onclick="openLesson('+(idx+1)+')">درس بعدی</button></div>';
+  $('lessonView').innerHTML=html;
+
+  if(L.board)initSteps(L);
+  if(L.quiz&&L.quiz.fen)renderBoardEl($('quizBoard'),parseFEN(L.quiz.fen),[],null);
+  renderQuizOptions();
+  renderList($('search').value);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= پخش حرکات مثال ================= */
+function initSteps(L){
+  stepData=L.board;
+  const base=parseFEN(L.board.fen);
+  stepBoards=[base.slice()];
+  if(L.board.steps){
+    let b=base.slice();
+    for(const st of L.board.steps){
+      b=applyUci(b.slice(),st.uci);
+      stepBoards.push(b);
+    }
+  }
+  curStep=0;
+  drawStep();
+}
+function stepGo(n){
+  if(!stepData)return;
+  n=Math.max(0,Math.min(stepBoards.length-1,n));
+  curStep=n;
+  drawStep();
+}
+function drawStep(){
+  const L=stepData;
+  const last=(curStep>0&&L.board.steps)
+    ?{from:parseSq(L.board.steps[curStep-1].uci.slice(0,2)),
+      to:parseSq(L.board.steps[curStep-1].uci.slice(2,4))}
+    :null;
+  const hl=(curStep===0)?(L.board.highlights||[]):[];
+  renderBoardEl($('lboard'),stepBoards[curStep],hl,last);
+  if(L.board.steps&&L.board.steps.length){
+    const st=curStep>0?L.board.steps[curStep-1]:null;
+    $('stepText').innerHTML=st
+      ?('🎬 <b>حرکت '+curStep+' از '+L.board.steps.length+':</b> '+st.text)
+      :'🎬 برای دیدن حرکات این مثال، دکمهٔ ▶ را بزن.';
+  }
+}
+
+/* ================= آزمون ================= */
+function renderQuizOptions(){
+  const L=LEARN_DB[curIdx];
+  answered=false;
+  $('opts').innerHTML=L.quiz.options.map((o,i)=>'<button class="opt" onclick="answer('+i+')">'+o+'</button>').join('');
+  $('hintBox').classList.add('hidden');
+  $('explainBox').classList.add('hidden');
+}
+function answer(i){
+  if(answered)return;
+  const L=LEARN_DB[curIdx];
+  const btns=[...$('opts').children];
+  if(i===L.quiz.answer){
+    answered=true;
+    btns[i].classList.add('correct');
+    btns.forEach((b,j)=>{if(j!==i)b.disabled=true;});
+    $('explainBox').classList.remove('hidden');
+    markComplete(L.id);
+  }else{
+    btns[i].classList.add('wrong');
+    btns[i].disabled=true;
+    $('hintBox').classList.remove('hidden');
+  }
+}
+function showHint(){$('hintBox').classList.remove('hidden');}
+function markComplete(id){
+  if(!completed.includes(id)){
+    completed.push(id);
+    localStorage.setItem('learn-completed',JSON.stringify(completed));
+  }
+  const meta=document.querySelector('.lesson-head .meta');
+  if(meta&&!meta.querySelector('.done-tag'))
+    meta.insertAdjacentHTML('beforeend',' • <span class="done-tag">✅ کامل شد</span>');
+  renderList($('search').value);
+}
+
+/* ================= شروع ================= */
+$('search').addEventListener('input',e=>renderList(e.target.value));
+renderList('');
+openLesson(0);
+</script>
+</body>
+</html>
