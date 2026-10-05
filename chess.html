@@ -241,6 +241,31 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 .puzzle-explain{background:#1e3325;border:1px solid #2e7d32;border-radius:12px;
   padding:14px;font-size:13.5px;line-height:2.2;color:#a5d6a7}
 .puzzle-explain b{color:#81c784}
+/* ---------- ساعت شطرنج ---------- */
+.clock{
+  font-family:'Courier New',Consolas,monospace;
+  font-size:14px;
+  font-weight:700;
+  padding:3px 8px;
+  border-radius:6px;
+  background:#191b22;
+  border:1px solid #3a3e50;
+  color:#8a8f9c;
+  direction:ltr;
+  min-width:62px;
+  text-align:center;
+  letter-spacing:.5px;
+  transition:color .2s,border-color .2s,background .2s;
+  flex:none;
+}
+.clock.hidden{display:none}
+.clock.active{color:#ffd54f;border-color:#c9973c;background:#2b2318}
+.clock.low{color:#e57373;border-color:#8d3b3b;background:#3a1e1e;
+  animation:clockPulse 1s infinite}
+@keyframes clockPulse{
+  0%,100%{background:#3a1e1e}
+  50%{background:#5a1e1e}
+}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -443,6 +468,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
     <div class="stage">
       <div class="pbar">
         <span id="topName">🤖 موتور</span>
+        <span class="clock hidden" id="topClock">--:--</span>
         <span class="dots" id="topDots"><i></i><i></i><i></i></span>
         <span class="badge-check" id="topCheck">کیش!</span>
         <span style="flex:1"></span>
@@ -481,6 +507,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
       </div>
       <div class="pbar">
         <span id="botName">🧑 شما</span>
+        <span class="clock hidden" id="botClock">--:--</span>
         <span class="badge-check" id="botCheck">کیش!</span>
         <span style="flex:1"></span>
         <span class="mat" id="botMat"></span>
@@ -504,6 +531,19 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
             <option value="2" selected>متوسط</option>
             <option value="3">سخت</option>
             <option value="4">خیلی سخت</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>⏱ زمان بازی
+          <select id="selTime" onchange="onTimeChange(this.value)">
+            <option value="none">بدون زمان</option>
+            <option value="1+0">Bullet — ۱ دقیقه</option>
+            <option value="3+2">Blitz — ۳+۲</option>
+            <option value="5+0">Blitz — ۵ دقیقه</option>
+            <option value="10+0">Rapid — ۱۰ دقیقه</option>
+            <option value="15+10">Rapid — ۱۵+۱۰</option>
+            <option value="30+0">Classical — ۳۰ دقیقه</option>
           </select>
         </label>
       </div>
@@ -921,7 +961,128 @@ let thinking=false,searchRole=null,gameId=0,searchGen=-1;
 let lastEval=null,lastDepth=0,searchSide='w';
 let engine='ai',sf=null,engineReady=false,pendingGo=false;
 let level=2;
+let timeControl='none';
 const LEVELS_SF=[{skill:0,depth:4},{skill:5,depth:6},{skill:10,depth:9},{skill:16,depth:12},{skill:20,depth:15}];
+
+/* ---------- ساعت شطرنج ---------- */
+const clock = {
+  enabled: false,
+  white: 0,
+  black: 0,
+  increment: 0,
+  activeSide: null,
+  running: false,
+  lastTick: 0,
+  timerId: null
+};
+
+function formatClock(ms){
+  if(ms < 0) ms = 0;
+  if(ms < 10000){
+    const totalTenths = Math.floor(ms / 100);
+    const m = Math.floor(totalTenths / 600);
+    const s = Math.floor((totalTenths % 600) / 10);
+    const t = totalTenths % 10;
+    return m + ':' + String(s).padStart(2,'0') + '.' + t;
+  }
+  const total = Math.ceil(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+function setupClock(tc){
+  stopClock();
+  if(!tc || tc === 'none'){
+    clock.enabled = false;
+    clock.white = 0; clock.black = 0;
+    clock.increment = 0;
+    renderClocks();
+    return;
+  }
+  const [base, inc] = tc.split('+').map(Number);
+  clock.enabled = true;
+  clock.white = base * 60 * 1000;
+  clock.black = base * 60 * 1000;
+  clock.increment = (inc || 0) * 1000;
+  clock.activeSide = null;
+  renderClocks();
+}
+
+function startClock(side){
+  if(!clock.enabled) return;
+  clock.activeSide = side;
+  clock.running = true;
+  clock.lastTick = performance.now();
+  if(clock.timerId) clearInterval(clock.timerId);
+  clock.timerId = setInterval(tickClock, 100);
+  renderClocks();
+}
+
+function stopClock(){
+  if(clock.timerId){
+    clearInterval(clock.timerId);
+    clock.timerId = null;
+  }
+  clock.running = false;
+  clock.activeSide = null;
+  renderClocks();
+}
+
+function tickClock(){
+  if(!clock.running || !clock.activeSide) return;
+  const now = performance.now();
+  const elapsed = now - clock.lastTick;
+  clock.lastTick = now;
+  if(clock.activeSide === 'w'){
+    clock.white = Math.max(0, clock.white - elapsed);
+    if(clock.white <= 0){ onTimeOut('w'); return; }
+  } else {
+    clock.black = Math.max(0, clock.black - elapsed);
+    if(clock.black <= 0){ onTimeOut('b'); return; }
+  }
+  renderClocks();
+}
+
+function addIncrement(side){
+  if(!clock.enabled || !clock.increment) return;
+  if(side === 'w') clock.white += clock.increment;
+  else if(side === 'b') clock.black += clock.increment;
+}
+
+function onTimeOut(side){
+  stopClock();
+  const winner = side === 'w' ? 'b' : 'w';
+  endGame('timeout', winner);
+}
+
+function renderClocks(){
+  const topEl = $('topClock');
+  const botEl = $('botClock');
+  if(!topEl || !botEl) return;
+  if(!clock.enabled){
+    topEl.classList.add('hidden');
+    botEl.classList.add('hidden');
+    return;
+  }
+  topEl.classList.remove('hidden');
+  botEl.classList.remove('hidden');
+  const engSide = humanColor === 'w' ? 'b' : 'w';
+  const humanTime = humanColor === 'w' ? clock.white : clock.black;
+  const engTime   = engSide === 'w' ? clock.white : clock.black;
+  topEl.textContent = formatClock(engTime);
+  botEl.textContent = formatClock(humanTime);
+  topEl.classList.toggle('active', clock.activeSide === engSide);
+  botEl.classList.toggle('active', clock.activeSide === humanColor);
+  topEl.classList.toggle('low', engTime < 30000 && engTime > 0);
+  botEl.classList.toggle('low', humanTime < 30000 && humanTime > 0);
+}
+
+function onTimeChange(v){
+  timeControl = v;
+  saveOptions();
+  setStatus('⏱ زمان بازی روی «' + (v === 'none' ? 'بدون زمان' : v) + '» تنظیم شد — در بازی جدید اعمال می‌شود');
+}
 const engineName=()=>engine==='stockfish'?'🤖 استاک‌فیش ۱۹':'🧠 موتور ساده';
 let audioCtx=null;
 function playSound(type){
@@ -981,6 +1142,7 @@ function renderPlayers(){
   $('topDots').classList.toggle('on',thinking);
   $('topCheck').style.display=inCheck(S,eng)?'inline-block':'none';
   $('botCheck').style.display=inCheck(S,humanColor)?'inline-block':'none';
+  renderClocks();
 }
 function renderMoves(){
   if(!hist.length){$('moves').innerHTML='<div class="empty">هنوز حرکتی ثبت نشده</div>';return;}
@@ -1025,6 +1187,11 @@ function applyMove(m){
 }
 function afterMove(mover){
   selected=null;render();
+  if(clock.enabled){
+    stopClock();
+    addIncrement(mover);
+    renderClocks();
+  }
   const legal=legalMoves(S);
   if(!legal.length){
     if(inCheck(S,S.turn))endGame('mate',S.turn==='w'?'b':'w');
@@ -1034,6 +1201,7 @@ function afterMove(mover){
   if(S.half>=100)return endGame('fifty');
   if(insufficient(S))return endGame('material');
   if(keys.filter(x=>x===keys[keys.length-1]).length>=3)return endGame('repeat');
+  if(clock.enabled) startClock(S.turn);
   if(S.turn!==humanColor){opponentGo();}
   else{
     setStatus('نوبت شماست ♙');
@@ -1041,11 +1209,16 @@ function afterMove(mover){
   }
 }
 function endGame(type,winner){
+  stopClock();
   gameOver={type,winner};thinking=false;Coach.busy=false;render();
   let txt,emoji='🤝';
   if(type==='mate'){
     if(winner===humanColor){txt='مات شد! شما برنده شدید 🎉';emoji='🏆';}
     else{txt='مات شدید! حریف برد';emoji='🤖';}
+  }
+  else if(type==='timeout'){
+    if(winner===humanColor){txt='⏰ زمان حریف تمام شد! برنده شدی 🎉';emoji='🏆';}
+    else{txt='⏰ زمانت تمام شد! حریف برد';emoji='⌛';}
   }
   else if(type==='stalemate')txt='پات — بازی مساوی شد';
   else if(type==='fifty')txt='تساوی — قانون پنجاه حرکت';
@@ -1073,10 +1246,14 @@ function newGame(){
   hideEnd();closePromo();
   ChessStorage.autoClear();
   if(engine==='stockfish')sfSend('ucinewgame');
+  setupClock(timeControl);
   render();
   Coach.reset();
   if(humanColor==='b'){opponentGo();}
-  else{setStatus('بازی جدید — نوبت شماست ♙');}
+  else{
+    setStatus('بازی جدید — نوبت شماست ♙');
+    if(clock.enabled) startClock('w');
+  }
 }
 function undo(){
   abortAllSearches();
@@ -1144,9 +1321,16 @@ function sfOpponentGo(){
   thinking=true;searchGen=gameId;searchSide=S.turn;searchRole='opponent';
   lastEval=null;lastDepth=0;
   render();setStatus('🤖 حریف فکر می‌کند…');
+  let maxDepth = LEVELS_SF[level].depth;
+  if(clock.enabled){
+    const remaining = S.turn === 'w' ? clock.white : clock.black;
+    if(remaining < 5000) maxDepth = 1;
+    else if(remaining < 15000) maxDepth = Math.min(maxDepth, 4);
+    else if(remaining < 30000) maxDepth = Math.min(maxDepth, 8);
+  }
   sfSend('setoption name Skill Level value '+LEVELS_SF[level].skill);
   sfSend('position startpos'+(hist.length?' moves '+hist.map(h=>h.uci).join(' '):''));
-  sfSend('go depth '+LEVELS_SF[level].depth);
+  sfSend('go depth '+maxDepth);
 }
 function aiOpponentGo(){
   thinking=true;searchGen=gameId;searchSide=S.turn;searchRole='opponent';render();
@@ -1527,8 +1711,15 @@ function saveAutoState(){
            ep:S.ep, half:S.half, full:S.full },
       hist: hist,
       keys: keys,
-      humanColor, flipped, level,
-      engineType: engine
+      humanColor, flipped, level, timeControl,
+      engineType: engine,
+      clock: clock.enabled ? {
+        enabled: true,
+        white: clock.white,
+        black: clock.black,
+        increment: clock.increment,
+        activeSide: clock.activeSide
+      } : { enabled: false }
     });
   }catch(e){ console.warn('auto-save failed', e); }
 }
@@ -1544,12 +1735,18 @@ function loadSavedOptions(){
   if(chkSound && o.sound != null) chkSound.checked = !!o.sound;
   const chkAutoCoach = $('chkAutoCoach');
   if(chkAutoCoach && o.autoCoach != null) chkAutoCoach.checked = !!o.autoCoach;
+  if(o.timeControl){
+    timeControl = o.timeControl;
+    const selTime = $('selTime');
+    if(selTime) selTime.value = timeControl;
+  }
+  setupClock(timeControl);
 }
 
 function saveOptions(){
   try{
     ChessStorage.optsSave({
-      humanColor, level, flipped,
+      humanColor, level, flipped, timeControl,
       sound: $('chkSound') ? $('chkSound').checked : true,
       autoCoach: $('chkAutoCoach') ? $('chkAutoCoach').checked : true
     });
@@ -1579,12 +1776,26 @@ function resumeSavedGame(){
     selected = null; pendingPromo = null;
     hideEnd(); closePromo();
     if(engine==='stockfish') sfSend('ucinewgame');
+    if(data.timeControl){
+      timeControl = data.timeControl;
+      const selTime = $('selTime');
+      if(selTime) selTime.value = timeControl;
+    }
+    setupClock(timeControl);
+    if(data.clock && data.clock.enabled){
+      clock.enabled = true;
+      clock.white = data.clock.white;
+      clock.black = data.clock.black;
+      clock.increment = data.clock.increment;
+      renderClocks();
+    }
     render();
     Coach.reset();
     if(S.turn !== humanColor){
       opponentGo();
     } else {
       setStatus('بازی بازیابی شد — نوبت شماست ♙');
+      if(clock.enabled) startClock(S.turn);
       if($('chkAutoCoach').checked) Coach.go();
     }
   }catch(e){
@@ -2141,6 +2352,7 @@ const wantSF=(window.crossOriginIsolated===true)
 if(wantSF){engine='stockfish';updateBadge();initStockfish();}
 else{switchToAI();setStatus('در حال آماده‌سازی…');}
 loadSavedOptions();
+if($('selTime')) $('selTime').value = timeControl;
 Coach.init();
 Coach.updateStrengthInfo();
 switchTab('game');
