@@ -195,6 +195,9 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 .hist-item .del:hover{color:#e57373}
 .hist-empty{text-align:center;color:#6f7480;padding:30px 10px;font-size:13px;line-height:2}
 .hist-foot{padding:12px 18px;border-top:1px solid #313444;display:flex;gap:8px}
+.pgn-btn{background:transparent;border:none;color:#6f7480;font-size:16px;
+  cursor:pointer;padding:6px;min-height:auto;flex:none;border-radius:6px}
+.pgn-btn:hover{color:#81c784;background:#1e3325}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -469,6 +472,11 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
         <button onclick="openHistory()">📜 تاریخچه بازی‌ها</button>
         <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
       </div>
+      <div class="row">
+        <button onclick="exportCurrentPGN()">📥 PGN بازی جاری</button>
+        <button onclick="importPGNClick()">📤 بارگذاری PGN</button>
+      </div>
+      <input type="file" id="pgnFileInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
       <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
       <h3>🎓 مربی شما (همیشه قوی‌تر از حریف)</h3>
       <div class="row">
@@ -561,6 +569,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
     <div id="histList" class="hist-list"></div>
     <div class="hist-foot">
       <button onclick="clearAllHistory()">🗑 پاک کردن همه</button>
+      <button onclick="exportAllPGN()">📥 دانلود همه</button>
       <button class="primary" onclick="closeHistory()">بستن</button>
     </div>
   </div>
@@ -573,6 +582,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 
 <!-- فایل‌های داده و مربی -->
 <script src="storage.js"></script>
+<script src="pgn.js"></script>
 <script src="coach.js"></script>
 <script src="learn-data-1.js"></script>
 <script src="learn-data-2.js"></script>
@@ -1572,6 +1582,7 @@ function renderHistory(){
       '<span class="result-icon">' + icon + '</span>' +
       '<div class="info"><b>' + g.resultText + ' — ' + side + ' (سطح ' + lvl + ')</b>' +
       '<small>' + d + ' • ' + g.movesCount + ' حرکت</small></div>' +
+      '<button class="pgn-btn" title="دانلود PGN" onclick="event.stopPropagation();exportHistoryPGN(\'' + g.id + '\')">📥</button>' +
       '<button class="del" onclick="event.stopPropagation();deleteHistoryGame(\'' + g.id + '\')">🗑</button>' +
       '</div>';
   }).join('');
@@ -1598,6 +1609,170 @@ function clearAllHistory(){
   ChessStorage.histClear();
   renderHistory();
 }
+/* ============================================================
+   📄 PGN — Export و Import
+   ============================================================ */
+
+function sanListToUci(sanList) {
+  const out = [];
+  let s = initialState();
+  for(const san of sanList) {
+    const legal = legalMoves(s);
+    let found = null;
+    const clean = san.replace(/[+#]/g, '');
+    for(const m of legal) {
+      const s1 = sanOf(s, m, legal);
+      if(s1 === san || s1.replace(/[+#]/g, '') === clean) { found = m; break; }
+    }
+    if(!found) break;
+    out.push({ uci: sqName(found.from) + sqName(found.to) + (found.promo || ''), san: sanOf(s, found, legal) });
+    s = makeMove(s, found);
+  }
+  return out;
+}
+
+function currentGameMetadata() {
+  const engineLbl = engine === 'stockfish' ? 'Stockfish 19 Lite' : 'Simple AI';
+  const userLbl = 'Omid Garousi';
+  return {
+    white: humanColor === 'w' ? userLbl : engineLbl,
+    black: humanColor === 'w' ? engineLbl : userLbl,
+    eventName: 'بازی با موتور — my-chess',
+    annotator: 'امید گروسی'
+  };
+}
+
+function historyResultToPGN(g) {
+  if(g.result === 'win')  return g.humanColor === 'w' ? '1-0' : '0-1';
+  if(g.result === 'loss') return g.humanColor === 'w' ? '0-1' : '1-0';
+  return '1/2-1/2';
+}
+
+function exportCurrentPGN() {
+  if(!hist.length) {
+    alert('هنوز حرکتی انجام نشده که ذخیره شود.');
+    return;
+  }
+  const meta = currentGameMetadata();
+  const result = gameOver
+    ? (gameOver.type === 'mate'
+        ? (gameOver.winner === 'w' ? '1-0' : '0-1')
+        : '1/2-1/2')
+    : '*';
+  const pgn = ChessPGN.buildGamePGN({
+    white: meta.white, black: meta.black,
+    result,
+    movesSan: hist.map(h => h.san),
+    eventName: meta.eventName,
+    annotator: meta.annotator
+  });
+  const fname = `chess-${ChessPGN.formatDateISO().replace(/\./g,'-')}-${hist.length}mv.pgn`;
+  ChessPGN.download(fname, pgn);
+}
+
+function exportHistoryPGN(id) {
+  const g = ChessStorage.histAll().find(x => x.id === id);
+  if(!g) return;
+  const tokens = String(g.movesSan || '').split(/\s+/).filter(Boolean);
+  const engineLbl = g.engine === 'stockfish' ? 'Stockfish 19 Lite' : 'Simple AI';
+  const userLbl = 'Omid Garousi';
+  const pgn = ChessPGN.buildGamePGN({
+    white: g.humanColor === 'w' ? userLbl : engineLbl,
+    black: g.humanColor === 'b' ? userLbl : engineLbl,
+    result: historyResultToPGN(g),
+    movesSan: tokens,
+    eventName: 'بازی ذخیره‌شده — my-chess',
+    annotator: 'امید گروسی'
+  });
+  ChessPGN.download(`game-${g.id}.pgn`, pgn);
+}
+
+function exportAllPGN() {
+  const arr = ChessStorage.histAll();
+  if(!arr.length) { alert('هنوز بازی‌ای ذخیره نشده است.'); return; }
+  const parts = arr.map(g => {
+    const tokens = String(g.movesSan || '').split(/\s+/).filter(Boolean);
+    const engineLbl = g.engine === 'stockfish' ? 'Stockfish 19 Lite' : 'Simple AI';
+    const userLbl = 'Omid Garousi';
+    return ChessPGN.buildGamePGN({
+      white: g.humanColor === 'w' ? userLbl : engineLbl,
+      black: g.humanColor === 'b' ? userLbl : engineLbl,
+      date: new Date(g.ts).toISOString().slice(0,10).replace(/-/g,'.'),
+      result: historyResultToPGN(g),
+      movesSan: tokens,
+      eventName: 'بازی ' + new Date(g.ts).toLocaleDateString('fa-IR'),
+      annotator: 'امید گروسی'
+    });
+  });
+  const all = parts.join('\n\n' + '='.repeat(60) + '\n\n');
+  ChessPGN.download(`all-games-${ChessPGN.formatDateISO().replace(/\./g,'-')}.pgn`, all);
+}
+
+function importPGNClick() {
+  const inp = $('pgnFileInput');
+  if(inp) { inp.value = ''; inp.click(); }
+}
+
+function handlePGNFile(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { loadPGN(e.target.result); }
+    catch(err) { console.error(err); alert('خطا در خواندن PGN.'); }
+  };
+  reader.onerror = () => alert('خواندن فایل ناموفق بود.');
+  reader.readAsText(file, 'utf-8');
+}
+
+function loadPGN(text) {
+  const { headers, moves } = ChessPGN.parse(text);
+  if(!moves.length) { alert('هیچ حرکتی در این PGN پیدا نشد.'); return; }
+
+  const sanList = moves.filter(t => /^([KQRBNO]|[a-h])/.test(t) && !/^\d/.test(t));
+  const uciList = sanListToUci(sanList);
+  if(!uciList.length) { alert('نتوانستم هیچ حرکتی را استخراج کنم.'); return; }
+
+  abortAllSearches(); gameId++;
+  S = initialState(); hist = []; keys = [keyOf(S)];
+  gameOver = null; selected = null; lastEval = null; lastDepth = 0;
+  Coach.stop(); Coach.move = null;
+  hideEnd(); closePromo(); ChessStorage.autoClear();
+
+  for(const item of uciList) {
+    const legal = legalMoves(S);
+    const from = parseSq(item.uci.slice(0,2));
+    const to = parseSq(item.uci.slice(2,4));
+    const promo = item.uci[4] || null;
+    const m = legal.find(x => x.from === from && x.to === to && (x.promo||null) === promo);
+    if(!m) break;
+    const captured = S.board[m.to] || (m.ep ? (S.turn === 'w' ? 'p' : 'P') : null);
+    const before = S;
+    S = makeMove(S, m);
+    hist.push({ m, uci: item.uci, san: item.san, before, captured });
+    keys.push(keyOf(S));
+    saveAutoState();
+  }
+
+  if(engine === 'stockfish') sfSend('ucinewgame');
+  render();
+  Coach.reset();
+
+  const lines = [];
+  if(headers.White)  lines.push('⚪ سفید: ' + headers.White);
+  if(headers.Black)  lines.push('⚫ مشکی: ' + headers.Black);
+  if(headers.Event)  lines.push('🏆 ' + headers.Event);
+  if(headers.Result) lines.push('📊 نتیجه: ' + headers.Result);
+
+  Coach.say('📄 <b>PGN بارگذاری شد</b> — ' + uciList.length + ' حرکت' +
+    (lines.length ? '<br>' + lines.join('<br>') : '') +
+    '<br>می‌توانی ادامه بدهی یا از مربی تحلیل بخواهی.', 'sys');
+
+  setStatus('PGN بارگذاری شد — ' + uciList.length + ' حرکت');
+  if(S.turn !== humanColor) opponentGo();
+  else if($('chkAutoCoach').checked) Coach.go();
+}
+
 
 /* ================= تب‌ها و شروع ================= */
 function switchTab(name){
@@ -1659,6 +1834,9 @@ switchTab('game');
 setTimeout(updateBoardSize,100);
 /* بررسی وجود بازی ذخیره‌شده */
 setTimeout(checkAutoSave,200);
+/* اتصال ورودی فایل PGN */
+const _pgnInp = $('pgnFileInput');
+if(_pgnInp) _pgnInp.addEventListener('change', handlePGNFile);
 </script>
 
 <script>
