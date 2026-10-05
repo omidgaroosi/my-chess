@@ -1,57 +1,89 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<script src="coi-serviceworker.js"></script>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#14151b">
 <meta http-equiv="cross-origin-opener-policy" content="same-origin">
 <meta http-equiv="cross-origin-embedder-policy" content="require-corp">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
-<title>♞ شطرنج با استاک‌فیش — بازی، آکادمی، گشایش‌ها</title>
+<title>♞ شطرنج با استاک‌فیش — امید گروسی</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--size:min(96vw,520px);--lsize:min(92vw,400px)}
-body{background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);color:#e9e7e2;
-  font-family:"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding:12px;touch-action:manipulation}
-h1{text-align:center;font-size:22px;margin-bottom:8px}
+:root{
+  --size:320px;          /* با JS به‌روزرسانی می‌شود */
+  --cell:40px;           /* با JS به‌روزرسانی می‌شود */
+  --panel-max:400px;
+}
+html,body{
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+body{
+  background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);
+  color:#e9e7e2;
+  font-family:"Segoe UI",Tahoma,sans-serif;
+  min-height:100dvh;
+  padding:max(10px,env(safe-area-inset-top))
+          max(10px,env(safe-area-inset-right))
+          max(10px,env(safe-area-inset-bottom))
+          max(10px,env(safe-area-inset-left));
+  touch-action:manipulation;
+  overscroll-behavior-y:contain;
+}
+h1{text-align:center;font-size:20px;margin-bottom:4px;padding:0 8px;line-height:1.6}
+.subtitle{text-align:center;font-size:12px;color:#9aa0ae;margin-bottom:12px}
+.subtitle b{color:#ffd54f}
 .hidden{display:none!important}
 /* ---------- تب‌ها ---------- */
-.tabs{display:flex;gap:6px;max-width:760px;margin:0 auto 16px;background:#20222b;border:1px solid #313444;border-radius:14px;padding:6px}
-.tbtn{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:46px;border:none;border-radius:10px;background:transparent;color:#9aa0ae;cursor:pointer}
+.tabs{display:flex;gap:4px;max-width:720px;margin:0 auto 14px;background:#20222b;
+  border:1px solid #313444;border-radius:14px;padding:5px}
+.tbtn{flex:1;font:inherit;font-size:13px;font-weight:700;min-height:44px;border:none;
+  border-radius:10px;background:transparent;color:#9aa0ae;cursor:pointer;padding:6px 8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s}
 .tbtn.active{background:#c9973c;color:#fff}
 /* ---------- صفحه‌های شطرنج (مشترک) ---------- */
-#board,#lboard,#quizBoard,#mini-board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;
-  border-radius:10px;overflow:hidden;direction:ltr;user-select:none;-webkit-user-select:none;
-  -webkit-touch-callout:none;touch-action:manipulation}
-#board{width:var(--size);--cell:calc(var(--size)/8)}
-#lboard,#mini-board{width:var(--lsize);--cell:calc(var(--lsize)/8)}
-#quizBoard{width:min(80vw,300px);--cell:calc(min(80vw,300px)/8)}
+#board,#lboard,#quizBoard,#mini-board{display:grid;grid-template-columns:repeat(8,1fr);
+  aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;
+  -webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+#board{width:var(--size);height:var(--size)}
+#lboard,#mini-board{width:min(90vw,400px)}
+#quizBoard{width:min(80vw,300px)}
 .cell{position:relative}
 .cell.light{background:#efd9b4}.cell.dark{background:#b28356}
 .cell.last::before,.cell.llast::before{content:'';position:absolute;inset:0;background:rgba(255,213,79,.42)}
 .cell.coach::before{content:'';position:absolute;inset:0;background:rgba(76,175,80,.5)}
 .cell.coach{box-shadow:inset 0 0 0 3px #4caf50}
 .cell.sel{box-shadow:inset 0 0 0 3px #ffd54f}
-.cell.check::after{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,60,60,.8) 12%,rgba(255,60,60,0) 72%)}
-.cell.hl::after{content:'';position:absolute;inset:8%;border-radius:50%;border:calc(var(--cell)*.07) solid rgba(76,175,80,.95)}
+.cell.check::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle,rgba(255,60,60,.8) 12%,rgba(255,60,60,0) 72%)}
+.cell.hl::after{content:'';position:absolute;inset:8%;border-radius:50%;
+  border:calc(var(--cell)*.07) solid rgba(76,175,80,.95)}
 .piece{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:calc(var(--cell)*.82);line-height:1;pointer-events:none;
-  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif}
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  text-rendering:optimizeLegibility}
 .piece.w{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.6)}
 .piece.b{color:#141414;text-shadow:0 1px 2px rgba(255,255,255,.22)}
 .dot{position:absolute;left:50%;top:50%;width:34%;height:34%;transform:translate(-50%,-50%);
   border-radius:50%;background:rgba(25,25,25,.35);pointer-events:none}
-.dot.cap{width:88%;height:88%;background:transparent;border:calc(var(--cell)*.06) solid rgba(25,25,25,.4)}
-.coord{position:absolute;font-size:calc(var(--cell)*.2);font-weight:700;opacity:.85;pointer-events:none}
+.dot.cap{width:88%;height:88%;background:transparent;
+  border:calc(var(--cell)*.06) solid rgba(25,25,25,.4)}
+.coord{position:absolute;font-size:calc(var(--cell)*.2);font-weight:700;opacity:.85;
+  pointer-events:none;user-select:none}
 .coord.rank{top:3%;left:6%}.coord.file{bottom:2%;right:6%}
 .cell.light .coord{color:#b28356}.cell.dark .coord{color:#efd9b4}
 /* ---------- تب بازی ---------- */
-#engineBadge{display:block;width:max-content;margin:0 auto 10px;padding:4px 14px;border-radius:20px;
-  font-size:12px;background:#2b2e3b;border:1px solid #3a3e50;color:#ffd54f}
-.app{display:flex;gap:18px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:1100px;margin:0 auto}
-.stage{display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:calc(var(--size) + 60px)}
+#engineBadge{display:block;width:max-content;max-width:92%;margin:0 auto 10px;
+  padding:5px 14px;border-radius:20px;font-size:12px;background:#2b2e3b;
+  border:1px solid #3a3e50;color:#ffd54f;text-align:center;line-height:1.6}
+.app{display:flex;gap:14px;justify-content:center;align-items:flex-start;
+  flex-wrap:wrap;max-width:1100px;margin:0 auto;width:100%}
+.stage{display:flex;flex-direction:column;gap:8px;align-items:center;
+  width:100%;max-width:560px;min-width:0}
 .pbar{display:flex;align-items:center;gap:8px;background:#20222b;border:1px solid #313444;
   border-radius:12px;padding:8px 12px;width:100%;font-size:13px;min-height:44px}
 .pbar .caps{font-size:18px;letter-spacing:-3px;direction:ltr}
@@ -60,36 +92,46 @@ h1{text-align:center;font-size:22px;margin-bottom:8px}
 .dots{display:inline-flex;gap:3px;margin-inline-start:2px;visibility:hidden}
 .dots.on{visibility:visible}
 .dots i{width:5px;height:5px;border-radius:50%;background:#ffd54f;animation:blink 1s infinite}
-.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+.dots i:nth-child(2){animation-delay:.2s}
+.dots i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
-.frame-wrap{display:flex;gap:6px}
-.evalcol{display:flex;flex-direction:column;align-items:center;gap:4px}
-.evalbar{width:13px;height:var(--size);border-radius:8px;background:#262626;overflow:hidden;position:relative;border:1px solid #313444}
-#evalFill{position:absolute;bottom:0;left:0;right:0;height:50%;background:linear-gradient(#fff,#d8d8d8);transition:height .5s}
+.frame-wrap{display:flex;gap:6px;align-items:stretch}
+.evalcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto}
+.evalbar{width:12px;height:var(--size);border-radius:8px;background:#262626;overflow:hidden;
+  position:relative;border:1px solid #313444}
+#evalFill{position:absolute;bottom:0;left:0;right:0;height:50%;
+  background:linear-gradient(#fff,#d8d8d8);transition:height .4s ease-out}
 #evalLabel{font-size:10px;color:#9aa0ae;direction:ltr}
-.board-frame{position:relative;padding:8px;background:#2c2f3a;border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.55)}
-#status{min-height:26px;font-size:14px;color:#cfd3dd;text-align:center;padding:0 6px}
-.panel{width:360px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
-  padding:14px;display:flex;flex-direction:column;gap:12px}
+.board-frame{position:relative;padding:6px;background:#2c2f3a;border-radius:14px;
+  box-shadow:0 12px 34px rgba(0,0,0,.55);flex:0 0 auto;contain:layout style paint}
+#status{min-height:26px;font-size:14px;color:#cfd3dd;text-align:center;padding:2px 6px;
+  line-height:1.6}
+.panel{width:100%;max-width:var(--panel-max);background:#20222b;border:1px solid #313444;
+  border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .panel h3{font-size:14px;color:#ffd54f}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.row label{font-size:12px;color:#9aa0ae;display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
-select,button{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b;
-  color:#fff;padding:10px 12px;min-height:46px}
-button{cursor:pointer;transition:.15s;flex:1}
+.row label{font-size:12px;color:#9aa0ae;display:flex;flex-direction:column;gap:4px;
+  flex:1;min-width:120px}
+select,button{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;
+  background:#2b2e3b;color:#fff;padding:10px 12px;min-height:46px}
+button{cursor:pointer;transition:background .15s;flex:1}
 button:hover{background:#3d4157}
 button:disabled{opacity:.45;cursor:not-allowed}
 button.primary{background:#c9973c;border-color:#c9973c;font-weight:700}
 button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
-#moves{max-height:130px;overflow:auto;background:#191b22;border-radius:10px;padding:8px;font-size:13px}
+#moves{max-height:130px;overflow:auto;background:#191b22;border-radius:10px;padding:8px;
+  font-size:13px;-webkit-overflow-scrolling:touch}
 .mrow{display:grid;grid-template-columns:30px 1fr 1fr;padding:2px 8px;border-radius:6px}
 .mrow:nth-child(odd){background:#22242e}
 .mn{color:#8a8f9c}
 .empty{color:#666;text-align:center;padding:10px;font-size:12px}
-.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#9aa0ae}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#9aa0ae;
+  min-height:32px;cursor:pointer}
 .hint{font-size:11px;color:#6f7480;line-height:2}
-#coachLog{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px;background:#191b22;border-radius:10px;padding:10px}
-.msg{background:#20222b;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:2;border-inline-start:3px solid #4caf50}
+#coachLog{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px;
+  background:#191b22;border-radius:10px;padding:10px;-webkit-overflow-scrolling:touch}
+.msg{background:#20222b;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:2;
+  border-inline-start:3px solid #4caf50}
 .msg.analyst{border-inline-start-color:#64b5f6}
 .msg.sys{border-inline-start-color:#c9973c}
 .msg b{color:#ffd54f}
@@ -97,42 +139,55 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
   border-radius:14px;z-index:5;text-align:center;padding:20px}
 .loadbar{width:70%;height:10px;border-radius:6px;background:#333;overflow:hidden}
-#loadFill{height:100%;width:0%;background:linear-gradient(90deg,#c9973c,#ffd54f);transition:width .2s}
+#loadFill{height:100%;width:0%;background:linear-gradient(90deg,#c9973c,#ffd54f);
+  transition:width .2s}
 #loadText{font-size:12px;color:#cfd3dd;direction:ltr}
 #endEmoji{font-size:52px}
 #promoBox{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.55);border-radius:14px;z-index:6}
-#promoBox .pcard{background:#262833;padding:16px;border-radius:14px;display:flex;gap:12px;align-items:center;flex-direction:column}
+#promoBox .pcard{background:#262833;padding:16px;border-radius:14px;display:flex;gap:12px;
+  align-items:center;flex-direction:column}
 #promoBox .btns{display:flex;gap:10px}
-.promoBtn{font-size:40px;width:60px;height:60px;min-height:0;line-height:1;flex:none;cursor:pointer;
-  font-family:"Segoe UI Symbol",sans-serif;display:flex;align-items:center;justify-content:center;
-  border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b}
+.promoBtn{font-size:38px;width:56px;height:56px;min-height:0;line-height:1;flex:none;
+  cursor:pointer;font-family:"Segoe UI Symbol",sans-serif;display:flex;align-items:center;
+  justify-content:center;border-radius:10px;border:1px solid #3a3e50;background:#2b2e3b;
+  padding:0}
 .promoBtn.pw{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.7)}
 .promoBtn.pb{color:#141414;background:#d9c49a;text-shadow:0 1px 2px rgba(255,255,255,.35)}
 #promoBox .cancelBtn{font-size:13px;min-height:40px;padding:8px 18px;flex:none}
+/* ---------- فوتر ---------- */
+.credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
+  padding:12px;line-height:2}
+.credit b{color:#ffd54f;font-weight:700}
 /* ---------- آکادمی و گشایش‌ها ---------- */
-.layout{display:flex;gap:16px;max-width:1200px;margin:0 auto;align-items:flex-start;flex-wrap:wrap}
-.side{width:320px;max-width:100%;background:#20222b;border:1px solid #313444;border-radius:14px;
-  padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.layout{display:flex;gap:16px;max-width:1200px;margin:0 auto;align-items:flex-start;
+  flex-wrap:wrap;width:100%}
+.side{width:320px;max-width:100%;background:#20222b;border:1px solid #313444;
+  border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
 .prog{font-size:12.5px;color:#cfd3dd}
 .pbar2{height:9px;border-radius:5px;background:#2b2e3b;overflow:hidden;margin-top:6px}
-.pfill{height:100%;width:0%;background:linear-gradient(90deg,#2e7d32,#81c784);transition:width .4s}
-.side input[type=text]{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;
-  background:#2b2e3b;color:#fff;padding:10px 12px;min-height:44px;width:100%}
-.slist{max-height:65vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.pfill{height:100%;width:0%;background:linear-gradient(90deg,#2e7d32,#81c784);
+  transition:width .4s}
+.side input[type=text]{font:inherit;font-size:14px;border-radius:10px;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:10px 12px;
+  min-height:44px;width:100%}
+.slist{max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:6px;
+  -webkit-overflow-scrolling:touch}
 details{background:#191b22;border-radius:10px;padding:8px 10px}
 summary{cursor:pointer;font-size:13px;font-weight:700;color:#ffd54f;line-height:1.9}
 summary small{display:block;color:#6f7480;font-weight:400;font-size:11px}
 summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
-.lsn,.op-item{display:flex;align-items:center;gap:6px;width:100%;text-align:right;background:transparent;
-  border:none;color:#e9e7e2;font:inherit;font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px;line-height:1.7}
+.lsn,.op-item{display:flex;align-items:center;gap:6px;width:100%;text-align:right;
+  background:transparent;border:none;color:#e9e7e2;font:inherit;font-size:12.5px;
+  padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px;line-height:1.7}
 .lsn:hover,.op-item:hover{background:#2b2e3b}
 .lsn.active,.op-item.active{background:#3a3f52;color:#ffd54f;font-weight:700}
 .lsn small,.op-item small{margin-inline-start:auto;color:#6f7480;white-space:nowrap}
 .done{color:#4caf50}
-.reset-link{background:none;border:none;color:#6f7480;font-size:11px;cursor:pointer;text-align:center;min-height:auto;padding:4px;flex:none}
+.reset-link{background:none;border:none;color:#6f7480;font-size:11px;cursor:pointer;
+  text-align:center;min-height:auto;padding:4px;flex:none}
 .reset-link:hover{color:#e57373}
-.content{flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px}
+.content{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
 .card{background:#20222b;border:1px solid #313444;border-radius:14px;padding:14px}
 .card h3{font-size:14px;color:#ffd54f;margin-bottom:8px}
 .card ul{padding-inline-start:20px;font-size:13px;line-height:2.2;color:#cfd3dd}
@@ -142,8 +197,8 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
 .lesson-head h2{font-size:19px;color:#fff;line-height:1.9}
 .lesson-head .meta{font-size:12px;color:#9aa0ae;margin-top:4px}
 .done-tag{color:#81c784}
-.intro{background:#20222b;border-inline-start:4px solid #64b5f6;border-radius:12px;padding:12px 14px;
-  font-size:13.5px;line-height:2.2;color:#cfd3dd}
+.intro{background:#20222b;border-inline-start:4px solid #64b5f6;border-radius:12px;
+  padding:12px 14px;font-size:13.5px;line-height:2.2;color:#cfd3dd}
 .part{background:#20222b;border:1px solid #313444;border-radius:12px;padding:12px 14px}
 .part h3{font-size:14px;color:#ffd54f;margin-bottom:6px}
 .part p{font-size:13.5px;line-height:2.2;color:#cfd3dd}
@@ -151,22 +206,24 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
 .caption{font-size:12.5px;color:#9aa0ae;text-align:center;line-height:2}
 .step-controls{display:flex;gap:6px;width:100%}
 .step-controls button{flex:1;font-size:15px}
-.step-text{background:#191b22;border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.1;color:#cfd3dd;width:100%;min-height:44px}
+.step-text{background:#191b22;border-radius:10px;padding:10px 12px;font-size:13px;
+  line-height:2.1;color:#cfd3dd;width:100%;min-height:44px}
 .coach-bubble{background:#20222b;border-inline-start:4px solid #4caf50;border-radius:12px;
   padding:12px 14px;font-size:13.5px;line-height:2.2;color:#cfd3dd}
 .coach-bubble b{color:#81c784}
 .quiz-card{border-color:#c9973c}
 .qtext{font-size:14px;line-height:2.1;color:#fff;margin-bottom:10px;font-weight:700}
-#quizBoard{margin:0 auto 10px}
 .opts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.opt{font:inherit;font-size:13px;text-align:right;border-radius:10px;cursor:pointer;line-height:2;
-  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:10px 12px;min-height:46px}
+.opt{font:inherit;font-size:13px;text-align:right;border-radius:10px;cursor:pointer;
+  line-height:2;border:1px solid #3a3e50;background:#2b2e3b;color:#fff;padding:10px 12px;
+  min-height:46px}
 .opt:hover{background:#3d4157}
 .opt.correct{background:#2e7d32;border-color:#4caf50;font-weight:700}
 .opt.wrong{background:#8d3b3b;border-color:#e57373}
 .hint-btn{font:inherit;font-size:12.5px;border-radius:10px;cursor:pointer;min-height:40px;
   border:1px solid #3b5f8d;background:#26364d;color:#90caf9;padding:8px 14px;flex:none}
-.hintbox,.explain{border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.2;margin-top:8px}
+.hintbox,.explain{border-radius:10px;padding:10px 12px;font-size:13px;line-height:2.2;
+  margin-top:8px}
 .hintbox{background:#26364d;color:#90caf9}
 .explain{background:#1e3325;color:#a5d6a7;border:1px solid #2e7d32}
 .nav-btns{display:flex;gap:8px}
@@ -178,9 +235,10 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
 .info-top .meta b{color:#cfd3dd}
 .main-row{display:flex;gap:14px;flex-wrap:wrap}
 .board-col{display:flex;flex-direction:column;gap:8px;align-items:center}
-.comment-col{flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px}
-#openMoves{background:#191b22;border-radius:12px;padding:10px;max-height:260px;overflow:auto;
-  display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.comment-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+#openMoves{background:#191b22;border-radius:12px;padding:10px;max-height:260px;
+  overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px;
+  -webkit-overflow-scrolling:touch}
 .mv{display:flex;gap:8px;padding:5px 10px;border-radius:8px;cursor:pointer;line-height:1.8}
 .mv:hover{background:#2b2e3b}
 .mv.cur{background:#3a3f52;color:#ffd54f;font-weight:700}
@@ -190,12 +248,30 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
 .card.green{border-color:#2e7d32}.card.green h3{color:#81c784}
 .card.red{border-color:#8d3b3b}.card.red h3{color:#e57373}
 .card.blue{border-color:#3b5f8d}.card.blue h3{color:#64b5f6}
-@media(max-width:700px){.side{width:100%}.slist{max-height:300px}.panel{padding:10px}
-  #moves{max-height:110px}#coachLog{max-height:200px}}
+@media(max-width:700px){
+  h1{font-size:18px;margin-bottom:2px}
+  .subtitle{font-size:11px;margin-bottom:10px}
+  .tabs{gap:3px;padding:4px;margin-bottom:10px}
+  .tbtn{font-size:12px;min-height:42px}
+  .side{width:100%}
+  .slist{max-height:320px}
+  .panel{padding:12px}
+  #moves{max-height:110px}
+  #coachLog{max-height:200px}
+  .stage{max-width:100%}
+  .board-frame{padding:5px}
+  .evalbar{width:10px}
+  .app{gap:10px}
+}
+@media(max-width:380px){
+  h1{font-size:16px}
+  .tbtn{font-size:11px;padding:4px 6px}
+}
 </style>
 </head>
 <body>
 <h1>♞ شطرنج با استاک‌فیش 🎓</h1>
+<div class="subtitle">ساخته شده با ❤️ توسط <b>امید گروسی</b></div>
 
 <div class="tabs">
   <button class="tbtn active" id="tbtn-game" onclick="switchTab('game')">🎮 بازی با مربی</button>
@@ -362,6 +438,11 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
     </main>
   </div>
 </div>
+
+<footer class="credit">
+  ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b><br>
+  موتور: Stockfish 19 Lite &nbsp;|&nbsp; طراحی و توسعه: ۱۴۰۳
+</footer>
 
 <!-- فایل‌های داده و مربی -->
 <script src="coach.js"></script>
@@ -566,7 +647,7 @@ function renderBoardEl(el,board,highlights,last){
   el.innerHTML=html;
 }
 
-/* ================= موتور سادهٔ داخلی (جایگزین آفلاین) ================= */
+/* ================= موتور سادهٔ داخلی ================= */
 const VALC={p:100,n:320,b:330,r:500,q:900,k:0};
 const PST={
 p:[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,20,20,0,0,0,5,-5,-10,0,0,-10,-5,5,5,10,10,-20,-20,10,10,5,0,0,0,0,0,0,0,0],
@@ -1211,7 +1292,6 @@ function stopPlay(){
 function practice(){if(curOp)practiceOpening(curOp.id);}
 
 /* ================= تب‌ها و شروع ================= */
-
 function switchTab(name){
   ['game','learn','open'].forEach(t=>{
     $('tab-'+t).classList.toggle('hidden',t!==name);
@@ -1223,7 +1303,40 @@ function switchTab(name){
 $('search').addEventListener('input',e=>renderLearnList(e.target.value));
 $('searchOpen').addEventListener('input',e=>renderOpenList(e.target.value));
 
+/* ============================================================
+   📐 محاسبهٔ اندازهٔ صفحهٔ شطرنج — رفع لرزش موبایل
+   ------------------------------------------------------------
+   قبلاً از min(96vw, 520px) استفاده می‌شد که با ظاهر/مخفی
+   شدن نوار آدرس موبایل تغییر می‌کرد و باعث reflow و لرزش
+   می‌شد. الان به‌جای آن، یک‌بار اندازهٔ دقیق محاسبه و به
+   صورت پیکسل ثابت روی :root ست می‌شود.
+   ============================================================ */
+function updateBoardSize(){
+  const frameWrap=document.querySelector('.frame-wrap');
+  if(!frameWrap)return;
+  const avail=frameWrap.clientWidth;
+  if(avail<=0)return;
+  /* eval bar (12px) + gap (6px) + board frame padding (12px) ≈ 30px */
+  const reserved=30;
+  const maxSize=520;
+  const minSize=220;
+  const size=Math.max(minSize,Math.min(avail-reserved,maxSize));
+  document.documentElement.style.setProperty('--size',size+'px');
+  document.documentElement.style.setProperty('--cell',(size/8)+'px');
+}
+let _sizeTimer=null;
+function scheduleBoardSize(){
+  clearTimeout(_sizeTimer);
+  _sizeTimer=setTimeout(updateBoardSize,120);
+}
+window.addEventListener('resize',scheduleBoardSize,{passive:true});
+window.addEventListener('orientationchange',scheduleBoardSize,{passive:true});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',scheduleBoardSize,{passive:true});
+}
+
 /* شروع */
+updateBoardSize();
 render();
 const wantSF=(window.crossOriginIsolated===true)
              &&(typeof Worker!=='undefined')
@@ -1233,41 +1346,42 @@ else{switchToAI();setStatus('در حال آماده‌سازی…');}
 Coach.init();
 Coach.updateStrengthInfo();
 switchTab('game');
+/* بعد از رندر اولیه، یک بار دیگر اندازه را محاسبه کن (چون layout تغییر کرده) */
+setTimeout(updateBoardSize,100);
 </script>
 
 <script>
 /* ================= PWA ================= */
-if ('serviceWorker' in navigator && window.isSecureContext) {
-  // اگر سرویس‌ورکر فعال است ولی صفحه هنوز هدرهای امنیتی را نگرفته، یک‌بار ریلود کن
-  if (navigator.serviceWorker.controller && !window.crossOriginIsolated && !sessionStorage.getItem('sw-reloaded')) {
-    sessionStorage.setItem('sw-reloaded', '1');
-    setTimeout(() => location.reload(), 300);
+if('serviceWorker' in navigator && window.isSecureContext){
+  if(navigator.serviceWorker.controller && !window.crossOriginIsolated && !sessionStorage.getItem('sw-reloaded')){
+    sessionStorage.setItem('sw-reloaded','1');
+    setTimeout(()=>location.reload(),300);
   }
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    if (window.crossOriginIsolated) return;
-    if (sessionStorage.getItem('sw-reloaded')) return;
-    const reloadOnce = () => {
-      if (sessionStorage.getItem('sw-reloaded')) return;
-      sessionStorage.setItem('sw-reloaded', '1');
-      setTimeout(() => location.reload(), 400);
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    if(window.crossOriginIsolated)return;
+    if(sessionStorage.getItem('sw-reloaded'))return;
+    const reloadOnce=()=>{
+      if(sessionStorage.getItem('sw-reloaded'))return;
+      sessionStorage.setItem('sw-reloaded','1');
+      setTimeout(()=>location.reload(),400);
     };
-    if (reg.active && !navigator.serviceWorker.controller) reloadOnce();
-    else reg.addEventListener('updatefound', reloadOnce);
-  }).catch(() => {});
+    if(reg.active&&!navigator.serviceWorker.controller)reloadOnce();
+    else reg.addEventListener('updatefound',reloadOnce);
+  }).catch(()=>{});
 }
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
-  deferredPrompt = e;
-  const b = document.getElementById('btnInstall');
-  if (b) b.classList.remove('hidden');
+  deferredPrompt=e;
+  const b=document.getElementById('btnInstall');
+  if(b)b.classList.remove('hidden');
 });
-function installApp() {
-  if (deferredPrompt) {
+function installApp(){
+  if(deferredPrompt){
     deferredPrompt.prompt();
-    deferredPrompt = null;
+    deferredPrompt=null;
     document.getElementById('btnInstall').classList.add('hidden');
-  } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  }else if(/iphone|ipad|ipod/i.test(navigator.userAgent)){
     alert('در سافاری: دکمهٔ Share 🔼 را بزن و «Add to Home Screen» را انتخاب کن.');
   }
 }
