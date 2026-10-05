@@ -559,6 +559,18 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
         </label>
       </div>
       <div class="row">
+        <label>🎨 تم صفحه
+          <select id="selTheme" onchange="onThemeChange(this.value)">
+            <option value="wood">🪵 کلاسیک چوبی</option>
+            <option value="green">🌿 سبز</option>
+            <option value="blue">💧 آبی</option>
+            <option value="marble">🪨 مرمر</option>
+            <option value="gray">⬛ خاکستری</option>
+            <option value="night">🌙 شب</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
         <button class="primary" onclick="newGame()">🔄 جدید</button>
         <button onclick="undo()">↩️ برگشت</button>
         <button onclick="flip()">🔃 چرخش</button>
@@ -2419,6 +2431,8 @@ if(wantSF){engine='stockfish';updateBadge();initStockfish();}
 else{switchToAI();setStatus('در حال آماده‌سازی…');}
 loadSavedOptions();
 if($('selTime')) $('selTime').value = timeControl;
+if($('selTheme')) $('selTheme').value = theme;
+applyTheme(theme);
 Coach.init();
 Coach.updateStrengthInfo();
 switchTab('game');
