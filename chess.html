@@ -198,6 +198,49 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 .pgn-btn{background:transparent;border:none;color:#6f7480;font-size:16px;
   cursor:pointer;padding:6px;min-height:auto;flex:none;border-radius:6px}
 .pgn-btn:hover{color:#81c784;background:#1e3325}
+/* ---------- پازل روزانه ---------- */
+.puzzle-wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.puzzle-header{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap}
+.puzzle-title{font-size:18px;font-weight:700;color:#ffd54f}
+.puzzle-streak{font-size:13px;color:#81c784;background:#1e3325;padding:5px 12px;
+  border-radius:20px;border:1px solid #2e7d32;white-space:nowrap}
+.puzzle-theme-badge{display:flex;gap:8px;font-size:12px;flex-wrap:wrap}
+.puzzle-theme-badge span{background:#2b2e3b;border:1px solid #3a3e50;color:#cfd3dd;
+  padding:4px 12px;border-radius:20px}
+.puzzle-board-wrap{display:flex;justify-content:center}
+#puzzleBoard{
+  --psize:min(92vw,440px);
+  --cell:calc(var(--psize) / 8);
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  width:var(--psize);
+  height:var(--psize);
+  border-radius:10px;
+  overflow:hidden;
+  direction:ltr;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+  touch-action:pan-y;
+  box-shadow:0 10px 30px rgba(0,0,0,.5)
+}
+.puzzle-turn{text-align:center;font-size:13.5px;color:#9aa0ae;min-height:22px}
+.puzzle-feedback{min-height:48px;padding:10px 14px;border-radius:10px;
+  background:#20222b;border:1px solid #313444;font-size:13.5px;line-height:2;
+  color:#cfd3dd;text-align:center}
+.puzzle-feedback.correct{background:#1e3325;border-color:#2e7d32;color:#a5d6a7}
+.puzzle-feedback.wrong{background:#3a1e1e;border-color:#8d3b3b;color:#e57373}
+.puzzle-controls,.puzzle-nav{display:flex;gap:6px;flex-wrap:wrap}
+.puzzle-controls button,.puzzle-nav button{flex:1;min-width:100px;font-size:13px;min-height:42px}
+.puzzle-stats{background:#20222b;border:1px solid #313444;border-radius:12px;
+  padding:12px;font-size:12px;color:#9aa0ae;display:flex;gap:16px;flex-wrap:wrap;
+  justify-content:center}
+.puzzle-stats > div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.puzzle-stats b{color:#ffd54f;display:block;font-size:18px}
+.puzzle-explain{background:#1e3325;border:1px solid #2e7d32;border-radius:12px;
+  padding:14px;font-size:13.5px;line-height:2.2;color:#a5d6a7}
+.puzzle-explain b{color:#81c784}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -379,9 +422,10 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <div class="subtitle">ساخته شده با ❤️ توسط <b>امید گروسی</b></div>
 
 <div class="tabs">
-  <button class="tbtn active" id="tbtn-game" onclick="switchTab('game')">🎮 بازی با مربی</button>
+  <button class="tbtn active" id="tbtn-game" onclick="switchTab('game')">🎮 بازی</button>
   <button class="tbtn" id="tbtn-learn" onclick="switchTab('learn')">📚 آکادمی</button>
-  <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش‌ها</button>
+  <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش</button>
+  <button class="tbtn" id="tbtn-puzzle" onclick="switchTab('puzzle')">🧩 پازل</button>
 </div>
 
 <div id="resumeBanner" class="resume-banner hidden">
@@ -574,6 +618,44 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
     </div>
   </div>
 </div>
+<!-- ================= تب پازل ================= -->
+<div id="tab-puzzle" class="hidden">
+  <div class="puzzle-wrap">
+    <div class="puzzle-header">
+      <div class="puzzle-title">🧩 پازل تاکتیکی</div>
+      <div class="puzzle-streak" id="puzzleStreak">شروع کن!</div>
+    </div>
+
+    <div class="puzzle-theme-badge">
+      <span id="puzzleTheme">—</span>
+      <span id="puzzleDifficulty">—</span>
+    </div>
+
+    <div class="puzzle-board-wrap">
+      <div id="puzzleBoard"></div>
+    </div>
+
+    <div class="puzzle-turn" id="puzzleTurn">—</div>
+
+    <div class="puzzle-feedback" id="puzzleFeedback">در حال بارگذاری…</div>
+
+    <div class="puzzle-controls">
+      <button onclick="puzzleHint()">💡 راهنمایی</button>
+      <button onclick="puzzleRetry()">🔄 از اول</button>
+      <button class="primary" onclick="puzzleShowSolution()">👁 پاسخ</button>
+    </div>
+
+    <div class="puzzle-nav">
+      <button onclick="loadPuzzleByOffset(-1)">◀ قبلی</button>
+      <button onclick="loadTodaysPuzzle()">📅 پازل امروز</button>
+      <button onclick="loadPuzzleByOffset(1)">بعدی ▶</button>
+    </div>
+
+    <div class="puzzle-stats" id="puzzleStats"></div>
+
+    <div class="puzzle-explain hidden" id="puzzleExplain"></div>
+  </div>
+</div>
 
 <footer class="credit">
   ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b><br>
@@ -591,6 +673,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <script src="learn-data-5.js"></script>
 <script src="learn-data-6.js"></script>
 <script src="openings-data.js"></script>
+<script src="puzzles-data.js"></script>
 
 <script>
 "use strict";
@@ -1774,14 +1857,245 @@ function loadPGN(text) {
 }
 
 
+/* ============================================================
+   🧩 پازل تاکتیکی — روزانه و تمرینی
+   ============================================================ */
+const PuzzleStorage = {
+  KEY: 'chess.puzzle.v1',
+  load(){
+    try{ return JSON.parse(localStorage.getItem(this.KEY)) || this._default(); }
+    catch(e){ return this._default(); }
+  },
+  save(d){ try{ localStorage.setItem(this.KEY, JSON.stringify(d)); }catch(e){} },
+  _default(){ return { lastDay:'', streak:0, maxStreak:0, solvedIds:[], attempts:{} }; },
+  todayKey(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  },
+  yesterdayKey(){
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    return y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0');
+  },
+  recordSolve(id){
+    const d = this.load();
+    const today = this.todayKey();
+    if(!d.solvedIds.includes(id)) d.solvedIds.push(id);
+    if(d.lastDay !== today){
+      if(d.lastDay === this.yesterdayKey()) d.streak++;
+      else d.streak = 1;
+      d.lastDay = today;
+      if(d.streak > d.maxStreak) d.maxStreak = d.streak;
+    }
+    this.save(d);
+  },
+  recordAttempt(id){
+    const d = this.load();
+    d.attempts[id] = (d.attempts[id] || 0) + 1;
+    this.save(d);
+  }
+};
+
+let puzzleState = null;
+let puzzleIndex = 0;
+
+function dailyPuzzleIndex(){
+  const days = Math.floor(Date.now() / 86400000);
+  return days % PUZZLES_DB.length;
+}
+
+function loadTodaysPuzzle(){
+  puzzleIndex = dailyPuzzleIndex();
+  startPuzzle(PUZZLES_DB[puzzleIndex]);
+}
+
+function loadPuzzleByOffset(off){
+  puzzleIndex = (puzzleIndex + off + PUZZLES_DB.length) % PUZZLES_DB.length;
+  startPuzzle(PUZZLES_DB[puzzleIndex]);
+}
+
+function startPuzzle(p){
+  const turn = (p.fen.split(' ')[1] || 'w');
+  puzzleState = {
+    puzzle: p,
+    board: parseFEN(p.fen),
+    turn: turn,
+    step: 0,
+    done: false,
+    failed: false,
+    selectedSq: null
+  };
+  $('puzzleTheme').textContent = '🎯 ' + p.theme;
+  $('puzzleDifficulty').textContent = '📊 ' + (PUZZLES_META.difficulties[p.difficulty] || '؟');
+  $('puzzleExplain').classList.add('hidden');
+  $('puzzleExplain').innerHTML = '';
+  setPuzzleFeedback('نوبت ' + (turn === 'w' ? '⚪ سفید' : '⚫ مشکی') + ' است — بهترین حرکت را پیدا کن!', '');
+  $('puzzleTurn').textContent = 'هدف: پیدا کردن بهترین حرکت';
+  renderPuzzleBoard();
+  updatePuzzleStats();
+}
+
+function setPuzzleFeedback(txt, cls){
+  const el = $('puzzleFeedback');
+  el.className = 'puzzle-feedback' + (cls ? ' ' + cls : '');
+  el.innerHTML = txt;
+}
+
+function renderPuzzleBoard(){
+  if(!puzzleState) return;
+  const st = puzzleState;
+  let last = null;
+  if(st.step > 0){
+    const prev = st.puzzle.solution[st.step - 1];
+    if(prev) last = { from: parseSq(prev.slice(0,2)), to: parseSq(prev.slice(2,4)) };
+  }
+  const legal = (st.step % 2 === 0 && !st.done && !st.failed) ? puzzleLegalMoves() : [];
+  let html = '';
+  for(let i = 0; i < 64; i++){
+    const r = i >> 3, c = i & 7;
+    let cls = 'cell ' + (((r + c) % 2 === 1) ? 'dark' : 'light');
+    if(st.selectedSq === i) cls += ' sel';
+    if(last && (last.from === i || last.to === i)) cls += ' last';
+    const p = st.board[i];
+    const hint = st.selectedSq != null && legal.some(m => m.from === st.selectedSq && m.to === i);
+    html += '<div class="' + cls + '" data-psq="' + i + '">';
+    if(c === 0) html += '<span class="coord rank">' + (8 - r) + '</span>';
+    if(r === 7) html += '<span class="coord file">' + FILES[c] + '</span>';
+    if(p) html += '<span class="piece ' + (isW(p) ? 'w' : 'b') + '">' + GLYPH[p.toLowerCase()] + '</span>';
+    if(hint) html += '<span class="dot' + (p ? ' cap' : '') + '"></span>';
+    html += '</div>';
+  }
+  $('puzzleBoard').innerHTML = html;
+}
+
+function puzzleLegalMoves(){
+  const st = puzzleState;
+  const fake = {
+    board: st.board.slice(),
+    turn: st.turn,
+    castling: { K:0, Q:0, k:0, q:0 },
+    ep: -1, half: 0, full: 1
+  };
+  return legalMoves(fake);
+}
+
+function onPuzzleCellClick(sq){
+  if(!puzzleState || puzzleState.done || puzzleState.failed) return;
+  if(puzzleState.step % 2 !== 0) return;
+  const st = puzzleState;
+  const p = st.board[sq];
+  if(st.selectedSq != null){
+    const legal = puzzleLegalMoves();
+    const cands = legal.filter(m => m.from === st.selectedSq && m.to === sq);
+    if(cands.length){
+      const m = cands.find(x => !x.promo) || cands[0];
+      tryPuzzleMove(m);
+      return;
+    }
+  }
+  st.selectedSq = (p && (st.turn === 'w' ? isW(p) : !isW(p))) ? sq : null;
+  renderPuzzleBoard();
+}
+
+function uciFromMove(m){
+  return sqName(m.from) + sqName(m.to) + (m.promo || '');
+}
+
+function applyPuzzleUci(uci){
+  const st = puzzleState;
+  st.board = applyUci(st.board.slice(), uci);
+  st.turn = st.turn === 'w' ? 'b' : 'w';
+}
+
+function tryPuzzleMove(m){
+  const st = puzzleState;
+  const uci = uciFromMove(m);
+  const expected = st.puzzle.solution[st.step];
+  if(uci === expected){
+    applyPuzzleUci(uci);
+    st.step++;
+    st.selectedSq = null;
+    if(st.step >= st.puzzle.solution.length){ puzzleSolved(); return; }
+    renderPuzzleBoard();
+    setPuzzleFeedback('✅ درست! حالا پاسخ حریف…', 'correct');
+    setTimeout(() => {
+      if(!puzzleState || puzzleState.done) return;
+      const oppUci = puzzleState.puzzle.solution[puzzleState.step];
+      if(!oppUci){ puzzleSolved(); return; }
+      applyPuzzleUci(oppUci);
+      puzzleState.step++;
+      renderPuzzleBoard();
+      if(puzzleState.step >= puzzleState.puzzle.solution.length){ puzzleSolved(); }
+      else { setPuzzleFeedback('✅ ادامه بده…', 'correct'); }
+    }, 550);
+  } else {
+    st.failed = true;
+    PuzzleStorage.recordAttempt(st.puzzle.id);
+    setPuzzleFeedback('❌ اشتباه! حرکتت درست نبود. یک لحظه صبر کن…', 'wrong');
+    st.selectedSq = null;
+    renderPuzzleBoard();
+    setTimeout(() => {
+      if(!puzzleState || !puzzleState.failed) return;
+      puzzleState.failed = false;
+      setPuzzleFeedback('دوباره تلاش کن — بهترین حرکت را پیدا کن.', '');
+      renderPuzzleBoard();
+    }, 1400);
+  }
+}
+
+function puzzleSolved(){
+  const st = puzzleState;
+  st.done = true;
+  PuzzleStorage.recordSolve(st.puzzle.id);
+  setPuzzleFeedback('🎉 آفرین! پازل را حل کردی!', 'correct');
+  $('puzzleTurn').textContent = '✅ حل شد';
+  const ex = $('puzzleExplain');
+  ex.innerHTML = '🎓 <b>توضیح:</b> ' + st.puzzle.explain;
+  ex.classList.remove('hidden');
+  updatePuzzleStats();
+  renderPuzzleBoard();
+}
+
+function puzzleHint(){
+  if(!puzzleState) return;
+  setPuzzleFeedback('💡 <b>راهنمایی:</b> ' + puzzleState.puzzle.hint, '');
+}
+
+function puzzleRetry(){
+  if(!puzzleState) return;
+  startPuzzle(puzzleState.puzzle);
+}
+
+function puzzleShowSolution(){
+  if(!puzzleState) return;
+  setPuzzleFeedback('👁 پاسخ: <b>' + puzzleState.puzzle.solutionSan + '</b>', '');
+  const ex = $('puzzleExplain');
+  ex.innerHTML = '🎓 <b>توضیح:</b> ' + puzzleState.puzzle.explain;
+  ex.classList.remove('hidden');
+}
+
+function updatePuzzleStats(){
+  const d = PuzzleStorage.load();
+  const total = PUZZLES_DB.length;
+  const solved = d.solvedIds.length;
+  $('puzzleStats').innerHTML =
+    '<div><b>' + solved + '/' + total + '</b><span>حل‌شده</span></div>' +
+    '<div><b>' + d.streak + '</b><span>روز متوالی</span></div>' +
+    '<div><b>' + d.maxStreak + '</b><span>بهترین رشته</span></div>';
+  $('puzzleStreak').textContent = d.streak > 0 ? '🔥 ' + d.streak + ' روز متوالی' : '🔥 شروع کن!';
+}
+
 /* ================= تب‌ها و شروع ================= */
 function switchTab(name){
-  ['game','learn','open'].forEach(t=>{
+  ['game','learn','open','puzzle'].forEach(t=>{
     $('tab-'+t).classList.toggle('hidden',t!==name);
     $('tbtn-'+t).classList.toggle('active',t===name);
   });
   if(name==='learn'&&!learnInited){learnInited=true;renderLearnList('');openLesson(0);}
   if(name==='open'&&!openInited){openInited=true;renderOpenList('');selectOpening(OPENINGS_DB[0].id);}
+  if(name==='puzzle'){
+    if(!puzzleState) loadTodaysPuzzle();
+    else { renderPuzzleBoard(); updatePuzzleStats(); }
+  }
 }
 $('search').addEventListener('input',e=>renderLearnList(e.target.value));
 $('searchOpen').addEventListener('input',e=>renderOpenList(e.target.value));
@@ -1837,6 +2151,13 @@ setTimeout(checkAutoSave,200);
 /* اتصال ورودی فایل PGN */
 const _pgnInp = $('pgnFileInput');
 if(_pgnInp) _pgnInp.addEventListener('change', handlePGNFile);
+/* اتصال کلیک به صفحهٔ پازل */
+const _puzBoard = $('puzzleBoard');
+if(_puzBoard) _puzBoard.addEventListener('click', e => {
+  const cell = e.target.closest('[data-psq]');
+  if(!cell) return;
+  onPuzzleCellClick(+cell.dataset.psq);
+});
 </script>
 
 <script>
