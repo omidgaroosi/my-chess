@@ -1539,7 +1539,7 @@ function closeHistory(){
   $('historyModal').classList.add('hidden');
 }
 function renderHistory(){
-  const arr = ChessStorage.getHistory();
+  const arr = ChessStorage.histAll();
   const st  = ChessStorage.stats();
   const statsEl = $('histStats');
   if(statsEl){
@@ -1577,7 +1577,7 @@ function renderHistory(){
   }).join('');
 }
 function viewHistoryGame(id){
-  const g = ChessStorage.getHistory().find(x => x.id === id);
+  const g = ChessStorage.histAll().find(x => x.id === id);
   if(!g) return;
   const tokens = g.movesSan.split(' ');
   let out = '';
