@@ -155,6 +155,46 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 .promoBtn.pw{color:#fdfdfd;text-shadow:0 2px 3px rgba(0,0,0,.7)}
 .promoBtn.pb{color:#141414;background:#d9c49a;text-shadow:0 1px 2px rgba(255,255,255,.35)}
 #promoBox .cancelBtn{font-size:13px;min-height:40px;padding:8px 18px;flex:none}
+/* ---------- بنر ذخیره + مودال تاریخچه ---------- */
+.resume-banner{max-width:720px;margin:0 auto 12px;background:#1e3325;
+  border:1px solid #2e7d32;border-radius:12px;padding:10px 14px;display:flex;
+  align-items:center;gap:12px;font-size:13px;color:#a5d6a7;flex-wrap:wrap}
+.resume-actions{display:flex;gap:8px;margin-inline-start:auto}
+.resume-btn{font:inherit;font-size:13px;padding:6px 12px;min-height:36px;
+  border-radius:8px;border:1px solid #3a3e50;background:#2b2e3b;color:#fff;
+  cursor:pointer;flex:none}
+.resume-btn.primary{background:#2e7d32;border-color:#2e7d32;font-weight:700}
+#historyModal{position:fixed;inset:0;background:rgba(13,14,20,.88);
+  backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:16px}
+.hist-card{background:#20222b;border:1px solid #313444;border-radius:16px;
+  width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.hist-head{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid #313444}
+.hist-head h2{font-size:17px;color:#ffd54f}
+.hist-close{background:transparent;border:none;color:#9aa0ae;font-size:20px;
+  cursor:pointer;padding:4px 8px;min-height:auto;flex:none}
+.hist-close:hover{color:#e57373}
+.hist-stats{padding:12px 18px;border-bottom:1px solid #313444;display:flex;
+  gap:14px;flex-wrap:wrap;font-size:13px;color:#cfd3dd}
+.hist-stats .stat{display:flex;flex-direction:column;gap:2px;min-width:70px}
+.hist-stats .stat b{color:#ffd54f;font-size:17px}
+.hist-stats .stat span{color:#8a8f9c;font-size:11px}
+.hist-list{flex:1;overflow-y:auto;padding:8px 10px;display:flex;
+  flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.hist-item{display:flex;align-items:center;gap:10px;background:#191b22;
+  border-radius:10px;padding:10px 12px;cursor:pointer;transition:background .15s}
+.hist-item:hover{background:#2b2e3b}
+.hist-item .result-icon{font-size:22px;flex:none;width:28px;text-align:center}
+.hist-item .info{flex:1;min-width:0}
+.hist-item .info b{display:block;font-size:13px;color:#e9e7e2;margin-bottom:2px}
+.hist-item .info small{color:#8a8f9c;font-size:11px}
+.hist-item .del{background:transparent;border:none;color:#6f7480;font-size:16px;
+  cursor:pointer;padding:6px;min-height:auto;flex:none}
+.hist-item .del:hover{color:#e57373}
+.hist-empty{text-align:center;color:#6f7480;padding:30px 10px;font-size:13px;line-height:2}
+.hist-foot{padding:12px 18px;border-top:1px solid #313444;display:flex;gap:8px}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -341,6 +381,14 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
   <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش‌ها</button>
 </div>
 
+<div id="resumeBanner" class="resume-banner hidden">
+  <span>💾 بازی ذخیره‌شده‌ای داری — ادامه بده یا بازی جدید شروع کنی؟</span>
+  <div class="resume-actions">
+    <button class="resume-btn primary" onclick="resumeSavedGame()">▶ ادامه</button>
+    <button class="resume-btn" onclick="discardSavedGame()">✕ بازی جدید</button>
+  </div>
+</div>
+
 <!-- ================= تب بازی ================= -->
 <div id="tab-game">
   <span id="engineBadge">⏳ در حال شناسایی موتور…</span>
@@ -416,6 +464,9 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
         <button class="primary" onclick="newGame()">🔄 جدید</button>
         <button onclick="undo()">↩️ برگشت</button>
         <button onclick="flip()">🔃 چرخش</button>
+      </div>
+      <div class="row">
+        <button onclick="openHistory()">📜 تاریخچه بازی‌ها</button>
         <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
       </div>
       <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
@@ -500,6 +551,20 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
     </main>
   </div>
 </div>
+<div id="historyModal" class="hidden">
+  <div class="hist-card">
+    <div class="hist-head">
+      <h2>📜 تاریخچهٔ بازی‌ها</h2>
+      <button class="hist-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="histStats" class="hist-stats"></div>
+    <div id="histList" class="hist-list"></div>
+    <div class="hist-foot">
+      <button onclick="clearAllHistory()">🗑 پاک کردن همه</button>
+      <button class="primary" onclick="closeHistory()">بستن</button>
+    </div>
+  </div>
+</div>
 
 <footer class="credit">
   ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b><br>
@@ -507,6 +572,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 </footer>
 
 <!-- فایل‌های داده و مربی -->
+<script src="storage.js"></script>
 <script src="coach.js"></script>
 <script src="learn-data-1.js"></script>
 <script src="learn-data-2.js"></script>
@@ -861,6 +927,7 @@ function applyMove(m){
   hist.push({m,uci:sqName(m.from)+sqName(m.to)+(m.promo||''),san,before,captured});
   keys.push(keyOf(S));
   playSound(captured?'capture':'move');
+  saveAutoState();
   afterMove(mover);
 }
 function afterMove(mover){
@@ -895,6 +962,8 @@ function endGame(type,winner){
   $('overlayEnd').classList.remove('hidden');
   setStatus(txt);playSound('end');
   Coach.say((winner===humanColor)?'🎓 مربی: عالی بود! با هم بردیم 🏆':'🎓 مربی: اشکالی ندارد، دوباره تلاش می‌کنیم. از اشتباه‌ها یاد بگیر 💪','sys');
+  recordGameResult();
+  ChessStorage.autoClear();
 }
 function hideEnd(){$('overlayEnd').classList.add('hidden');}
 function abortAllSearches(){
@@ -909,6 +978,7 @@ function newGame(){
   gameOver=null;selected=null;lastEval=null;lastDepth=0;
   pendingGo=false;
   hideEnd();closePromo();
+  ChessStorage.autoClear();
   if(engine==='stockfish')sfSend('ucinewgame');
   render();
   Coach.reset();
@@ -926,9 +996,8 @@ function undo(){
 }
 function pop1(){const h=hist.pop();keys.pop();S=h.before;}
 function flip(){flipped=!flipped;render();}
-function onSideChange(v){humanColor=v;flipped=(v==='b');newGame();}
-function onLevelChange(v){level=+v;Coach.updateStrengthInfo();setStatus('سختی حریف تغییر کرد ✅ (مربی همچنان قوی‌تر می‌ماند)');}
-
+function onSideChange(v){humanColor=v;flipped=(v==='b');saveOptions();newGame();}
+function onLevelChange(v){level=+v;saveOptions();Coach.updateStrengthInfo();setStatus('سختی حریف تغییر کرد ✅ (مربی همچنان قوی‌تر می‌ماند)');}
 /* ================= تعامل کاربر ================= */
 $('board').addEventListener('click',e=>{
   const cell=e.target.closest('[data-sq]');
@@ -1353,6 +1422,183 @@ function stopPlay(){
 }
 function practice(){if(curOp)practiceOpening(curOp.id);}
 
+/* ============================================================
+   💾 ذخیره‌سازی، بازیابی و تاریخچه
+   ============================================================ */
+
+function saveAutoState(){
+  if(gameOver) return;
+  try{
+    ChessStorage.autoSave({
+      S: { board:S.board, turn:S.turn, castling:S.castling,
+           ep:S.ep, half:S.half, full:S.full },
+      hist: hist,
+      keys: keys,
+      humanColor, flipped, level,
+      engineType: engine
+    });
+  }catch(e){ console.warn('auto-save failed', e); }
+}
+
+function loadSavedOptions(){
+  const o = ChessStorage.optsLoad();
+  if(o.humanColor) humanColor = o.humanColor;
+  if(o.level != null) level = +o.level;
+  if(o.flipped != null) flipped = !!o.flipped;
+  const selSide = $('selSide'); if(selSide) selSide.value = humanColor;
+  const selLvl = $('selLevel'); if(selLvl) selLvl.value = String(level);
+  const chkSound = $('chkSound');
+  if(chkSound && o.sound != null) chkSound.checked = !!o.sound;
+  const chkAutoCoach = $('chkAutoCoach');
+  if(chkAutoCoach && o.autoCoach != null) chkAutoCoach.checked = !!o.autoCoach;
+}
+
+function saveOptions(){
+  try{
+    ChessStorage.optsSave({
+      humanColor, level, flipped,
+      sound: $('chkSound') ? $('chkSound').checked : true,
+      autoCoach: $('chkAutoCoach') ? $('chkAutoCoach').checked : true
+    });
+  }catch(e){}
+}
+
+function checkAutoSave(){
+  const banner = $('resumeBanner');
+  if(!banner) return;
+  if(ChessStorage.hasAuto()) banner.classList.remove('hidden');
+  else banner.classList.add('hidden');
+}
+
+function resumeSavedGame(){
+  const data = ChessStorage.autoLoad();
+  const banner = $('resumeBanner');
+  if(banner) banner.classList.add('hidden');
+  if(!data) return;
+  try{
+    S = data.S;
+    hist = data.hist || [];
+    keys = data.keys || [keyOf(S)];
+    humanColor = data.humanColor || 'w';
+    flipped = !!data.flipped;
+    level = data.level ?? 2;
+    gameOver = null;
+    selected = null; pendingPromo = null;
+    hideEnd(); closePromo();
+    if(engine==='stockfish') sfSend('ucinewgame');
+    render();
+    Coach.reset();
+    if(S.turn !== humanColor){
+      opponentGo();
+    } else {
+      setStatus('بازی بازیابی شد — نوبت شماست ♙');
+      if($('chkAutoCoach').checked) Coach.go();
+    }
+  }catch(e){
+    console.error('resume failed', e);
+    if(confirm('بازیابی ناموفق بود. بازی ذخیره‌شده پاک شود؟'))
+      ChessStorage.autoClear();
+    checkAutoSave();
+  }
+}
+
+function discardSavedGame(){
+  ChessStorage.autoClear();
+  checkAutoSave();
+  newGame();
+}
+
+function recordGameResult(){
+  if(!gameOver) return;
+  let result = 'draw', resultText = '';
+  if(gameOver.type === 'mate'){
+    result = (gameOver.winner === humanColor) ? 'win' : 'loss';
+    resultText = (result === 'win') ? 'برد' : 'باخت';
+  } else {
+    result = 'draw';
+    resultText = ({
+      stalemate:'پات', fifty:'قانون ۵۰ حرکت',
+      repeat:'تکرار سه‌گانه', material:'مهرهٔ ناکافی'
+    }[gameOver.type]) || 'تساوی';
+  }
+  ChessStorage.histAdd({
+    result, resultText,
+    movesSan: hist.map(h => h.san).join(' '),
+    movesCount: hist.length,
+    humanColor, level, engine,
+    gameOverType: gameOver.type
+  });
+}
+
+/* ---------- مودال تاریخچه ---------- */
+function openHistory(){
+  renderHistory();
+  $('historyModal').classList.remove('hidden');
+}
+function closeHistory(){
+  $('historyModal').classList.add('hidden');
+}
+function renderHistory(){
+  const arr = ChessStorage.getHistory();
+  const st  = ChessStorage.stats();
+  const statsEl = $('histStats');
+  if(statsEl){
+    if(st.total === 0){
+      statsEl.innerHTML = '<div style="color:#6f7480">هنوز بازی‌ای ثبت نشده</div>';
+    } else {
+      const wr = Math.round(100 * st.w / Math.max(st.total, 1));
+      statsEl.innerHTML =
+        '<div class="stat"><b>' + st.total + '</b><span>کل بازی</span></div>' +
+        '<div class="stat"><b style="color:#81c784">' + st.w + '</b><span>برد</span></div>' +
+        '<div class="stat"><b style="color:#e57373">' + st.l + '</b><span>باخت</span></div>' +
+        '<div class="stat"><b style="color:#9aa0ae">' + st.d + '</b><span>مساوی</span></div>' +
+        '<div class="stat"><b>' + wr + '%</b><span>درصد برد</span></div>' +
+        '<div class="stat"><b>' + st.maxStreak + '</b><span>بهترین رشته</span></div>';
+    }
+  }
+  const listEl = $('histList');
+  if(!listEl) return;
+  if(!arr.length){
+    listEl.innerHTML = '<div class="hist-empty">هنوز بازی‌ای ذخیره نشده.<br>اولین بازی‌ات را انجام بده تا اینجا ظاهر شود.</div>';
+    return;
+  }
+  const LV = ['خیلی آسان','آسان','متوسط','سخت','خیلی سخت'];
+  listEl.innerHTML = arr.map(g => {
+    const icon = g.result==='win' ? '🏆' : g.result==='loss' ? '🤖' : '🤝';
+    const d = new Date(g.ts).toLocaleString('fa-IR', { dateStyle:'short', timeStyle:'short' });
+    const lvl = LV[g.level] || '؟';
+    const side = g.humanColor === 'w' ? 'سفید' : 'مشکی';
+    return '<div class="hist-item" onclick="viewHistoryGame(\'' + g.id + '\')">' +
+      '<span class="result-icon">' + icon + '</span>' +
+      '<div class="info"><b>' + g.resultText + ' — ' + side + ' (سطح ' + lvl + ')</b>' +
+      '<small>' + d + ' • ' + g.movesCount + ' حرکت</small></div>' +
+      '<button class="del" onclick="event.stopPropagation();deleteHistoryGame(\'' + g.id + '\')">🗑</button>' +
+      '</div>';
+  }).join('');
+}
+function viewHistoryGame(id){
+  const g = ChessStorage.getHistory().find(x => x.id === id);
+  if(!g) return;
+  const tokens = g.movesSan.split(' ');
+  let out = '';
+  for(let i = 0; i < tokens.length; i++){
+    if(i % 2 === 0) out += (Math.floor(i/2)+1) + '. ';
+    out += tokens[i] + ' ';
+    if(i % 2 === 1) out += '\n';
+  }
+  alert('📜 حرکات بازی (' + g.resultText + '):\n\n' + out.trim());
+}
+function deleteHistoryGame(id){
+  if(!confirm('این بازی از تاریخچه حذف شود؟')) return;
+  ChessStorage.histDelete(id);
+  renderHistory();
+}
+function clearAllHistory(){
+  if(!confirm('همهٔ تاریخچه پاک شود؟ این کار قابل بازگشت نیست.')) return;
+  ChessStorage.histClear();
+  renderHistory();
+}
+
 /* ================= تب‌ها و شروع ================= */
 function switchTab(name){
   ['game','learn','open'].forEach(t=>{
@@ -1405,11 +1651,14 @@ const wantSF=(window.crossOriginIsolated===true)
              &&(!/[?&]ai\b/.test(location.search));
 if(wantSF){engine='stockfish';updateBadge();initStockfish();}
 else{switchToAI();setStatus('در حال آماده‌سازی…');}
+loadSavedOptions();
 Coach.init();
 Coach.updateStrengthInfo();
 switchTab('game');
 /* بعد از رندر اولیه، یک بار دیگر اندازه را محاسبه کن (چون layout تغییر کرده) */
 setTimeout(updateBoardSize,100);
+/* بررسی وجود بازی ذخیره‌شده */
+setTimeout(checkAutoSave,200);
 </script>
 
 <script>
