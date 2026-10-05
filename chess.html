@@ -95,6 +95,21 @@ h1{text-align:center;font-size:20px;margin-bottom:4px;padding:0 8px;line-height:
   border:1px solid #3a3e50;color:#ffd54f;text-align:center;line-height:1.6}
 .app{display:flex;gap:14px;justify-content:center;align-items:flex-start;
   flex-wrap:wrap;max-width:1100px;margin:0 auto;width:100%}
+.side-col{display:flex;flex-direction:column;gap:12px;width:100%;
+  max-width:var(--panel-max);min-width:0}
+.coach-panel{border-color:#2e7d32}
+.coach-panel .coach-head{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;flex-wrap:wrap}
+.coach-panel .coach-head h3{color:#81c784;margin:0}
+.coach-panel .chk.compact{font-size:12px;color:#9aa0ae;min-height:auto}
+.setting-details{background:transparent;border:none;padding:0;margin:0}
+.setting-details > summary{list-style:none;cursor:pointer;color:#ffd54f;font-weight:700;
+  font-size:14px;padding:6px 0;display:flex;align-items:center;gap:6px}
+.setting-details > summary::before{content:'▸';color:#8a8f9c;transition:transform .2s;
+  display:inline-block;font-size:12px}
+.setting-details[open] > summary::before{transform:rotate(90deg)}
+.setting-details > summary::-webkit-details-marker{display:none}
+.setting-details > summary ~ *{margin-top:8px}
 .stage{display:flex;flex-direction:column;gap:8px;align-items:center;
   width:100%;max-width:560px;min-width:0}
 .pbar{display:flex;align-items:center;gap:8px;background:#20222b;border:1px solid #313444;
@@ -141,8 +156,9 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 .chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#9aa0ae;
   min-height:32px;cursor:pointer}
 .hint{font-size:11px;color:#6f7480;line-height:2}
-#coachLog{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px;
-  background:#191b22;border-radius:10px;padding:10px;-webkit-overflow-scrolling:touch}
+#coachLog{max-height:320px;min-height:120px;overflow:auto;display:flex;flex-direction:column;
+  gap:6px;background:#191b22;border-radius:10px;padding:10px;
+  -webkit-overflow-scrolling:touch}
 .msg{background:#20222b;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:2;
   border-inline-start:3px solid #4caf50}
 .msg.analyst{border-inline-start-color:#64b5f6}
@@ -411,6 +427,15 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
 .card.green{border-color:#2e7d32}.card.green h3{color:#81c784}
 .card.red{border-color:#8d3b3b}.card.red h3{color:#e57373}
 .card.blue{border-color:#3b5f8d}.card.blue h3{color:#64b5f6}
+@media(max-width:900px){
+  /* روی موبایل و تبلت، پنل مربی مستقیماً زیر صفحه می‌آید */
+  .app{flex-direction:column;align-items:center;gap:12px}
+  .stage{max-width:100%}
+  .side-col{max-width:100%}
+  /* مربی اول، تنظیمات بعد */
+  #coachPanel{order:1}
+  #settingsPanel{order:2}
+}
 @media(max-width:700px){
   h1{font-size:18px;margin-bottom:2px}
   .subtitle{font-size:11px;margin-bottom:10px}
@@ -420,11 +445,12 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
   .slist{max-height:320px}
   .panel{padding:12px}
   #moves{max-height:110px}
-  #coachLog{max-height:200px}
-  .stage{max-width:100%}
+  #coachLog{max-height:280px}   /* بزرگ‌تر برای خواندن راحت‌تر */
   .board-frame{padding:5px}
   .evalbar{width:10px}
   .app{gap:10px}
+  /* صفحهٔ شطرنج کوچک‌تر تا مربی در دید بماند */
+  :root{--size:min(88vw,420px)}
 }
 @media(max-width:380px){
   h1{font-size:16px}
@@ -568,75 +594,86 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
       </div>
       <div id="status">در حال آماده‌سازی…</div>
     </div>
-    <div class="panel">
-      <h3>⚙️ تنظیمات</h3>
-      <div class="row">
-        <label>رنگ شما
-          <select id="selSide" onchange="onSideChange(this.value)">
-            <option value="w">⚪ سفید</option>
-            <option value="b">⚫ مشکی</option>
-          </select>
-        </label>
-        <label>سختی حریف
-          <select id="selLevel" onchange="onLevelChange(this.value)">
-            <option value="0">خیلی آسان</option>
-            <option value="1">آسان</option>
-            <option value="2" selected>متوسط</option>
-            <option value="3">سخت</option>
-            <option value="4">خیلی سخت</option>
-          </select>
-        </label>
+    <div class="side-col">
+      <!-- 🎓 پنل مربی — نزدیک به صفحه -->
+      <div class="panel coach-panel" id="coachPanel">
+        <div class="coach-head">
+          <h3>🎓 مربی شما</h3>
+          <label class="chk compact"><input type="checkbox" id="chkAutoCoach" checked> خودکار</label>
+        </div>
+        <div class="row">
+          <button id="btnCoach" class="coachbtn">🎓 راهنمایی مربی</button>
+        </div>
+        <div id="coachLog"></div>
+        <div class="hint" id="strengthInfo"></div>
       </div>
-      <div class="row">
-        <label>⏱ زمان بازی
-          <select id="selTime" onchange="onTimeChange(this.value)">
-            <option value="none">بدون زمان</option>
-            <option value="1+0">Bullet — ۱ دقیقه</option>
-            <option value="3+2">Blitz — ۳+۲</option>
-            <option value="5+0">Blitz — ۵ دقیقه</option>
-            <option value="10+0">Rapid — ۱۰ دقیقه</option>
-            <option value="15+10">Rapid — ۱۵+۱۰</option>
-            <option value="30+0">Classical — ۳۰ دقیقه</option>
-          </select>
-        </label>
+
+      <!-- ⚙️ پنل تنظیمات -->
+      <div class="panel" id="settingsPanel">
+        <details class="setting-details" open>
+          <summary>⚙️ تنظیمات</summary>
+          <div class="row">
+            <label>رنگ شما
+              <select id="selSide" onchange="onSideChange(this.value)">
+                <option value="w">⚪ سفید</option>
+                <option value="b">⚫ مشکی</option>
+              </select>
+            </label>
+            <label>سختی حریف
+              <select id="selLevel" onchange="onLevelChange(this.value)">
+                <option value="0">خیلی آسان</option>
+                <option value="1">آسان</option>
+                <option value="2" selected>متوسط</option>
+                <option value="3">سخت</option>
+                <option value="4">خیلی سخت</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>⏱ زمان بازی
+              <select id="selTime" onchange="onTimeChange(this.value)">
+                <option value="none">بدون زمان</option>
+                <option value="1+0">Bullet — ۱ دقیقه</option>
+                <option value="3+2">Blitz — ۳+۲</option>
+                <option value="5+0">Blitz — ۵ دقیقه</option>
+                <option value="10+0">Rapid — ۱۰ دقیقه</option>
+                <option value="15+10">Rapid — ۱۵+۱۰</option>
+                <option value="30+0">Classical — ۳۰ دقیقه</option>
+              </select>
+            </label>
+            <label>🎨 تم صفحه
+              <select id="selTheme" onchange="onThemeChange(this.value)">
+                <option value="wood">🪵 کلاسیک چوبی</option>
+                <option value="green">🌿 سبز</option>
+                <option value="blue">💧 آبی</option>
+                <option value="marble">🪨 مرمر</option>
+                <option value="gray">⬛ خاکستری</option>
+                <option value="night">🌙 شب</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <button class="primary" onclick="newGame()">🔄 جدید</button>
+            <button onclick="undo()">↩️ برگشت</button>
+            <button onclick="flip()">🔃 چرخش</button>
+          </div>
+          <div class="row">
+            <button onclick="openHistory()">📜 تاریخچه</button>
+            <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
+          </div>
+          <div class="row">
+            <button onclick="exportCurrentPGN()">📥 PGN جاری</button>
+            <button onclick="importPGNClick()">📤 بارگذاری PGN</button>
+          </div>
+          <input type="file" id="pgnFileInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
+          <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
+        </details>
+
+        <details class="setting-details">
+          <summary>📜 لیست حرکات</summary>
+          <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>
+        </details>
       </div>
-      <div class="row">
-        <label>🎨 تم صفحه
-          <select id="selTheme" onchange="onThemeChange(this.value)">
-            <option value="wood">🪵 کلاسیک چوبی</option>
-            <option value="green">🌿 سبز</option>
-            <option value="blue">💧 آبی</option>
-            <option value="marble">🪨 مرمر</option>
-            <option value="gray">⬛ خاکستری</option>
-            <option value="night">🌙 شب</option>
-          </select>
-        </label>
-      </div>
-      <div class="row">
-        <button class="primary" onclick="newGame()">🔄 جدید</button>
-        <button onclick="undo()">↩️ برگشت</button>
-        <button onclick="flip()">🔃 چرخش</button>
-      </div>
-      <div class="row">
-        <button onclick="openHistory()">📜 تاریخچه بازی‌ها</button>
-        <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
-      </div>
-      <div class="row">
-        <button onclick="exportCurrentPGN()">📥 PGN بازی جاری</button>
-        <button onclick="importPGNClick()">📤 بارگذاری PGN</button>
-      </div>
-      <input type="file" id="pgnFileInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
-      <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
-      <h3>🎓 مربی شما (همیشه قوی‌تر از حریف)</h3>
-      <div class="row">
-        <button id="btnCoach" class="coachbtn">🎓 راهنمایی مربی</button>
-      </div>
-      <label class="chk"><input type="checkbox" id="chkAutoCoach" checked> راهنمایی خودکار بعد از هر حرکت حریف</label>
-      <div id="coachLog"></div>
-      <div class="hint" id="strengthInfo"></div>
-      <h3>📜 حرکات</h3>
-      <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>
-      <div class="hint">💡 حرکت پیشنهادی مربی با رنگ <b style="color:#4caf50">سبز</b> روی صفحه مشخص می‌شود. در تب «گشایش‌ها» می‌توانی هر گشایش را مستقیم وارد بازی کنی.</div>
     </div>
   </div>
 </div>

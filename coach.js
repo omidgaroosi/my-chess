@@ -95,9 +95,29 @@ const Coach = {
       const p = s.board[sq];
       if(!p || colorOf(p) !== color) continue;
       if(p.toLowerCase() === 'k') continue;
-      if(attacked(s, sq, enemyW) && !attacked(s, sq, color === 'w'))
-        res.push({sq, san: this.FA_PIECE[p.toLowerCase()] + ' در ' + sqName(sq)});
+      const iAttacked = attacked(s, sq, enemyW);
+      if(!iAttacked) continue;
+      const iDefended = attacked(s, sq, color === 'w');
+      if(iDefended) continue;
+      /* شناسایی مهاجم اصلی و ارزش مهرهٔ در معرض خطر */
+      const val = this.FA_VAL[p.toLowerCase()] || 0;
+      let attackerName = '';
+      for(let sq2 = 0; sq2 < 64; sq2++){
+        const q = s.board[sq2];
+        if(!q || colorOf(q) === color) continue;
+        if(attacked({...s, board: s.board.map((x,i) => i===sq2?null:x)}, sq, enemyW)){
+          attackerName = this.FA_PIECE[q.toLowerCase()];
+          break;
+        }
+      }
+      const pieceName = this.FA_PIECE[p.toLowerCase()];
+      res.push({
+        sq,
+        val,
+        san: pieceName + ' در ' + sqName(sq) + (attackerName ? ' (در تیررس ' + attackerName + ')' : ' (بی‌دفاع)')
+      });
     }
+    res.sort((a,b) => b.val - a.val);
     return res;
   },
 
@@ -138,49 +158,190 @@ const Coach = {
     const s1 = makeMove(s0, m);
     const captured = s0.board[m.to] || (m.ep ? (mover === 'w' ? 'p' : 'P') : null);
 
-    // ۱) ماهیت حرکت
+    /* ۱) ماهیت حرکت */
     if(m.castle){
       parts.push((m.castle === 'K' || m.castle === 'k')
-        ? 'قلعهٔ کوتاه — شاه امن می‌شود و رخ وارد بازی می‌شود'
-        : 'قلعهٔ بلند — شاه امن می‌شود و رخ وارد بازی می‌شود');
+        ? 'قلعهٔ کوتاه — شاه در گوشهٔ امن قرار می‌گیرد و رخ به بازی می‌آید'
+        : 'قلعهٔ بلند — شاه در جناح وزیر امن می‌شود و رخ فعال می‌گردد');
     } else if(captured){
-      parts.push('گرفتن ' + this.FA_PIECE[captured.toLowerCase()] + ' در ' + sqName(m.to)
-        + ' (' + this.FA_VAL[captured.toLowerCase()] + ' امتیاز مواد)');
+      const capVal = this.FA_VAL[captured.toLowerCase()] || 0;
+      const wasDefended = attacked(s0, m.to, mover !== 'w');
+      parts.push('گرفتن ' + this.FA_PIECE[captured.toLowerCase()] +
+        ' در ' + sqName(m.to) + ' (' + capVal + ' امتیاز)' +
+        (wasDefended ? '' : ' که بی‌دفاع بود 🎯'));
     } else {
       parts.push('حرکت ' + this.FA_PIECE[t] + ' از ' + sqName(m.from) + ' به ' + sqName(m.to));
     }
     if(m.promo) parts.push('ارتقای پیاده به ' + this.FA_PIECE[m.promo] + ' 🎉');
-    if(inCheck(s1, s1.turn)) parts.push('کیش به شاه — حریف مجبور به پاسخ دفاعی است');
+    if(inCheck(s1, s1.turn)) parts.push('کیش — حریف مجبور به پاسخ فوری است');
 
-    // ۲) تهدیدهای جدید که این حرکت ساخت
-    if(!m.castle){
+    /* ۲) تهدیدهای جدید که این حرکت ساخت (مرتب‌شده بر اساس ارزش) */
+    if(!m.castle && t !== 'k'){
       const threats = [], byW = mover === 'w';
       for(let sq = 0; sq < 64; sq++){
         const q = s1.board[sq];
-        if(q && colorOf(q) !== mover && attacked(s1, sq, byW) && !attacked(s0, sq, byW))
-          threats.push(this.FA_PIECE[q.toLowerCase()] + ' در ' + sqName(sq));
+        if(!q || colorOf(q) === mover) continue;
+        const isNew = attacked(s1, sq, byW) && !attacked(s0, sq, byW);
+        if(!isNew) continue;
+        const val = this.FA_VAL[q.toLowerCase()] || 0;
+        threats.push({ name: this.FA_PIECE[q.toLowerCase()] + ' در ' + sqName(sq), val });
       }
-      if(threats.length) parts.push('تهدید گرفتن ' + threats.slice(0,2).join(' و '));
+      threats.sort((a,b) => b.val - a.val);
+      if(threats.length){
+        parts.push('تهدید ' + threats.slice(0,2).map(x => x.name).join(' و '));
+      }
     }
 
-    // ۳) آیا مهرهٔ گرفته‌شده بی‌دفاع بود؟
-    if(captured && !m.ep){
-      const defenderByWhite = mover !== 'w';
-      if(!attacked(s0, m.to, defenderByWhite))
-        parts.push('این مهره بی‌دفاع بود — شکار آسان! 🎯');
+    /* ۳) شناسایی الگوهای تاکتیکی (چنگال / آچمز / سیخ / حملهٔ برخاست) */
+    const tactics = this._detectTactics(s0, s1, m, captured);
+    if(tactics.length) parts.push(tactics.join('؛ '));
+
+    /* ۴) حرکت‌های آموزشی بر اساس فاز بازی */
+    if(s0.full <= 10){
+      if(t === 'p' && this.CENTER.includes(m.to)){
+        const files = ['a','b','c','d','e','f','g','h'];
+        parts.push('اشغال مرکز با پیادهٔ ' + files[m.to & 7] + (8 - (m.to >> 3)) +
+          ' — بهترین راه کنترل میدان');
+      }
+      if((t === 'n' || t === 'b') && ((mover === 'w' && m.from >= 56) || (mover === 'b' && m.from < 8))){
+        parts.push('گسترش مهرهٔ سبک — طبق اصول شروع بازی ✅');
+      }
+      if(t === 'q'){
+        parts.push('⚠️ خروج زودهنگام وزیر — بهتر است بعد از گسترش مهره‌ها وارد شود');
+      }
+      /* پیاده‌های جناح شاه */
+      if(t === 'p' && !m.castle && m.from >= 48){
+        const toFile = m.to & 7;
+        if(toFile <= 2 || toFile >= 5){
+          parts.push('⚠️ حرکت پیادهٔ جناح شاه در شروع — ممکن است سپر شاه را ضعیف کند');
+        }
+      }
+      /* رخ در شروع */
+      if(t === 'r' && s0.full <= 8){
+        parts.push('⚠️ حرکت زودهنگام رخ — در شروع بازی معمولاً توصیه نمی‌شود');
+      }
     }
 
-    // ۴) نکات آموزشی/استراتژیک
-    if(this.CENTER.includes(m.to) && (t === 'p' || t === 'n' || t === 'b') && s0.full <= 12)
-      parts.push('کنترل مرکز صفحه — مهره‌های مرکزی قوی‌ترند');
-    if((t === 'n' || t === 'b') && ((mover === 'w' && m.from >= 56) || (mover === 'b' && m.from < 8)) && s0.full <= 10)
-      parts.push('گسترش مهرهٔ سبک در شروع بازی');
-    if(t === 'q' && s0.full <= 6)
-      parts.push('خروج زودهنگام وزیر — معمولاً در شروع بازی توصیه نمی‌شود');
-    if(t === 'k' && !m.castle && s0.full > 10)
-      parts.push('جابه‌جایی دستی شاه — بهتر بود زودتر قلعه می‌رفت');
+    /* ۵) حرکت دستی شاه وقتی حق قلعه وجود دارد */
+    const castlingRights = mover === 'w'
+      ? (s0.castling.K || s0.castling.Q)
+      : (s0.castling.k || s0.castling.q);
+    if(t === 'k' && !m.castle && s0.full > 8 && castlingRights){
+      parts.push('⚠️ حرکت دستی شاه — بهتر بود ابتدا قلعه می‌رفت');
+    }
+
+    /* ۶) وضعیت پس از حرکت: آیا مهره‌ای بی‌دفاع رها شده؟ */
+    if(!m.castle && t !== 'k'){
+      const hang = this.hangingPieces(s1, mover);
+      if(hang.length && hang[0].val >= 3){
+        parts.push('⚠️ توجه: ' + hang[0].san + ' بعد از این حرکت بی‌دفاع می‌شود');
+      }
+    }
 
     return parts;
+  },
+
+  /* ---------- تشخیص الگوهای تاکتیکی ---------- */
+  _detectTactics(s0, s1, m, captured){
+    const out = [];
+    const mover = s0.turn;
+    const byW = mover === 'w';
+    const p = s0.board[m.from];
+    if(!p) return out;
+    const t = p.toLowerCase();
+
+    /* چنگال: مهره‌ای که هم‌زمان به دو مهرهٔ ارزشمند حمله می‌کند */
+    if(!m.castle){
+      const targets = [];
+      for(let sq = 0; sq < 64; sq++){
+        const q = s1.board[sq];
+        if(!q || colorOf(q) === mover) continue;
+        if(attacked(s1, sq, byW) && !attacked(s0, sq, byW)){
+          const val = this.FA_VAL[q.toLowerCase()] || 0;
+          if(q.toLowerCase() !== 'k') targets.push({ name: this.FA_PIECE[q.toLowerCase()] + ' در ' + sqName(sq), val, kind:'piece' });
+          else targets.push({ name: 'شاه', val: 100, kind:'king' });
+        }
+      }
+      if(targets.length >= 2){
+        const hasKing = targets.some(x => x.kind === 'king');
+        const hasBigPiece = targets.some(x => x.kind === 'piece' && x.val >= 5);
+        if(hasKing && hasBigPiece){
+          out.push('🎯 چنگال به شاه و مهرهٔ سنگین!');
+        } else if(targets.filter(x => x.kind === 'piece').length >= 2){
+          const sum = targets.filter(x => x.kind === 'piece').reduce((a,x) => a + x.val, 0);
+          if(sum >= 6){
+            out.push('🎯 چنگال — دو مهرهٔ ارزشمند هم‌زمان تهدید می‌شوند');
+          }
+        }
+      }
+    }
+
+    /* آچمز: مهره‌ای که بین مهرهٔ دوربرد و شاه/وزیر حریف قرار می‌گیرد */
+    if((t === 'b' || t === 'r' || t === 'q')){
+      const enemyK = s1.board.indexOf(mover === 'w' ? 'k' : 'K');
+      if(enemyK >= 0){
+        const r1 = m.to >> 3, c1 = m.to & 7;
+        const r2 = enemyK >> 3, c2 = enemyK & 7;
+        const dr = Math.sign(r2 - r1), dc = Math.sign(c2 - c1);
+        const straight = (r1 === r2) || (c1 === c2);
+        const diagonal = Math.abs(r2 - r1) === Math.abs(c2 - c1);
+        const canPin = (t === 'r' && straight) || (t === 'b' && diagonal) || (t === 'q' && (straight || diagonal));
+        if(canPin){
+          /* بین مهرهٔ ما و شاه، دقیقاً یک مهرهٔ حریف هست؟ */
+          let between = [], rr = r1 + dr, cc = c1 + dc;
+          while(rr !== r2 || cc !== c2){
+            const sq = rr*8 + cc;
+            if(s1.board[sq]) between.push(s1.board[sq]);
+            rr += dr; cc += dc;
+          }
+          if(between.length === 1){
+            const mid = between[0];
+            const midVal = this.FA_VAL[mid.toLowerCase()] || 0;
+            if(midVal >= 3){
+              out.push('📌 آچمز ' + this.FA_PIECE[mid.toLowerCase()] + ' حریف — نمی‌تواند فرار کند');
+            }
+          }
+        }
+      }
+    }
+
+    /* حملهٔ برخاست: مهرهٔ پشتی که با حرکت این مهره، حمله‌اش آزاد شده */
+    /* بررسی ساده: اگر مهرهٔ جلویی از مسیر یک مهرهٔ دوربرد خودی کنار رفته و هدف جدیدی تهدید شده */
+    if(t === 'n' || t === 'p'){
+      const backDir = [B_DIRS, R_DIRS].flat();
+      for(const [dr, dc] of backDir){
+        let rr = (m.from >> 3) - dr, cc = (m.from & 7) - dc;
+        let found = null;
+        while(rr >= 0 && rr < 8 && cc >= 0 && cc < 8){
+          const sq = rr*8 + cc;
+          if(s0.board[sq]){ found = { sq, piece: s0.board[sq] }; break; }
+          rr -= dr; cc -= dc;
+        }
+        if(!found) continue;
+        const backP = found.piece, bt = backP.toLowerCase();
+        if((bt === 'b' || bt === 'r' || bt === 'q') && isW(backP) === byW){
+          /* حالا با نگاه از مهرهٔ پشتی، آیا خانه‌ای جدید تهدید می‌شود؟ */
+          const dirs = bt === 'b' ? B_DIRS : bt === 'r' ? R_DIRS : B_DIRS.concat(R_DIRS);
+          for(const [dr2, dc2] of dirs){
+            let rr2 = (found.sq >> 3) + dr2, cc2 = (found.sq & 7) + dc2;
+            while(rr2 >= 0 && rr2 < 8 && cc2 >= 0 && cc2 < 8){
+              const sq2 = rr2*8 + cc2;
+              const q = s1.board[sq2];
+              if(q){
+                if(colorOf(q) !== mover && !attacked(s0, sq2, byW)){
+                  out.push('⚡ حملهٔ برخاست — ' + this.FA_PIECE[bt] + ' پشت این حرکت به ' + this.FA_PIECE[q.toLowerCase()] + ' ' + sqName(sq2) + ' حمله می‌کند');
+                }
+                break;
+              }
+              rr2 += dr2; cc2 += dc2;
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    return out;
   },
 
   // نکات راهبردی کلی بر اساس وضعیت فعلی (برای بازیکن)
@@ -189,18 +350,45 @@ const Coach = {
     const phase = this.gamePhase(s);
     const myW = s.turn === 'w';
 
+    /* ---- فاز شروع بازی ---- */
     if(phase === 'opening'){
       const rights = myW ? (s.castling.K || s.castling.Q) : (s.castling.k || s.castling.q);
-      if(rights) parts.push('هنوز قلعه نرفته‌ای — امنیت شاه را زود تأمین کن 🛡️');
-      let back = 0;
-      const homeSquares = myW ? [57,58,59,61,62] : [1,2,3,5,6];
-      for(const sq of homeSquares){
-        const p = s.board[sq];
-        if(p && (p.toLowerCase() === 'n' || p.toLowerCase() === 'b')) back++;
+      const myK = s.board.indexOf(myW ? 'K' : 'k');
+      const kOnHome = myW ? myK === 60 : myK === 4;
+      if(rights && kOnHome){
+        const developedCount = this._developedCount(s, myW);
+        if(developedCount >= 3){
+          parts.push('گسترش خوبی داشته‌ای — الان زمان قلعه رفتن است تا شاه امن شود 🛡️');
+        } else {
+          parts.push('هدف اصلی: گسترش اسب‌ها و فیل‌ها، سپس قلعه');
+        }
       }
-      if(back >= 3) parts.push('مهره‌های سبک هنوز در خانهٔ اولیه‌اند — آن‌ها را بگسترش کن');
+      /* کنترل مرکز */
+      if(!this._controlsCenter(s, myW)){
+        parts.push('مرکز صفحه را از دست نده — با پیاده یا مهره کنترلش کن');
+      }
     }
 
+    /* ---- فاز وسط بازی ---- */
+    if(phase === 'middlegame'){
+      const myK = s.board.indexOf(myW ? 'K' : 'k');
+      const enemyW = !myW;
+      /* اگر شاه در مرکز است و قلعه نرفته */
+      const kFile = myK & 7;
+      if(kFile >= 3 && kFile <= 4 && (s.castling.K || s.castling.Q || s.castling.k || s.castling.q)){
+        parts.push('⚠️ شاهت هنوز در مرکز است — قلعه رفتن یا فرار به جناح امن را در اولویت بگذار');
+      }
+      /* تعویض مفید */
+      const myMat = this._material(s, myW);
+      const opMat = this._material(s, !myW);
+      if(myMat > opMat + 2){
+        parts.push('تو جلوتری — به دنبال تعویض مهره‌ها و ساده‌سازی برای رسیدن به پایان بازی برنده باش');
+      } else if(opMat > myMat + 2){
+        parts.push('تو عقب هستی — بازی را پیچیده نگه دار و از تعویض‌های بی‌دلیل پرهیز کن');
+      }
+    }
+
+    /* ---- فاز پایان بازی ---- */
     if(phase === 'endgame'){
       let myP = 0, opP = 0;
       for(const p of s.board){
@@ -208,15 +396,97 @@ const Coach = {
           if(isW(p) === myW) myP++; else opP++;
         }
       }
-      if(myP > opP) parts.push('آخر بازی است و پیادهٔ اضافی داری — آن را به سمت ارتقا پیش ببر 🚀');
-      parts.push('در آخر بازی، شاه یک مهرهٔ جنگنده است — آن را فعال کن');
+      if(myP > opP){
+        parts.push('پیادهٔ اضافی داری — آن را به سمت ارتقا پیش ببر 🚀');
+      } else if(opP > myP){
+        parts.push('حریف پیادهٔ اضافی دارد — روی متوقف کردن پیادهٔ رونده‌اش تمرکز کن');
+      }
+      parts.push('در پایان بازی، شاه یک مهرهٔ جنگنده است — آن را به مرکز بیاور');
     }
 
+    /* ---- هشدار مهره‌های بی‌دفاع (اولویت اول) ---- */
     const hang = this.hangingPieces(s, s.turn);
-    if(hang.length)
-      parts.push('مراقب باش: ' + hang.slice(0,2).map(h => h.san).join(' و ') + ' بی‌دفاع است!');
+    if(hang.length){
+      const top = hang[0];
+      if(top.val >= 5){
+        parts.unshift('🚨 خطر فوری: ' + top.san + ' — این مهرهٔ ارزشمند در تیررس است!');
+      } else if(top.val >= 3){
+        parts.unshift('⚠️ ' + top.san + ' بی‌دفاع است — یا آن را نجات بده یا از حملهٔ متقابل استفاده کن');
+      } else {
+        parts.push('مراقب باش: ' + hang.slice(0,2).map(h => h.san).join(' و'));
+      }
+    }
+
+    /* ---- اگر حریف شاه را در خطر دارد، به حمله تشویق کن ---- */
+    const enemyW = !myW;
+    const enemyK = s.board.indexOf(enemyW ? 'K' : 'k');
+    if(enemyK >= 0){
+      const enemyKingExposed = this._isKingExposed(s, enemyW);
+      if(enemyKingExposed && phase !== 'endgame'){
+        parts.push('👑 شاه حریف ناامن است — به دنبال حمله و باز کردن خطوط به سمت او باش');
+      }
+    }
 
     return parts;
+  },
+
+  /* ---------- توابع کمکی ---------- */
+  _developedCount(s, white){
+    let n = 0;
+    const homeSquares = white ? [57, 58, 59, 61, 62] : [1, 2, 3, 5, 6];
+    for(const sq of homeSquares){
+      const p = s.board[sq];
+      if(p && (p.toLowerCase() === 'n' || p.toLowerCase() === 'b')) n++;
+    }
+    /* ۵ خانهٔ اولیه - اگر پشت سفید ۰ باشد یعنی همه گسترش یافته */
+    return 5 - n;
+  },
+
+  _controlsCenter(s, white){
+    const centerFiles = [3, 4];
+    for(let sq = 0; sq < 64; sq++){
+      const p = s.board[sq];
+      if(!p || isW(p) !== white) continue;
+      if(p.toLowerCase() === 'p'){
+        const file = sq & 7;
+        if(file >= 3 && file <= 4) return true;
+      }
+    }
+    /* کنترل غیرمستقیم با مهره‌های سبک در مرکز */
+    for(const sq of [27, 28, 35, 36]){
+      const p = s.board[sq];
+      if(p && isW(p) === white) return true;
+    }
+    return false;
+  },
+
+  _material(s, white){
+    let m = 0;
+    for(const p of s.board){
+      if(!p || isW(p) !== white) continue;
+      m += this.FA_VAL[p.toLowerCase()] || 0;
+    }
+    return m;
+  },
+
+  _isKingExposed(s, white){
+    const k = s.board.indexOf(white ? 'K' : 'k');
+    if(k < 0) return false;
+    const r = k >> 3, c = k & 7;
+    /* فرض کن اگر شاه قلعه نرفته و در مرکز است، ناامن است */
+    const notCastled = (c >= 3 && c <= 4);
+    /* یا اگر پیاده‌های اطرافش حرکت کرده‌اند */
+    let shieldMissing = 0;
+    const shieldRanks = white ? [-1] : [1];
+    for(const dr of shieldRanks){
+      for(const dc of [-1, 0, 1]){
+        const rr = r + dr, cc = c + dc;
+        if(rr < 0 || rr > 7 || cc < 0 || cc > 7) continue;
+        const p = s.board[rr*8 + cc];
+        if(!p || p.toLowerCase() !== 'p' || isW(p) !== white) shieldMissing++;
+      }
+    }
+    return notCastled || shieldMissing >= 2;
   },
 
   /* ============================================================
