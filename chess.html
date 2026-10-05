@@ -978,7 +978,11 @@ const clock = {
 
 function formatClock(ms){
   if(ms < 0) ms = 0;
-  if(ms < 10000){
+  /* برای بازی‌های کوتاه (Bullet/Blitz) یا زیر ۲۰ ثانیه، دهم ثانیه نمایش بده
+     تا شمارش زنده و محسوس باشد */
+  const shortGame = clock.initialBase && clock.initialBase <= 5;
+  const showTenths = shortGame || ms < 20000;
+  if(showTenths){
     const totalTenths = Math.floor(ms / 100);
     const m = Math.floor(totalTenths / 600);
     const s = Math.floor((totalTenths % 600) / 10);
@@ -1005,6 +1009,7 @@ function setupClock(tc){
   clock.white = base * 60 * 1000;
   clock.black = base * 60 * 1000;
   clock.increment = (inc || 0) * 1000;
+  clock.initialBase = base;   /* زمان اولیه برای فرمت نمایش */
   clock.activeSide = null;
   renderClocks();
 }
@@ -1249,10 +1254,13 @@ function newGame(){
   setupClock(timeControl);
   render();
   Coach.reset();
-  if(humanColor==='b'){opponentGo();}
+  if(clock.enabled) startClock('w');
+  if(humanColor==='b'){
+    setStatus('بازی جدید — نوبت حریف است ⏳');
+    opponentGo();
+  }
   else{
     setStatus('بازی جدید — نوبت شماست ♙');
-    if(clock.enabled) startClock('w');
   }
 }
 function undo(){
@@ -1330,11 +1338,15 @@ function sfOpponentGo(){
   }
   sfSend('setoption name Skill Level value '+LEVELS_SF[level].skill);
   sfSend('position startpos'+(hist.length?' moves '+hist.map(h=>h.uci).join(' '):''));
+  /* زمان شروع فکر کردن موتور را ثبت کن */
+  onBestmove._t0 = Date.now();
   sfSend('go depth '+maxDepth);
 }
 function aiOpponentGo(){
   thinking=true;searchGen=gameId;searchSide=S.turn;searchRole='opponent';render();
   setStatus('🤖 حریف فکر می‌کند…');
+  /* در حالت زمان‌دار، حداقل ۵۰۰ms فکر کن تا شمارنده محسوس باشد */
+  const minDelay = clock.enabled ? 500 : 250;
   setTimeout(()=>{
     if(searchGen!==gameId||gameOver){thinking=false;render();return;}
     const depths=[1,2,3,4,4],jitters=[90,35,15,10,10];
@@ -1342,7 +1354,7 @@ function aiOpponentGo(){
     thinking=false;
     if(searchGen!==gameId||gameOver){render();return;}
     if(res){lastEval={mate:false,white:S.turn==='w'?res.v:-res.v};updateEvalBar();applyMove(res.m);}
-  },250);
+    },minDelay);
 }
 
 /* ================= اتصال به استاک‌فیش ================= */
@@ -1396,7 +1408,25 @@ function onBestmove(token){
   const role=searchRole;searchRole=null;
   if(searchGen!==gameId||gameOver){Coach.busy=false;thinking=false;render();return;}
   if(role==='coach'){Coach.bestmove(token);return;}
+  /* اگر زمان‌دار است، حداقل ۵۰۰ms صبر کن تا ساعت موتور محسوس بچرخد */
+  const minThinkMs = clock.enabled ? 500 : 0;
+  const elapsed = Date.now() - (onBestmove._t0 || Date.now());
+  if(minThinkMs && onBestmove._t0){
+    const wait = Math.max(0, minThinkMs - elapsed);
+    if(wait > 0){
+      setTimeout(() => {
+        thinking=false;
+        onBestmove._t0 = 0;
+        const from=parseSq(token.slice(0,2)),to=parseSq(token.slice(2,4)),promo=token[4]||null;
+        const m=legalMoves(S).find(x=>x.from===from&&x.to===to&&(x.promo||null)===(promo||null));
+        if(!m){setStatus('⚠️ حرکت نامعتبر از موتور');render();return;}
+        applyMove(m);
+      }, wait);
+      return;
+    }
+  }
   thinking=false;
+  onBestmove._t0 = 0;
   const from=parseSq(token.slice(0,2)),to=parseSq(token.slice(2,4)),promo=token[4]||null;
   const m=legalMoves(S).find(x=>x.from===from&&x.to===to&&(x.promo||null)===(promo||null));
   if(!m){setStatus('⚠️ حرکت نامعتبر از موتور');render();return;}
