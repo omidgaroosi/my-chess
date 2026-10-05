@@ -268,6 +268,68 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
   .tbtn{font-size:11px;padding:4px 6px}
 }
 </style>
+<style>
+/* ============================================================
+   🛠️ اصلاح اسکرول موبایل — نسخهٔ ۱.۱
+   ------------------------------------------------------------
+   این بلوک intentionally بعد از style اصلی می‌آید تا با
+   specificity بر آن اولویت داشته باشد و مشکلی که در نسخهٔ
+   قبلی باعث گیر کردن اسکرول شده بود را برطرف کند.
+   ============================================================ */
+
+/* ۱) حذف محدودیت‌های اسکرول از body */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body {
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto !important;   /* قبلاً contain بود — این باعث گیر کردن می‌شد */
+  touch-action: auto !important;            /* قبلاً manipulation بود — این با اسکرول تضاد داشت */
+  min-height: 100dvh;
+  height: auto !important;
+}
+
+/* ۲) حذف contain از board-frame (گاهی اسکرول والد را بلاک می‌کند) */
+.board-frame {
+  contain: none !important;
+}
+
+/* ۳) اجازه دادن به اسکرول از روی خود صفحهٔ شطرنج
+   (چون بیشتر فضای صفحه را اشغال می‌کند و کاربر از همان‌جا اسکرول می‌کند) */
+#board,
+#lboard,
+#mini-board,
+#quizBoard {
+  touch-action: pan-y !important;   /* فقط اسکرول عمودی مجاز */
+}
+
+/* ۴) روی دکمه‌ها و کنترل‌ها، double-tap zoom را غیرفعال کن
+   (ولی اسکرول را مختل نکن) */
+button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
+  touch-action: manipulation;
+}
+
+/* ۵) اسکرول نرم در لیست‌ها */
+#moves, #coachLog, .slist, #openMoves, #lessonView, #openView {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: auto;
+}
+
+/* ۶) اطمینان از این‌که محتوای اصلی بالای صفحه قرار نگیرد */
+.app, .layout, .content, .stage, .panel {
+  position: relative;
+}
+
+/* ۷) در موبایل، فاصلهٔ پایین بیشتر تا اسکرول راحت‌تر باشد */
+@media (max-width: 700px) {
+  body {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+</style>
 </head>
 <body>
 <h1>♞ شطرنج با استاک‌فیش 🎓</h1>
