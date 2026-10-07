@@ -232,9 +232,9 @@ window.LiveLessons = (() => {
     html += '<div class="puzzle-feedback" id="puzzleFeedback">نوبت ' +
       (turn === 'w' ? '⚪ سفید' : '⚫ مشکی') + ' است — بهترین حرکت را پیدا کن.</div>';
     html += '<div class="puzzle-controls">' +
-      '<button onclick="LiveLessons.hint()">💡 راهنمایی</button>' +
-      '<button onclick="LiveLessons.retry()">🔄 از اول</button>' +
-      '<button class="primary" onclick="LiveLessons.showSolution()">👁 پاسخ</button>' +
+      '<button type="button" data-action="hint">💡 راهنمایی</button>' +
+      '<button type="button" data-action="retry">🔄 از اول</button>' +
+      '<button type="button" class="primary" data-action="solution">👁 پاسخ</button>' +
     '</div>';
     html += '<div class="puzzle-explain hidden" id="puzzleExplain"></div>';
     html += '<div id="puzzleNextWrap" class="hidden" style="margin-top:12px">' +
@@ -242,6 +242,17 @@ window.LiveLessons = (() => {
     '</div>';
     html += '</div>';
     container.innerHTML = html;
+        /* اتصال دکمه‌ها با addEventListener */
+    container.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const a = btn.dataset.action;
+        if(a === 'hint') hint();
+        else if(a === 'retry') retry();
+        else if(a === 'solution') showSolution();
+      });
+    });
     renderBoard(board, [], null);
   }
 
