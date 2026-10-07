@@ -2944,7 +2944,7 @@ function renderRatingChart(d){
 }
 /* ================= تب‌ها و شروع ================= */
 function switchTab(name){
-  ['game','learn','open','puzzle'].forEach(t=>{
+  ['game','learn','open','puzzle','books'].forEach(t=>{
     $('tab-'+t).classList.toggle('hidden',t!==name);
     $('tbtn-'+t).classList.toggle('active',t===name);
   });
@@ -2953,6 +2953,9 @@ function switchTab(name){
   if(name==='puzzle'){
     if(!puzzleState) loadTodaysPuzzle();
     else { renderPuzzleBoard(); updatePuzzleStats(); }
+  }
+  if(name==='books'){
+    LiveLessons.init();
   }
 }
 $('search').addEventListener('input',e=>renderLearnList(e.target.value));
