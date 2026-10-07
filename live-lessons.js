@@ -1,11 +1,11 @@
 "use strict";
 /* ============================================================
-   📖 live-lessons.js — موتور «آموزش زنده» (نسخهٔ 2.0)
+   📖 live-lessons.js — موتور «آموزش زنده» (نسخهٔ 3.0)
    ------------------------------------------------------------
-   - مهره‌های SVG مثل صفحهٔ اصلی
-   - اندازهٔ بزرگ‌تر و خوانا
-   - ذخیره و بازیابی موقعیت (کتاب/فصل/درس)
-   - دکمه‌های کارآمد
+   - Event Delegation (۱۰۰٪ مقاوم به هر تغییر DOM)
+   - مهره‌های SVG صفحهٔ اصلی
+   - ذخیرهٔ موقعیت
+   - _debug() برای عیب‌یابی
    ساخته شده توسط امید گروسی
    ============================================================ */
 
@@ -17,7 +17,6 @@ window.LiveLessons = (() => {
   let curBook = null;
   let curChapter = null;
   let curLesson = null;
-
   let board = null;
   let selectedSq = null;
   let stepIndex = 0;
@@ -26,7 +25,7 @@ window.LiveLessons = (() => {
   let attempts = 0;
   let lastMove = null;
 
-  /* ---------- ذخیره‌سازی ---------- */
+  /* ---------- ذخیره ---------- */
   function loadProgress() {
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
     catch(e) { return {}; }
@@ -48,7 +47,6 @@ window.LiveLessons = (() => {
         if(ls.type === 'puzzle') { total++; if(p[ls.id]) solved++; }
     return { total, solved };
   }
-
   function savePosition() {
     try {
       if(!curBook) { localStorage.removeItem(POSITION_KEY); return; }
@@ -67,29 +65,22 @@ window.LiveLessons = (() => {
       const book = BOOKS_DB.find(b => b.id === p.bookId);
       if(!book) { showBookList(); return; }
       curBook = book;
-      if(p.chapterId)
-        curChapter = curBook.chapters.find(c => c.id === p.chapterId) || null;
-      if(curChapter && p.lessonId)
-        curLesson = curChapter.lessons.find(l => l.id === p.lessonId) || null;
-
+      if(p.chapterId) curChapter = curBook.chapters.find(c => c.id === p.chapterId) || null;
+      if(curChapter && p.lessonId) curLesson = curChapter.lessons.find(l => l.id === p.lessonId) || null;
       if(curLesson) {
         if(curLesson.type === 'read') showReadLesson();
         else showPuzzleLesson();
-      } else if(curChapter) {
-        openChapter(curChapter.id);
-      } else {
-        openBook(curBook.id);
-      }
+      } else if(curChapter) openChapter(curChapter.id);
+      else openBook(curBook.id);
     } catch(e) { showBookList(); }
   }
 
-  /* ---------- مهره‌ها: SVG صفحهٔ اصلی ---------- */
+  /* ---------- مهره ---------- */
   function renderPiece(p) {
     const white = p === p.toUpperCase();
     if(typeof pieceSvg === 'function') {
       return '<span class="piece ' + (white ? 'w' : 'b') + '">' + pieceSvg(p, white) + '</span>';
     }
-    /* fallback فقط اگر pieces.js بار نشده باشد */
     const G = {k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
     return '<span class="piece ' + (white ? 'w' : 'b') + '">' + G[p.toLowerCase()] + '</span>';
   }
@@ -100,13 +91,14 @@ window.LiveLessons = (() => {
     savePosition();
     const header = document.getElementById('booksHeader');
     const container = document.getElementById('booksContent');
+    if(!container) return;
     header.innerHTML = '<h2>📖 آموزش زنده</h2>' +
       '<p style="color:#9aa0ae;font-size:13px;margin-top:6px">محتوای اقتباس‌شده از کتاب‌های مرجع شطرنج — درس‌ها را بخوان و پازل‌ها را حل کن.</p>';
     let html = '<div class="books-grid">';
     for(const b of BOOKS_DB) {
       const prog = bookProgress(b);
       const pct = prog.total ? Math.round(100 * prog.solved / prog.total) : 0;
-      html += '<div class="book-card" onclick="LiveLessons.openBook(\'' + b.id + '\')">' +
+      html += '<div class="book-card" data-action="open-book" data-book-id="' + b.id + '">' +
         '<div class="book-icon" style="color:' + b.color + '">' + b.icon + '</div>' +
         '<div class="book-title">' + b.title + '</div>' +
         '<div class="book-author">' + b.author + ' — ' + b.year + '</div>' +
@@ -120,7 +112,7 @@ window.LiveLessons = (() => {
     container.innerHTML = html;
   }
 
-  /* ---------- باز کردن کتاب ---------- */
+  /* ---------- کتاب ---------- */
   function openBook(bookId) {
     curBook = BOOKS_DB.find(b => b.id === bookId);
     if(!curBook) return;
@@ -128,7 +120,7 @@ window.LiveLessons = (() => {
     savePosition();
     document.getElementById('booksHeader').innerHTML = '';
     const container = document.getElementById('booksContent');
-    let html = '<button class="back-btn" onclick="LiveLessons.showBookList()">← بازگشت به کتاب‌ها</button>';
+    let html = '<button class="back-btn" data-action="home">← بازگشت به کتاب‌ها</button>';
     html += '<div class="book-header" style="border-color:' + curBook.color + '">' +
       '<div class="book-icon-big" style="color:' + curBook.color + '">' + curBook.icon + '</div>' +
       '<h2>' + curBook.title + '</h2>' +
@@ -140,7 +132,7 @@ window.LiveLessons = (() => {
       const solvedCount = puzzles.filter(l => isSolved(l.id)).length;
       const hasLessons = ch.lessons.length > 0;
       html += '<div class="chapter-card' + (hasLessons ? '' : ' empty') + '" ' +
-        (hasLessons ? 'onclick="LiveLessons.openChapter(\'' + ch.id + '\')"' : '') + '>' +
+        (hasLessons ? 'data-action="open-chapter" data-chapter-id="' + ch.id + '"' : '') + '>' +
         '<h3>' + ch.title + '</h3>' +
         '<div class="chapter-sub">' + ch.titleEn + '</div>' +
         '<p>' + ch.intro + '</p>' +
@@ -153,28 +145,28 @@ window.LiveLessons = (() => {
     container.innerHTML = html;
   }
 
-  /* ---------- باز کردن فصل ---------- */
+  /* ---------- فصل ---------- */
   function openChapter(chapterId) {
     curChapter = curBook.chapters.find(c => c.id === chapterId);
     if(!curChapter) return;
     curLesson = null;
     savePosition();
     const container = document.getElementById('booksContent');
-    let html = '<button class="back-btn" onclick="LiveLessons.openBook(\'' + curBook.id + '\')">← ' + curBook.title + '</button>';
+    let html = '<button class="back-btn" data-action="back-book">← ' + curBook.title + '</button>';
     html += '<h2 class="chapter-title">' + curChapter.title + '</h2>';
     html += '<p class="chapter-intro">' + curChapter.intro + '</p>';
     html += '<div class="lessons-list">';
     let idx = 0;
     for(const ls of curChapter.lessons) {
       if(ls.type === 'read') {
-        html += '<div class="lesson-row read" onclick="LiveLessons.openLesson(\'' + ls.id + '\')">' +
+        html += '<div class="lesson-row read" data-action="open-lesson" data-lesson-id="' + ls.id + '">' +
           '<span class="lesson-icon">📘</span>' +
           '<span class="lesson-title">' + ls.title + '</span>' +
           '<span class="lesson-tag">درس</span></div>';
       } else {
         idx++;
         const done = isSolved(ls.id) ? '✅' : '⬜';
-        html += '<div class="lesson-row puzzle" onclick="LiveLessons.openLesson(\'' + ls.id + '\')">' +
+        html += '<div class="lesson-row puzzle" data-action="open-lesson" data-lesson-id="' + ls.id + '">' +
           '<span class="lesson-icon">' + done + '</span>' +
           '<span class="lesson-title">پازل ' + idx + ' — ' + ls.title + '</span>' +
           '<span class="lesson-tag">حل کن</span></div>';
@@ -184,7 +176,7 @@ window.LiveLessons = (() => {
     container.innerHTML = html;
   }
 
-  /* ---------- باز کردن درس ---------- */
+  /* ---------- درس ---------- */
   function openLesson(lessonId) {
     curLesson = curChapter.lessons.find(l => l.id === lessonId);
     if(!curLesson) return;
@@ -197,7 +189,7 @@ window.LiveLessons = (() => {
   function showReadLesson() {
     const L = curLesson;
     const container = document.getElementById('booksContent');
-    let html = '<button class="back-btn" onclick="LiveLessons.openChapter(\'' + curChapter.id + '\')">← ' + curChapter.title + '</button>';
+    let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
     html += '<div class="read-lesson"><h2>' + L.title + '</h2>';
     for(const p of L.text) html += '<p>' + p + '</p>';
     if(L.board) {
@@ -224,7 +216,7 @@ window.LiveLessons = (() => {
 
     const turn = L.fen.split(' ')[1];
     const container = document.getElementById('booksContent');
-    let html = '<button class="back-btn" onclick="LiveLessons.openChapter(\'' + curChapter.id + '\')">← ' + curChapter.title + '</button>';
+    let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
     html += '<div class="puzzle-lesson">';
     html += '<h2>' + L.title + '</h2>';
     html += '<div class="puzzle-text">' + L.text[0] + '</div>';
@@ -232,33 +224,20 @@ window.LiveLessons = (() => {
     html += '<div class="puzzle-feedback" id="puzzleFeedback">نوبت ' +
       (turn === 'w' ? '⚪ سفید' : '⚫ مشکی') + ' است — بهترین حرکت را پیدا کن.</div>';
     html += '<div class="puzzle-controls">' +
-      '<button type="button" id="btnHint">💡 راهنمایی</button>' +
-      '<button type="button" id="btnRetry">🔄 از اول</button>' +
-      '<button type="button" id="btnSolution" class="primary">👁 پاسخ</button>' +
+      '<button type="button" data-action="hint">💡 راهنمایی</button>' +
+      '<button type="button" data-action="retry">🔄 از اول</button>' +
+      '<button type="button" data-action="solution" class="primary">👁 پاسخ</button>' +
     '</div>';
     html += '<div class="puzzle-explain hidden" id="puzzleExplain"></div>';
     html += '<div id="puzzleNextWrap" class="hidden" style="margin-top:12px">' +
-      '<button type="button" id="btnNext" class="primary" style="width:100%">درس بعدی ←</button>' +
+      '<button type="button" data-action="next" class="primary" style="width:100%">درس بعدی ←</button>' +
     '</div>';
     html += '</div>';
     container.innerHTML = html;
-
-    /* اتصال دکمه‌ها به‌صورت مستقیم — ۱۰۰٪ قابل اعتماد */
-    const bH = document.getElementById('btnHint');
-    const bR = document.getElementById('btnRetry');
-    const bS = document.getElementById('btnSolution');
-    if(bH) bH.addEventListener('click', e => { e.preventDefault(); hint(); });
-    if(bR) bR.addEventListener('click', e => { e.preventDefault(); retry(); });
-    if(bS) bS.addEventListener('click', e => { e.preventDefault(); showSolution(); });
-
-    /* اتصال دکمهٔ «درس بعدی» */
-    const bN = document.getElementById('btnNext');
-    if(bN) bN.addEventListener('click', e => { e.preventDefault(); nextLesson(); });
-
     renderBoard(board, [], null);
   }
 
-  /* ---------- رندر صفحه ---------- */
+  /* ---------- رندر ---------- */
   function renderBoard(b, highlights, last) {
     const el = document.getElementById('lessonBoard');
     if(!el) return;
@@ -293,15 +272,19 @@ window.LiveLessons = (() => {
   function onBoardClick(e) {
     if(!curLesson || curLesson.type !== 'puzzle') return;
     if(failed) return;
-    /* بعد از حل، فقط انتخاب مهره آزاد است ولی حرکت اعتبارسنجی نمی‌شود */
     const cell = e.target.closest('[data-bsq]');
     if(!cell) return;
     const sq = +cell.dataset.bsq;
-
     const turn = curLesson.fen.split(' ')[1];
     const piece = board[sq];
     const isW = p => p && p === p.toUpperCase();
     const pieceColor = piece ? (isW(piece) ? 'w' : 'b') : null;
+
+    if(solved) {
+      selectedSq = (selectedSq === sq) ? null : (pieceColor === turn ? sq : null);
+      renderBoard(board, [], lastMove);
+      return;
+    }
 
     if(selectedSq != null) {
       const expected = curLesson.solution[stepIndex];
@@ -335,12 +318,6 @@ window.LiveLessons = (() => {
       return;
     }
 
-    if(solved) {
-      /* حالت آزاد: فقط انتخاب/لغو انتخاب */
-      selectedSq = (selectedSq === sq) ? null : (pieceColor === turn ? sq : null);
-      renderBoard(board, [], lastMove);
-      return;
-    }
     if(pieceColor === turn) {
       selectedSq = sq;
       renderBoard(board, [], lastMove);
@@ -383,10 +360,7 @@ window.LiveLessons = (() => {
     markSolved(curLesson.id);
     setFeedback('🎉 آفرین! پازل را حل کردی.', 'correct');
     const ex = document.getElementById('puzzleExplain');
-    if(ex) {
-      ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation;
-      ex.classList.remove('hidden');
-    }
+    if(ex) { ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation; ex.classList.remove('hidden'); }
     const nw = document.getElementById('puzzleNextWrap');
     if(nw) nw.classList.remove('hidden');
     renderBoard(board, [], lastMove);
@@ -401,7 +375,8 @@ window.LiveLessons = (() => {
 
   /* ---------- دکمه‌ها ---------- */
   function hint() {
-    if(!curLesson || solved) return;
+    if(!curLesson) { console.warn('هیچ درسی باز نیست'); return; }
+    if(solved) return;
     setFeedback('💡 <b>راهنمایی:</b> ' + curLesson.hint, '');
   }
   function retry() {
@@ -412,10 +387,7 @@ window.LiveLessons = (() => {
     if(!curLesson || solved) return;
     setFeedback('👁 پاسخ: <b>' + curLesson.solutionSan + '</b>', '');
     const ex = document.getElementById('puzzleExplain');
-    if(ex) {
-      ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation;
-      ex.classList.remove('hidden');
-    }
+    if(ex) { ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation; ex.classList.remove('hidden'); }
     solved = true;
     const nw = document.getElementById('puzzleNextWrap');
     if(nw) nw.classList.remove('hidden');
@@ -430,7 +402,7 @@ window.LiveLessons = (() => {
     openLesson(curChapter.lessons[idx + 1].id);
   }
 
-  /* ---------- ابزار FEN ---------- */
+  /* ---------- FEN ---------- */
   function parseFENLocal(fen) {
     const b = new Array(64).fill(null);
     let sq = 0;
@@ -446,10 +418,48 @@ window.LiveLessons = (() => {
     return (8 - (+s[1])) * 8 + f;
   }
 
+  /* ---------- Event Delegation — کلید حل مشکل ---------- */
+  function attachDelegation() {
+    const container = document.getElementById('booksContent');
+    if(!container) { console.error('booksContent پیدا نشد'); return; }
+    if(container._delegated) return;
+    container._delegated = true;
+
+    container.addEventListener('click', e => {
+      const target = e.target.closest('[data-action]');
+      if(!target) return;
+      const action = target.dataset.action;
+
+      if(action === 'home') showBookList();
+      else if(action === 'open-book') openBook(target.dataset.bookId);
+      else if(action === 'back-book') openBook(curBook.id);
+      else if(action === 'open-chapter') openChapter(target.dataset.chapterId);
+      else if(action === 'back-chapter') openChapter(curChapter.id);
+      else if(action === 'open-lesson') openLesson(target.dataset.lessonId);
+      else if(action === 'hint') hint();
+      else if(action === 'retry') retry();
+      else if(action === 'solution') showSolution();
+      else if(action === 'next') nextLesson();
+    });
+  }
+
   /* ---------- API ---------- */
   return {
     showBookList, openBook, openChapter, openLesson,
     hint, retry, showSolution, nextLesson,
-    init() { restorePosition(); }
+    init() { attachDelegation(); restorePosition(); },
+    _debug() {
+      return {
+        curBook: curBook ? curBook.id : null,
+        curChapter: curChapter ? curChapter.id : null,
+        curLesson: curLesson ? curLesson.id : null,
+        boardExists: !!board,
+        solved, failed, attempts, stepIndex,
+        feedbackEl: !!document.getElementById('puzzleFeedback'),
+        boardEl: !!document.getElementById('lessonBoard'),
+        delegated: !!document.getElementById('booksContent')?._delegated,
+        booksContentCount: document.querySelectorAll('#booksContent').length
+      };
+    }
   };
 })();
