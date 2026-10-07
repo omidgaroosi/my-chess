@@ -232,27 +232,29 @@ window.LiveLessons = (() => {
     html += '<div class="puzzle-feedback" id="puzzleFeedback">نوبت ' +
       (turn === 'w' ? '⚪ سفید' : '⚫ مشکی') + ' است — بهترین حرکت را پیدا کن.</div>';
     html += '<div class="puzzle-controls">' +
-      '<button type="button" data-action="hint">💡 راهنمایی</button>' +
-      '<button type="button" data-action="retry">🔄 از اول</button>' +
-      '<button type="button" class="primary" data-action="solution">👁 پاسخ</button>' +
+      '<button type="button" id="btnHint">💡 راهنمایی</button>' +
+      '<button type="button" id="btnRetry">🔄 از اول</button>' +
+      '<button type="button" id="btnSolution" class="primary">👁 پاسخ</button>' +
     '</div>';
     html += '<div class="puzzle-explain hidden" id="puzzleExplain"></div>';
     html += '<div id="puzzleNextWrap" class="hidden" style="margin-top:12px">' +
-      '<button class="primary" style="width:100%" onclick="LiveLessons.nextLesson()">درس بعدی ←</button>' +
+      '<button type="button" id="btnNext" class="primary" style="width:100%">درس بعدی ←</button>' +
     '</div>';
     html += '</div>';
     container.innerHTML = html;
-        /* اتصال دکمه‌ها با addEventListener */
-    container.querySelectorAll('[data-action]').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        const a = btn.dataset.action;
-        if(a === 'hint') hint();
-        else if(a === 'retry') retry();
-        else if(a === 'solution') showSolution();
-      });
-    });
+
+    /* اتصال دکمه‌ها به‌صورت مستقیم — ۱۰۰٪ قابل اعتماد */
+    const bH = document.getElementById('btnHint');
+    const bR = document.getElementById('btnRetry');
+    const bS = document.getElementById('btnSolution');
+    if(bH) bH.addEventListener('click', e => { e.preventDefault(); hint(); });
+    if(bR) bR.addEventListener('click', e => { e.preventDefault(); retry(); });
+    if(bS) bS.addEventListener('click', e => { e.preventDefault(); showSolution(); });
+
+    /* اتصال دکمهٔ «درس بعدی» */
+    const bN = document.getElementById('btnNext');
+    if(bN) bN.addEventListener('click', e => { e.preventDefault(); nextLesson(); });
+
     renderBoard(board, [], null);
   }
 
@@ -290,7 +292,8 @@ window.LiveLessons = (() => {
   /* ---------- کلیک روی صفحه ---------- */
   function onBoardClick(e) {
     if(!curLesson || curLesson.type !== 'puzzle') return;
-    if(solved || failed) return;
+    if(failed) return;
+    /* بعد از حل، فقط انتخاب مهره آزاد است ولی حرکت اعتبارسنجی نمی‌شود */
     const cell = e.target.closest('[data-bsq]');
     if(!cell) return;
     const sq = +cell.dataset.bsq;
@@ -332,6 +335,12 @@ window.LiveLessons = (() => {
       return;
     }
 
+    if(solved) {
+      /* حالت آزاد: فقط انتخاب/لغو انتخاب */
+      selectedSq = (selectedSq === sq) ? null : (pieceColor === turn ? sq : null);
+      renderBoard(board, [], lastMove);
+      return;
+    }
     if(pieceColor === turn) {
       selectedSq = sq;
       renderBoard(board, [], lastMove);
