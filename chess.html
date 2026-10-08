@@ -603,6 +603,19 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
   pointer-events:none;
   background:rgba(76,175,80,.28);
 }
+/* ---------- کنترل سرعت سینما ---------- */
+#gvSpeedLabel{
+  transition:color .2s;
+  user-select:none;
+}
+#gvSpeedLabel.speed-bump{
+  animation:speedBump .35s ease-out;
+}
+@keyframes speedBump{
+  0%{transform:scale(1);color:#9aa0ae}
+  40%{transform:scale(1.3);color:#ffd54f}
+  100%{transform:scale(1);color:#9aa0ae}
+}
 /* ---------- ابزار بررسی موقعیت ---------- */
 .tools-wrap{
   margin-top:14px;
@@ -3577,34 +3590,60 @@ const GamesViewer = {
       '<br><span style="color:#8a8f9c">برای دریافت تحلیل استاک‌فیش، دکمهٔ 🐟 پایین را بزن.</span>';
   },
 
-  /* پخش/توقف */
+  /* پخش/توقف — با setTimeout بازگشتی تا سرعت لحظه‌ای اعمال شود */
   togglePlay() {
     if(this.timer) { this.stopPlay(); return; }
     if(this.ply >= this.allBoards.length - 1) this.goTo(0);
-    $('gvBtnPlay').textContent = '⏸ توقف';
-    $('gvBtnPlay').classList.add('playing');
+    const btn = $('gvBtnPlay');
+    if(btn) { btn.textContent = '⏸ توقف'; btn.classList.add('playing'); }
+    this._scheduleNextStep();
+  },
+
+  /* ⏱ زمان‌بندی مرحلهٔ بعدی با سرعتِ فعلی */
+  _scheduleNextStep() {
     const interval = Math.round(this.baseMs / this.speed);
-    this.timer = setInterval(() => {
-      if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
-      this.goTo(this.ply + 1);
-    }, interval);
+    this.timer = setTimeout(() => this._playStep(), interval);
+  },
+
+  /* ▶️ یک گام پخش */
+  _playStep() {
+    if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
+    this.goTo(this.ply + 1);
+    this._scheduleNextStep();
   },
 
   stopPlay() {
-    if(this.timer) { clearInterval(this.timer); this.timer = null; }
+    if(this.timer) { clearTimeout(this.timer); this.timer = null; }
     const btn = $('gvBtnPlay');
     if(btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
   },
 
-  /* تنظیم سرعت */
+  /* ⚡ تنظیم سرعت — بدون توقف پخش */
   speed(delta) {
     const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
     const idx = steps.indexOf(this.speed);
-    let newIdx = Math.max(0, Math.min(steps.length - 1, (idx < 0 ? 1 : idx) + delta));
+    const newIdx = Math.max(0, Math.min(steps.length - 1, (idx < 0 ? 1 : idx) + delta));
     this.speed = steps[newIdx];
-    $('gvSpeedLabel').textContent = this.speed.toFixed(1) + 'x';
-    /* اگر در حال پخش بود، از نو شروع کن */
-    if(this.timer) { this.stopPlay(); this.togglePlay(); }
+
+    /* به‌روزرسانی برچسب با اعداد فارسی + انیمیشن کوتاه */
+    const label = $('gvSpeedLabel');
+    if(label) {
+      label.textContent = this._formatSpeed(this.speed) + 'x';
+      label.classList.remove('speed-bump');
+      void label.offsetWidth; /* reflow — برای ری‌استارت انیمیشن */
+      label.classList.add('speed-bump');
+    }
+
+    /* اگر در حال پخشیم، مرحلهٔ بعدی با سرعت جدید زمان‌بندی می‌شود */
+    if(this.timer) {
+      clearTimeout(this.timer);
+      this._scheduleNextStep();
+    }
+  },
+
+  /* 🔢 تبدیل اعداد لاتین به فارسی برای نمایش سرعت */
+  _formatSpeed(s) {
+    return String(s.toFixed(1)).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
   },
 
   /* تحلیل با استاک‌فیش */
