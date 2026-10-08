@@ -1,11 +1,12 @@
 "use strict";
 /* ============================================================
-   📖 live-lessons.js — موتور «آموزش زنده» (نسخهٔ 3.0)
+   📖 live-lessons.js — موتور «آموزش زنده» (نسخهٔ 4.0)
    ------------------------------------------------------------
-   - Event Delegation (۱۰۰٪ مقاوم به هر تغییر DOM)
+   - Event Delegation
    - مهره‌های SVG صفحهٔ اصلی
    - ذخیرهٔ موقعیت
-   - _debug() برای عیب‌یابی
+   - ادغام استاک‌فیش (دکمهٔ تحلیل)
+   - شماره‌گذاری خودکار پازل‌ها
    ساخته شده توسط امید گروسی
    ============================================================ */
 
@@ -26,163 +27,7 @@ window.LiveLessons = (() => {
   let lastMove = null;
   let _analysis = null;
   let _analysisHighlight = null;
-  /* پاک‌سازی عنوان — حذف پیشوند "پازل X — " */
-  function cleanTitle(title) {
-    const m = String(title).match(/^پازل\s*\d*\s*[—–-]\s*(.+)$/);
-    return m ? m[1] : title;
-  }
-    /* ---------- ادغام با استاک‌فیش ---------- */
-  function engineReadyForLesson() {
-    return typeof engineReady !== 'undefined' && engineReady &&
-           typeof sfSend === 'function' &&
-           typeof engine !== 'undefined' && engine === 'stockfish';
-  }
 
-  /* تبدیل موقعیت فعلی board به FEN — با استفاده از FEN اصلی درس */
-  function buildLessonFEN() {
-    if(!curLesson) return null;
-    if(curLesson.type === 'puzzle' && board) {
-      const orig = curLesson.fen.split(' ');
-      const turn = orig[1] || 'w';
-      const castling = orig[2] || '-';
-      const ep = orig[3] || '-';
-      const half = orig[4] || '0';
-      const full = orig[5] || '1';
-      let placement = '', empty = 0;
-      for(let r = 0; r < 8; r++) {
-        for(let c = 0; c < 8; c++) {
-          const p = board[r * 8 + c];
-          if(!p) empty++;
-          else {
-            if(empty) { placement += empty; empty = 0; }
-            placement += p;
-          }
-        }
-        if(empty) { placement += empty; empty = 0; }
-        if(r < 7) placement += '/';
-      }
-      return placement + ' ' + turn + ' ' + castling + ' ' + ep + ' ' + half + ' ' + full;
-    }
-    if(curLesson.type === 'read' && curLesson.board && curLesson.board.fen) {
-      return curLesson.board.fen;
-    }
-    return null;
-  }
-
-  /* تابع اتصال UCI به SAN (تقریبی) */
-  function uciToSan(uci) {
-    if(!uci || uci.length < 4) return uci;
-    const from = parseSqLocal(uci.slice(0, 2));
-    const to = parseSqLocal(uci.slice(2, 4));
-    const promo = uci[4] || null;
-    const piece = board ? board[from] : null;
-    const files = 'abcdefgh';
-    const targetPiece = board ? board[to] : null;
-    const isCapture = !!targetPiece;
-    const pieceMap = {k:'K', q:'Q', r:'R', b:'B', n:'N', p:''};
-    const letter = piece ? pieceMap[piece.toLowerCase()] : '';
-    let san = letter;
-    if(piece && piece.toLowerCase() === 'p' && isCapture) san += files[from & 7];
-    if(isCapture) san += 'x';
-    san += files[to & 7] + (8 - (to >> 3));
-    if(promo) san += '=' + promo.toUpperCase();
-    return san;
-  }
-
-  /* شروع تحلیل با استاک‌فیش */
-  function analyzeWithStockfish() {
-    if(!curLesson) return;
-    if(!engineReadyForLesson()) {
-      showAnalysisResult('⚠️ استاک‌فیش هنوز آماده نیست. چند ثانیه صبر کن یا صفحه را رفرش کن.');
-      return;
-    }
-    const fen = buildLessonFEN();
-    if(!fen) return;
-
-    _analysis = { fen, score: null, mate: false, depth: 0, bestmove: null, pv: [] };
-    _analysisHighlight = null;
-    window._lessonAnalysis = _analysis;
-
-    if(typeof searchRole !== 'undefined') searchRole = 'lesson';
-    sfSend('setoption name Skill Level value 20');
-    sfSend('position fen ' + fen);
-    sfSend('go depth 15');
-
-    showAnalysisResult('🐟 استاک‌فیش در حال تحلیل… (عمق 0)');
-    if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, null);
-  }
-
-  /* نمایش نتیجه در باکس */
-  function showAnalysisResult(html) {
-    const el = document.getElementById('analysisOutput');
-    if(el) el.innerHTML = html;
-  }
-
-  /* دریافت اطلاعات از استاک‌فیش (از chess.html صدا زده می‌شود) */
-  function onStockfishInfo(line) {
-    if(!_analysis) return;
-    const ms = line.match(/ score (cp|mate) (-?\d+)/);
-    if(ms) {
-      _analysis.mate = ms[1] === 'mate';
-      _analysis.score = +ms[2];
-    }
-    const md = line.match(/ depth (\d+)/);
-    if(md) _analysis.depth = +md[1];
-    const pvm = line.match(/ pv (.+)$/);
-    if(pvm) _analysis.pv = pvm[1].trim().split(/\s+/);
-
-    const turn = curLesson.fen.split(' ')[1];
-    let valTxt = '…';
-    if(_analysis.score !== null) {
-      if(_analysis.mate) {
-        const m = Math.abs(_analysis.score);
-        const whiteWins = _analysis.score > 0;
-        valTxt = 'مات در ' + m + ' به نفع ' + (whiteWins ? 'سفید' : 'مشکی');
-      } else {
-        const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
-        if(Math.abs(v) < 0.3) valTxt = 'متعادل (' + v.toFixed(2) + ')';
-        else valTxt = (v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع سفید';
-      }
-    }
-    showAnalysisResult('🐟 استاک‌فیش: عمق ' + _analysis.depth + ' — ' + valTxt);
-  }
-
-  /* پایان تحلیل */
-  function onStockfishBestmove(token) {
-    if(!_analysis) return;
-    _analysis.bestmove = token;
-
-    const turn = curLesson.fen.split(' ')[1];
-    let evalTxt = 'نامشخص';
-    if(_analysis.mate) {
-      const m = Math.abs(_analysis.score);
-      evalTxt = 'مات در ' + m + ' حرکت به نفع ' +
-        (_analysis.score > 0 ? 'سفید' : 'مشکی');
-    } else if(_analysis.score !== null) {
-      const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
-      if(Math.abs(v) < 0.3) evalTxt = 'متعادل';
-      else if(v > 0) evalTxt = '+' + v.toFixed(2) + ' به نفع سفید';
-      else evalTxt = v.toFixed(2) + ' به نفع مشکی';
-    }
-
-    const bestSan = uciToSan(token);
-    showAnalysisResult(
-      '🐟 <b>تحلیل استاک‌فیش</b><br>' +
-      '📊 ارزیابی: <b>' + evalTxt + '</b><br>' +
-      '🎯 بهترین حرکت: <b>' + bestSan + '</b><br>' +
-      '📏 عمق: ' + _analysis.depth
-    );
-
-    /* هایلایت بهترین حرکت روی صفحه */
-    if(token && token.length >= 4) {
-      const from = parseSqLocal(token.slice(0, 2));
-      const to = parseSqLocal(token.slice(2, 4));
-      _analysisHighlight = { from, to };
-      if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, _analysisHighlight);
-      else if(curLesson.type === 'read' && curLesson.board)
-        renderBoard(parseFENLocal(curLesson.board.fen), [], null, _analysisHighlight);
-    }
-  }
   /* ---------- ذخیره ---------- */
   function loadProgress() {
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
@@ -233,6 +78,12 @@ window.LiveLessons = (() => {
     } catch(e) { showBookList(); }
   }
 
+  /* ---------- پاک‌سازی عنوان ---------- */
+  function cleanTitle(title) {
+    const m = String(title).match(/^پازل\s*\d*\s*[—–-]\s*(.+)$/);
+    return m ? m[1] : title;
+  }
+
   /* ---------- مهره ---------- */
   function renderPiece(p) {
     const white = p === p.toUpperCase();
@@ -243,7 +94,171 @@ window.LiveLessons = (() => {
     return '<span class="piece ' + (white ? 'w' : 'b') + '">' + G[p.toLowerCase()] + '</span>';
   }
 
-  /* ---------- لیست کتاب‌ها ---------- */
+  /* ============================================================
+     🐟 ادغام استاک‌فیش
+     ============================================================ */
+  function engineReadyForLesson() {
+    return typeof engineReady !== 'undefined' && engineReady &&
+           typeof sfSend === 'function' &&
+           typeof engine !== 'undefined' && engine === 'stockfish';
+  }
+
+  function buildLessonFEN() {
+    if(!curLesson) return null;
+    if(curLesson.type === 'puzzle' && board) {
+      const orig = curLesson.fen.split(' ');
+      const turn = orig[1] || 'w';
+      const castling = orig[2] || '-';
+      const ep = orig[3] || '-';
+      const half = orig[4] || '0';
+      const full = orig[5] || '1';
+      let placement = '', empty = 0;
+      for(let r = 0; r < 8; r++) {
+        for(let c = 0; c < 8; c++) {
+          const p = board[r * 8 + c];
+          if(!p) empty++;
+          else {
+            if(empty) { placement += empty; empty = 0; }
+            placement += p;
+          }
+        }
+        if(empty) { placement += empty; empty = 0; }
+        if(r < 7) placement += '/';
+      }
+      return placement + ' ' + turn + ' ' + castling + ' ' + ep + ' ' + half + ' ' + full;
+    }
+    if(curLesson.type === 'read' && curLesson.board && curLesson.board.fen) {
+      return curLesson.board.fen;
+    }
+    return null;
+  }
+
+  function uciToSan(uci) {
+    if(!uci || uci.length < 4) return uci || '?';
+    const from = parseSqLocal(uci.slice(0, 2));
+    const to = parseSqLocal(uci.slice(2, 4));
+    const promo = uci[4] || null;
+    const files = 'abcdefgh';
+    let b = board;
+    if(!b && curLesson && curLesson.type === 'read' && curLesson.board) {
+      b = parseFENLocal(curLesson.board.fen);
+    }
+    if(!b) return uci;
+    const piece = b[from];
+    const target = b[to];
+    const isCapture = !!target;
+    const pieceMap = {k:'K', q:'Q', r:'R', b:'B', n:'N', p:''};
+    const letter = piece ? pieceMap[piece.toLowerCase()] : '';
+    let san = letter;
+    if(piece && piece.toLowerCase() === 'p' && isCapture) san += files[from & 7];
+    if(isCapture) san += 'x';
+    san += files[to & 7] + (8 - (to >> 3));
+    if(promo) san += '=' + promo.toUpperCase();
+    return san;
+  }
+
+  function analyzeWithStockfish() {
+    if(!curLesson) return;
+    if(!engineReadyForLesson()) {
+      showAnalysisResult('⚠️ استاک‌فیش هنوز آماده نیست. چند ثانیه صبر کن.');
+      return;
+    }
+    const fen = buildLessonFEN();
+    if(!fen) {
+      showAnalysisResult('⚠️ موقعیتی برای تحلیل وجود ندارد.');
+      return;
+    }
+
+    _analysis = { fen, score: null, mate: false, depth: 0, bestmove: null, pv: [] };
+    _analysisHighlight = null;
+
+    try {
+      if(typeof searchRole !== 'undefined') window.searchRole = 'lesson';
+    } catch(e){}
+
+    /* استفاده از متغیرهای global chess.html */
+    try { searchRole = 'lesson'; } catch(e){}
+
+    sfSend('setoption name Skill Level value 20');
+    sfSend('position fen ' + fen);
+    sfSend('go depth 15');
+
+    showAnalysisResult('🐟 استاک‌فیش در حال تحلیل…');
+    if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, null);
+    else if(curLesson.type === 'read' && curLesson.board)
+      renderBoard(parseFENLocal(curLesson.board.fen), [], null, null);
+  }
+
+  function showAnalysisResult(html) {
+    const el = document.getElementById('analysisOutput');
+    if(el) el.innerHTML = html;
+  }
+
+  function onStockfishInfo(line) {
+    if(!_analysis) return;
+    const ms = line.match(/ score (cp|mate) (-?\d+)/);
+    if(ms) {
+      _analysis.mate = ms[1] === 'mate';
+      _analysis.score = +ms[2];
+    }
+    const md = line.match(/ depth (\d+)/);
+    if(md) _analysis.depth = +md[1];
+    const pvm = line.match(/ pv (.+)$/);
+    if(pvm) _analysis.pv = pvm[1].trim().split(/\s+/);
+
+    const turn = curLesson.fen.split(' ')[1];
+    let valTxt = '…';
+    if(_analysis.score !== null) {
+      if(_analysis.mate) {
+        const m = Math.abs(_analysis.score);
+        const whiteWins = _analysis.score > 0;
+        valTxt = 'مات در ' + m + ' به نفع ' + (whiteWins ? 'سفید' : 'مشکی');
+      } else {
+        const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
+        if(Math.abs(v) < 0.3) valTxt = 'متعادل';
+        else valTxt = (v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع سفید';
+      }
+    }
+    showAnalysisResult('🐟 استاک‌فیش — عمق ' + _analysis.depth + ' — ' + valTxt);
+  }
+
+  function onStockfishBestmove(token) {
+    if(!_analysis) return;
+    _analysis.bestmove = token;
+
+    const turn = curLesson.fen.split(' ')[1];
+    let evalTxt = 'نامشخص';
+    if(_analysis.mate) {
+      const m = Math.abs(_analysis.score);
+      evalTxt = 'مات در ' + m + ' به نفع ' + (_analysis.score > 0 ? 'سفید' : 'مشکی');
+    } else if(_analysis.score !== null) {
+      const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
+      if(Math.abs(v) < 0.3) evalTxt = 'متعادل';
+      else if(v > 0) evalTxt = '+' + v.toFixed(2) + ' به نفع سفید';
+      else evalTxt = v.toFixed(2) + ' به نفع مشکی';
+    }
+
+    const bestSan = uciToSan(token);
+    showAnalysisResult(
+      '🐟 <b>تحلیل استاک‌فیش</b><br>' +
+      '📊 ارزیابی: <b>' + evalTxt + '</b><br>' +
+      '🎯 بهترین حرکت: <b>' + bestSan + '</b><br>' +
+      '📏 عمق: ' + _analysis.depth
+    );
+
+    if(token && token.length >= 4) {
+      const from = parseSqLocal(token.slice(0, 2));
+      const to = parseSqLocal(token.slice(2, 4));
+      _analysisHighlight = { from, to };
+      if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, _analysisHighlight);
+      else if(curLesson.type === 'read' && curLesson.board)
+        renderBoard(parseFENLocal(curLesson.board.fen), [], null, _analysisHighlight);
+    }
+  }
+
+  /* ============================================================
+     📚 لیست کتاب‌ها
+     ============================================================ */
   function showBookList() {
     curBook = null; curChapter = null; curLesson = null;
     savePosition();
@@ -324,7 +339,6 @@ window.LiveLessons = (() => {
       } else {
         idx++;
         const done = isSolved(ls.id) ? '✅' : '⬜';
-        /* استفاده از cleanTitle و شمارهٔ خودکار */
         html += '<div class="lesson-row puzzle" data-action="open-lesson" data-lesson-id="' + ls.id + '">' +
           '<span class="lesson-icon">' + done + '</span>' +
           '<span class="lesson-title">پازل ' + idx + ' — ' + cleanTitle(ls.title) + '</span>' +
@@ -339,6 +353,8 @@ window.LiveLessons = (() => {
   function openLesson(lessonId) {
     curLesson = curChapter.lessons.find(l => l.id === lessonId);
     if(!curLesson) return;
+    _analysis = null;
+    _analysisHighlight = null;
     savePosition();
     if(curLesson.type === 'read') showReadLesson();
     else showPuzzleLesson();
@@ -349,7 +365,7 @@ window.LiveLessons = (() => {
     const L = curLesson;
     const container = document.getElementById('booksContent');
     let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
-    html += '<div class="read-lesson"><h2>' + L.title + '</h2>';
+    html += '<div class="read-lesson"><h2>' + cleanTitle(L.title) + '</h2>';
     for(const p of L.text) html += '<p>' + p + '</p>';
     if(L.bookNote) html += '<div class="book-note">' + L.bookNote + '</div>';
     if(L.board) {
@@ -362,6 +378,7 @@ window.LiveLessons = (() => {
       for(const p of L.points) html += '<li>' + p + '</li>';
       html += '</ul></div>';
     }
+    /* باکس تحلیل استاک‌فیش */
     if(L.board) {
       html += '<div class="analysis-wrap">' +
         '<button type="button" data-action="analyze" class="analysis-btn">🐟 تحلیل با استاک‌فیش</button>' +
@@ -379,6 +396,7 @@ window.LiveLessons = (() => {
     board = parseFENLocal(L.fen);
     selectedSq = null; stepIndex = 0;
     solved = false; failed = false; attempts = 0; lastMove = null;
+    _analysisHighlight = null;
 
     const turn = L.fen.split(' ')[1];
     const container = document.getElementById('booksContent');
@@ -394,6 +412,7 @@ window.LiveLessons = (() => {
       '<button type="button" data-action="retry">🔄 از اول</button>' +
       '<button type="button" data-action="solution" class="primary">👁 پاسخ</button>' +
     '</div>';
+    /* باکس تحلیل استاک‌فیش */
     html += '<div class="analysis-wrap">' +
       '<button type="button" data-action="analyze" class="analysis-btn">🐟 تحلیل با استاک‌فیش</button>' +
       '<div class="analysis-output" id="analysisOutput"></div>' +
@@ -404,7 +423,7 @@ window.LiveLessons = (() => {
     '</div>';
     html += '</div>';
     container.innerHTML = html;
-    renderBoard(board, [], null);
+    renderBoard(board, [], null, null);
   }
 
   /* ---------- رندر ---------- */
@@ -453,13 +472,13 @@ window.LiveLessons = (() => {
 
     if(solved) {
       selectedSq = (selectedSq === sq) ? null : (pieceColor === turn ? sq : null);
-      renderBoard(board, [], lastMove);
+      renderBoard(board, [], lastMove, _analysisHighlight);
       return;
     }
 
     if(selectedSq != null) {
       const expected = curLesson.solution[stepIndex];
-      if(!expected) { selectedSq = null; renderBoard(board, [], lastMove); return; }
+      if(!expected) { selectedSq = null; renderBoard(board, [], lastMove, _analysisHighlight); return; }
       const fromSq = parseSqLocal(expected.slice(0, 2));
       const toSq = parseSqLocal(expected.slice(2, 4));
       if(selectedSq === fromSq && sq === toSq) {
@@ -467,7 +486,7 @@ window.LiveLessons = (() => {
         lastMove = { from: selectedSq, to: sq };
         stepIndex++;
         selectedSq = null;
-        renderBoard(board, [], lastMove);
+        renderBoard(board, [], lastMove, _analysisHighlight);
         if(stepIndex >= curLesson.solution.length) { onSolved(); return; }
         setFeedback('✅ درست! حالا پاسخ حریف…', 'correct');
         setTimeout(() => {
@@ -479,7 +498,7 @@ window.LiveLessons = (() => {
           doMove(oFrom, oTo, oppUci[4] || null);
           lastMove = { from: oFrom, to: oTo };
           stepIndex++;
-          renderBoard(board, [], lastMove);
+          renderBoard(board, [], lastMove, _analysisHighlight);
           if(stepIndex >= curLesson.solution.length) onSolved();
           else setFeedback('✅ ادامه بده…', 'correct');
         }, 450);
@@ -491,7 +510,7 @@ window.LiveLessons = (() => {
 
     if(pieceColor === turn) {
       selectedSq = sq;
-      renderBoard(board, [], lastMove);
+      renderBoard(board, [], lastMove, _analysisHighlight);
     }
   }
 
@@ -513,11 +532,11 @@ window.LiveLessons = (() => {
     attempts++;
     failed = true;
     setFeedback('❌ اشتباه! حرکتت درست نبود.', 'wrong');
-    renderBoard(board, [], lastMove);
+    renderBoard(board, [], lastMove, _analysisHighlight);
     setTimeout(() => {
       failed = false;
       selectedSq = null;
-      renderBoard(board, [], lastMove);
+      renderBoard(board, [], lastMove, _analysisHighlight);
       if(attempts >= 3) {
         setFeedback('سه بار تلاش کردی. روی «👁 پاسخ» بزن تا راه‌حل را ببینی.', 'wrong');
       } else {
@@ -534,7 +553,7 @@ window.LiveLessons = (() => {
     if(ex) { ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation; ex.classList.remove('hidden'); }
     const nw = document.getElementById('booksPuzzleNextWrap');
     if(nw) nw.classList.remove('hidden');
-    renderBoard(board, [], lastMove);
+    renderBoard(board, [], lastMove, _analysisHighlight);
   }
 
   function setFeedback(txt, cls) {
@@ -589,7 +608,7 @@ window.LiveLessons = (() => {
     return (8 - (+s[1])) * 8 + f;
   }
 
-  /* ---------- Event Delegation — کلید حل مشکل ---------- */
+  /* ---------- Event Delegation ---------- */
   function attachDelegation() {
     const container = document.getElementById('booksContent');
     if(!container) { console.error('booksContent پیدا نشد'); return; }
@@ -630,10 +649,11 @@ window.LiveLessons = (() => {
         solved, failed, attempts, stepIndex,
         feedbackEl: !!document.getElementById('booksPuzzleFeedback'),
         boardEl: !!document.getElementById('lessonBoard'),
-        duplicateFeedback: document.querySelectorAll('#puzzleFeedback').length,
-        duplicateExplain: document.querySelectorAll('#puzzleExplain').length,
+        analysisOutputEl: !!document.getElementById('analysisOutput'),
+        analyzeBtnExists: !!document.querySelector('[data-action="analyze"]'),
         delegated: !!document.getElementById('booksContent')?._delegated,
-        booksContentCount: document.querySelectorAll('#booksContent').length
+        engine: typeof engine !== 'undefined' ? engine : 'undefined',
+        engineReady: typeof engineReady !== 'undefined' ? engineReady : 'undefined'
       };
     }
   };
