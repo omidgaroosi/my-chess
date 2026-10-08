@@ -603,6 +603,236 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
   pointer-events:none;
   background:rgba(76,175,80,.28);
 }
+/* ---------- ابزار بررسی موقعیت ---------- */
+.tools-wrap{
+  margin-top:14px;
+  background:#1a1a1a;
+  border:1px solid #2c2c2c;
+  border-radius:12px;
+  padding:12px;
+}
+.tools-header{
+  font-size:13px;
+  font-weight:700;
+  color:#9aa0ae;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.edited-badge{
+  font-size:10.5px;
+  background:#c9973c;
+  color:#fff;
+  padding:2px 8px;
+  border-radius:8px;
+  font-weight:700;
+}
+.edited-mini{
+  font-size:11px;
+  margin-inline-start:4px;
+}
+.tools-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.tool-btn{
+  flex:1;
+  min-width:120px;
+  font:inherit;
+  font-size:13px;
+  background:#2b2e3b;
+  border:1px solid #3a3e50;
+  color:#fff;
+  padding:9px;
+  border-radius:10px;
+  cursor:pointer;
+  min-height:42px;
+}
+.tool-btn:hover{background:#3d4157}
+.pieces-panel{
+  margin-top:12px;
+  background:#0d1117;
+  border:1px solid #2c3e50;
+  border-radius:10px;
+  padding:12px;
+}
+.pieces-panel-head{
+  font-size:12.5px;
+  color:#81c784;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid #2c3e50;
+  line-height:1.9;
+}
+.pl-two-col{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.pl-col{
+  background:#161b22;
+  border-radius:8px;
+  padding:10px;
+}
+.pl-header{
+  font-size:13px;
+  font-weight:700;
+  color:#fff;
+  margin-bottom:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid #30363d;
+}
+.pl-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12.5px;
+  padding:4px 0;
+  line-height:1.8;
+}
+.pl-glyph{
+  font-size:17px;
+  min-width:24px;
+  text-align:center;
+  color:#cfd3dd;
+}
+.pl-name{
+  color:#8b949e;
+  min-width:42px;
+}
+.pl-squares{
+  color:#ffd54f;
+  font-family:'Courier New',monospace;
+  font-size:12px;
+  font-weight:700;
+}
+.pl-empty{
+  color:#6f7480;
+  font-size:12px;
+  text-align:center;
+  padding:20px;
+}
+.fen-editor-panel{
+  margin-top:12px;
+  background:#0d1117;
+  border:1px solid #2c3e50;
+  border-radius:10px;
+  padding:12px;
+}
+.fe-wrap{display:flex;flex-direction:column;gap:8px}
+.fe-badge{
+  font-size:11.5px;
+  color:#ffd54f;
+  background:rgba(201,151,60,.15);
+  padding:4px 10px;
+  border-radius:8px;
+  align-self:flex-start;
+}
+.fe-label{
+  font-size:12.5px;
+  color:#8b949e;
+}
+.fe-textarea{
+  width:100%;
+  font-family:'Courier New',monospace;
+  font-size:12px;
+  background:#161b22;
+  border:1px solid #30363d;
+  color:#e6edf3;
+  border-radius:8px;
+  padding:10px;
+  resize:vertical;
+  min-height:60px;
+  line-height:1.7;
+}
+.fe-textarea:focus{
+  outline:none;
+  border-color:#1976d2;
+}
+.fe-validation{
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:6px;
+  min-height:20px;
+  line-height:1.8;
+}
+.fe-validation.ok{
+  color:#81c784;
+  background:rgba(76,175,80,.1);
+}
+.fe-validation.error{
+  color:#e57373;
+  background:rgba(229,115,115,.1);
+}
+.fe-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.fe-btn{
+  flex:1;
+  min-width:100px;
+  font:inherit;
+  font-size:12.5px;
+  background:#2b2e3b;
+  border:1px solid #3a3e50;
+  color:#fff;
+  padding:8px;
+  border-radius:8px;
+  cursor:pointer;
+  min-height:40px;
+}
+.fe-btn.primary{
+  background:#1976d2;
+  border-color:#1976d2;
+  font-weight:700;
+}
+.fe-btn:hover{background:#3d4157}
+.fe-btn.primary:hover{background:#1565c0}
+.fe-help{
+  background:#161b22;
+  border:1px solid #30363d;
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:12px;
+}
+.fe-help summary{
+  cursor:pointer;
+  color:#64b5f6;
+  font-weight:700;
+  font-size:12.5px;
+  line-height:2;
+}
+.fe-help-body{
+  padding-top:10px;
+  color:#8b949e;
+  line-height:2;
+}
+.fe-help-body code{
+  background:#0d1117;
+  padding:1px 5px;
+  border-radius:4px;
+  color:#ffd54f;
+  font-family:'Courier New',monospace;
+  font-size:11.5px;
+}
+.fe-original{
+  font-size:11.5px;
+  color:#6f7480;
+  padding:6px 10px;
+  background:#0d1117;
+  border-radius:6px;
+  word-break:break-all;
+}
+.fe-original code{
+  color:#8b949e;
+  font-family:'Courier New',monospace;
+}
+@media(max-width:520px){
+  .pl-two-col{grid-template-columns:1fr}
+}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -1128,6 +1358,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <script src="books-et-3.js"></script>
 <script src="books-et-3b.js"></script>
 <script src="books-et-4.js"></script>
+<script src="puzzle-editor.js"></script>
 <script src="live-lessons.js"></script>
 <script src="themes.js"></script>
 <script src="pieces.js"></script>

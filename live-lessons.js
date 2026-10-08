@@ -27,6 +27,17 @@ window.LiveLessons = (() => {
   let lastMove = null;
   let _analysis = null;
   let _analysisHighlight = null;
+  let _showPiecesPanel = false;
+  let _showFENEditor = false;
+
+  /* دریافت FEN مؤثر (با در نظر گرفتن override) */
+  function effectiveFen() {
+    if(!curLesson) return '';
+    if(window.PuzzleEditor && window.PuzzleEditor.getEffectiveFen) {
+      return window.PuzzleEditor.getEffectiveFen(curLesson);
+    }
+    return curLesson.fen;
+  }
 
   /* ---------- ذخیره ---------- */
   function loadProgress() {
@@ -106,7 +117,7 @@ window.LiveLessons = (() => {
   function buildLessonFEN() {
     if(!curLesson) return null;
     if(curLesson.type === 'puzzle' && board) {
-      const orig = curLesson.fen.split(' ');
+      const orig = effectiveFen().split(' ');
       const turn = orig[1] || 'w';
       const castling = orig[2] || '-';
       const ep = orig[3] || '-';
@@ -206,7 +217,7 @@ window.LiveLessons = (() => {
     const pvm = line.match(/ pv (.+)$/);
     if(pvm) _analysis.pv = pvm[1].trim().split(/\s+/);
 
-    const turn = curLesson.fen.split(' ')[1];
+    const turn = effectiveFen().split(' ')[1];
     let valTxt = '…';
     if(_analysis.score !== null) {
       if(_analysis.mate) {
@@ -226,7 +237,7 @@ window.LiveLessons = (() => {
     if(!_analysis) return;
     _analysis.bestmove = token;
 
-    const turn = curLesson.fen.split(' ')[1];
+    const turn = effectiveFen().split(' ')[1];
     let evalTxt = 'نامشخص';
     if(_analysis.mate) {
       const m = Math.abs(_analysis.score);
@@ -339,9 +350,11 @@ window.LiveLessons = (() => {
       } else {
         idx++;
         const done = isSolved(ls.id) ? '✅' : '⬜';
+        const edited = window.PuzzleEditor && window.PuzzleEditor.hasOverride(ls.id);
         html += '<div class="lesson-row puzzle" data-action="open-lesson" data-lesson-id="' + ls.id + '">' +
           '<span class="lesson-icon">' + done + '</span>' +
-          '<span class="lesson-title">پازل ' + idx + ' — ' + cleanTitle(ls.title) + '</span>' +
+          '<span class="lesson-title">پازل ' + idx + ' — ' + cleanTitle(ls.title) +
+          (edited ? ' <span class="edited-mini">✏️</span>' : '') + '</span>' +
           '<span class="lesson-tag">حل کن</span></div>';
       }
     }
@@ -393,12 +406,13 @@ window.LiveLessons = (() => {
   /* ---------- پازل ---------- */
   function showPuzzleLesson() {
     const L = curLesson;
-    board = parseFENLocal(L.fen);
+    const fen = effectiveFen();
+    board = parseFENLocal(fen);
     selectedSq = null; stepIndex = 0;
     solved = false; failed = false; attempts = 0; lastMove = null;
     _analysisHighlight = null;
 
-    const turn = L.fen.split(' ')[1];
+    const turn = fen.split(' ')[1];
     const container = document.getElementById('booksContent');
     let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
     html += '<div class="puzzle-lesson">';
@@ -421,9 +435,60 @@ window.LiveLessons = (() => {
     html += '<div id="booksPuzzleNextWrap" class="hidden" style="margin-top:12px">' +
       '<button type="button" data-action="next" class="primary" style="width:100%">درس بعدی ←</button>' +
     '</div>';
+
+    /* ---- ابزارهای تعمیر و بررسی ---- */
+    const isEdited = window.PuzzleEditor && window.PuzzleEditor.hasOverride(L.id);
+    html += '<div class="tools-wrap">' +
+      '<div class="tools-header">🛠 ابزار بررسی موقعیت' +
+      (isEdited ? ' <span class="edited-badge">✏️ ویرایش‌شده</span>' : '') +
+      '</div>' +
+      '<div class="tools-buttons">' +
+        '<button type="button" data-action="toggle-pieces" class="tool-btn">📋 لیست مهره‌ها</button>' +
+        '<button type="button" data-action="toggle-editor" class="tool-btn">✏️ ویرایش FEN</button>' +
+      '</div>' +
+      '<div id="piecesPanel" class="pieces-panel hidden"></div>' +
+      '<div id="fenEditorPanel" class="fen-editor-panel hidden"></div>' +
+    '</div>';
+
     html += '</div>';
     container.innerHTML = html;
     renderBoard(board, [], null, null);
+
+    /* اگر پنل باز بود، دوباره بسازش */
+    if(_showPiecesPanel) buildPiecesPanel();
+    if(_showFENEditor) buildFENEditorPanel();
+  }
+
+  /* ---------- ساخت پنل لیست مهره‌ها ---------- */
+  function buildPiecesPanel() {
+    const panel = document.getElementById('piecesPanel');
+    if(!panel || !window.PuzzleEditor) return;
+    const fen = effectiveFen();
+    panel.innerHTML =
+      '<div class="pieces-panel-head">' +
+        '📋 مقایسهٔ مهره‌ها با صفحه — اگر جایی فرق داشت، از «✏️ ویرایش FEN» اصلاح کن' +
+      '</div>' +
+      window.PuzzleEditor.renderPieceListHTML(fen);
+    panel.classList.remove('hidden');
+  }
+
+  /* ---------- ساخت پنل ویرایش FEN ---------- */
+  function buildFENEditorPanel() {
+    const panel = document.getElementById('fenEditorPanel');
+    if(!panel || !curLesson || !window.PuzzleEditor) return;
+    panel.innerHTML = window.PuzzleEditor.renderFENEditorHTML(curLesson);
+    window.PuzzleEditor.bindFENEditor(curLesson, function(action) {
+      if(action === 'close') {
+        _showFENEditor = false;
+        panel.classList.add('hidden');
+      } else if(action === 'save' || action === 'reset') {
+        /* بازسازی صفحه و پنل */
+        _showFENEditor = false;
+        _showPiecesPanel = false;
+        setTimeout(showPuzzleLesson, 100);
+      }
+    });
+    panel.classList.remove('hidden');
   }
 
   /* ---------- رندر ---------- */
@@ -465,7 +530,7 @@ window.LiveLessons = (() => {
     const cell = e.target.closest('[data-bsq]');
     if(!cell) return;
     const sq = +cell.dataset.bsq;
-    const turn = curLesson.fen.split(' ')[1];
+    const turn = effectiveFen().split(' ')[1];
     const piece = board[sq];
     const isW = p => p && p === p.toUpperCase();
     const pieceColor = piece ? (isW(piece) ? 'w' : 'b') : null;
@@ -631,6 +696,18 @@ window.LiveLessons = (() => {
       else if(action === 'solution') showSolution();
       else if(action === 'next') nextLesson();
       else if(action === 'analyze') analyzeWithStockfish();
+      else if(action === 'toggle-pieces') {
+        _showPiecesPanel = !_showPiecesPanel;
+        const p = document.getElementById('piecesPanel');
+        if(_showPiecesPanel) buildPiecesPanel();
+        else if(p) p.classList.add('hidden');
+      }
+      else if(action === 'toggle-editor') {
+        _showFENEditor = !_showFENEditor;
+        const p = document.getElementById('fenEditorPanel');
+        if(_showFENEditor) buildFENEditorPanel();
+        else if(p) p.classList.add('hidden');
+      }
     });
   }
 
