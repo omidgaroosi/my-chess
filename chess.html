@@ -1386,17 +1386,17 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
           <div class="board-col card board-card">
             <div id="gvBoard" style="display:grid;grid-template-columns:repeat(8,1fr);width:min(92vw,460px);aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
             <div class="caption" id="gvCaption">—</div>
-            <div class="step-controls">
-              <button onclick="gvGoTo(0)" title="شروع">⏮</button>
-              <button onclick="gvGoTo(gvPly-1)" title="قبلی">◀</button>
-              <button id="gvBtnPlay" onclick="gvTogglePlay()">▶️ پخش</button>
-              <button onclick="gvGoTo(gvPly+1)" title="بعدی">▶</button>
-              <button onclick="gvGoTo(gvAllBoards.length-1)" title="پایان">⏭</button>
+          <div class="step-controls">
+              <button onclick="GamesViewer.goTo(0)" title="شروع">⏮</button>
+              <button onclick="GamesViewer.goTo(GamesViewer.ply - 1)" title="قبلی">◀</button>
+              <button id="gvBtnPlay" onclick="GamesViewer.togglePlay()">▶️ پخش</button>
+              <button onclick="GamesViewer.goTo(GamesViewer.ply + 1)" title="بعدی">▶</button>
+              <button onclick="GamesViewer.goTo(GamesViewer.allBoards.length - 1)" title="پایان">⏭</button>
             </div>
             <div class="step-controls" style="margin-top:8px">
-              <button onclick="gvSpeed(-1)" title="کندتر">🐢 کندتر</button>
+              <button onclick="GamesViewer.speed(-1)" title="کندتر">🐢 کندتر</button>
               <span id="gvSpeedLabel" style="display:flex;align-items:center;padding:0 12px;color:#9aa0ae;font-size:12px">۱.۰x</span>
-              <button onclick="gvSpeed(1)" title="سریع‌تر">🐇 سریع‌تر</button>
+              <button onclick="GamesViewer.speed(1)" title="سریع‌تر">🐇 سریع‌تر</button>
             </div>
           </div>
 
@@ -1406,7 +1406,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
             </div>
             <div id="gvMoves" style="background:#191b22;border-radius:12px;padding:10px;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px"></div>
             <div class="analysis-wrap">
-              <button type="button" class="analysis-btn" onclick="gvAnalyze()">🐟 تحلیل این پوزیسیون با استاک‌فیش</button>
+<button type="button" class="analysis-btn" onclick="GamesViewer.gvAnalyze()">🐟 تحلیل این پوزیسیون با استاک‌فیش</button>
               <div class="analysis-output" id="gvAnalysisOutput"></div>
             </div>
           </div>
