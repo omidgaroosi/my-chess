@@ -3452,7 +3452,7 @@ const GamesViewer = {
   moveSquares: [],        /* ← برای هایلایت آخرین حرکت */
   ply: 0,
   timer: null,
-  speed: 1.0,
+  _speed: 1.0,       /* ✅ نام عوض شد تا با تابع speed تداخل نکند */
   speedIdx: 1,     /* ✅ index آرایهٔ steps — پیش‌فرض: 1 = 1.0x */
   baseMs: 1200,
   analysisActive: false,
@@ -3613,7 +3613,7 @@ const GamesViewer = {
       '<br><span style="color:#8a8f9c">برای دریافت تحلیل استاک‌فیش، دکمهٔ 🐟 پایین را بزن.</span>';
   },
 
-  /* ---------- پخش — با setTimeout بازگشتی ---------- */
+   /* ---------- پخش — با setTimeout بازگشتی ---------- */
   togglePlay() {
     if(this.timer) { this.stopPlay(); return; }
     if(this.ply >= this.allBoards.length - 1) this.goTo(0);
@@ -3623,7 +3623,7 @@ const GamesViewer = {
   },
 
   _scheduleNextStep() {
-    const interval = Math.max(80, Math.round(this.baseMs / this.speed));
+    const interval = Math.max(80, Math.round(this.baseMs / this._speed));
     this.timer = setTimeout(() => this._playStep(), interval);
   },
 
@@ -3640,42 +3640,32 @@ const GamesViewer = {
     if(btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
   },
 
-  /* ---------- تنظیم سرعت — نسخهٔ ضدضربه ---------- */
+  /* ---------- تنظیم سرعت (تابع) ---------- */
   speed(delta) {
-    try {
-      const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
+    const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
+    let idx = parseInt(this.speedIdx, 10);
+    if(!Number.isFinite(idx) || idx < 0 || idx >= steps.length) idx = 1;
 
-      /* اطمینان از صحیح بودن speedIdx */
-      let idx = parseInt(this.speedIdx, 10);
-      if(!Number.isFinite(idx) || idx < 0 || idx >= steps.length) idx = 1;
+    const newIdx = Math.max(0, Math.min(steps.length - 1, idx + delta));
+    this.speedIdx = newIdx;
+    this._speed = steps[newIdx];
 
-      const newIdx = Math.max(0, Math.min(steps.length - 1, idx + delta));
-      this.speedIdx = newIdx;
-      this.speed = steps[newIdx];
+    /* به‌روزرسانی برچسب با اعداد فارسی */
+    const label = $('gvSpeedLabel');
+    if(label) {
+      const faDigits = '۰۱۲۳۴۵۶۷۸۹';
+      const txt = this._speed.toFixed(1).replace(/\d/g, d => faDigits[d]);
+      label.textContent = txt + 'x';
+      label.classList.remove('speed-bump');
+      void label.offsetWidth;
+      label.classList.add('speed-bump');
+    }
 
-      console.log('[speed] delta=' + delta + ' → idx=' + newIdx + ' speed=' + this.speed);
-
-      /* به‌روزرسانی برچسب */
-      const label = $('gvSpeedLabel');
-      if(label) {
-        const faDigits = '۰۱۲۳۴۵۶۷۸۹';
-        const txt = this.speed.toFixed(1).replace(/\d/g, d => faDigits[d]);
-        label.textContent = txt + 'x';
-        label.classList.remove('speed-bump');
-        void label.offsetWidth;
-        label.classList.add('speed-bump');
-      } else {
-        console.warn('[speed] عنصر gvSpeedLabel پیدا نشد!');
-      }
-
-      /* اگر در حال پخشیم، مرحلهٔ بعدی با سرعت جدید */
-      if(this.timer) {
-        clearTimeout(this.timer);
-        this.timer = null;
-        this._scheduleNextStep();
-      }
-    } catch(err) {
-      console.error('[speed] خطا:', err);
+    /* اگر در حال پخشیم، مرحلهٔ بعدی با سرعت جدید */
+    if(this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+      this._scheduleNextStep();
     }
   },
 
