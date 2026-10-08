@@ -616,6 +616,19 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
   40%{transform:scale(1.3);color:#ffd54f}
   100%{transform:scale(1);color:#9aa0ae}
 }
+/* ---------- کنترل سرعت سینما ---------- */
+#gvSpeedLabel{
+  transition:color .2s;
+  user-select:none;
+}
+#gvSpeedLabel.speed-bump{
+  animation:speedBump .35s ease-out;
+}
+@keyframes speedBump{
+  0%{transform:scale(1);color:#9aa0ae}
+  40%{transform:scale(1.3);color:#ffd54f}
+  100%{transform:scale(1);color:#9aa0ae}
+}
 /* ---------- ابزار بررسی موقعیت ---------- */
 .tools-wrap{
   margin-top:14px;
@@ -3440,6 +3453,7 @@ const GamesViewer = {
   ply: 0,
   timer: null,
   speed: 1.0,
+  speedIdx: 1,     /* ✅ index آرایهٔ steps — پیش‌فرض: 1 = 1.0x */
   baseMs: 1200,
   analysisActive: false,
   lastAnalysis: null,
@@ -3590,7 +3604,7 @@ const GamesViewer = {
       '<br><span style="color:#8a8f9c">برای دریافت تحلیل استاک‌فیش، دکمهٔ 🐟 پایین را بزن.</span>';
   },
 
-  /* پخش/توقف — با setTimeout بازگشتی تا سرعت لحظه‌ای اعمال شود */
+  /* ---------- پخش — با setTimeout بازگشتی (سرعت لحظه‌ای) ---------- */
   togglePlay() {
     if(this.timer) { this.stopPlay(); return; }
     if(this.ply >= this.allBoards.length - 1) this.goTo(0);
@@ -3599,16 +3613,15 @@ const GamesViewer = {
     this._scheduleNextStep();
   },
 
-  /* ⏱ زمان‌بندی مرحلهٔ بعدی با سرعتِ فعلی */
   _scheduleNextStep() {
     const interval = Math.round(this.baseMs / this.speed);
     this.timer = setTimeout(() => this._playStep(), interval);
   },
 
-  /* ▶️ یک گام پخش */
   _playStep() {
     if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
     this.goTo(this.ply + 1);
+    if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
     this._scheduleNextStep();
   },
 
@@ -3618,25 +3631,31 @@ const GamesViewer = {
     if(btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
   },
 
-  /* ⚡ تنظیم سرعت — بدون توقف پخش */
+  /* ---------- تنظیم سرعت — مقاوم با speedIdx ---------- */
   speed(delta) {
     const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
-    const idx = steps.indexOf(this.speed);
-    const newIdx = Math.max(0, Math.min(steps.length - 1, (idx < 0 ? 1 : idx) + delta));
+
+    /* استفاده از speedIdx — همیشه یک عدد صحیح، بدون مشکل floating-point */
+    let idx = (typeof this.speedIdx === 'number') ? this.speedIdx : 1;
+    const newIdx = Math.max(0, Math.min(steps.length - 1, idx + delta));
+    this.speedIdx = newIdx;
     this.speed = steps[newIdx];
 
-    /* به‌روزرسانی برچسب با اعداد فارسی + انیمیشن کوتاه */
+    /* به‌روزرسانی برچسب با اعداد فارسی */
     const label = $('gvSpeedLabel');
     if(label) {
-      label.textContent = this._formatSpeed(this.speed) + 'x';
+      const faDigits = '۰۱۲۳۴۵۶۷۸۹';
+      const txt = this.speed.toFixed(1).replace(/\d/g, d => faDigits[d]);
+      label.textContent = txt + 'x';
       label.classList.remove('speed-bump');
-      void label.offsetWidth; /* reflow — برای ری‌استارت انیمیشن */
+      void label.offsetWidth;   /* reflow — ری‌استارت انیمیشن */
       label.classList.add('speed-bump');
     }
 
     /* اگر در حال پخشیم، مرحلهٔ بعدی با سرعت جدید زمان‌بندی می‌شود */
     if(this.timer) {
       clearTimeout(this.timer);
+      this.timer = null;
       this._scheduleNextStep();
     }
   },
