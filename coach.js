@@ -105,7 +105,8 @@ const Coach = {
       for(let sq2 = 0; sq2 < 64; sq2++){
         const q = s.board[sq2];
         if(!q || colorOf(q) === color) continue;
-        if(attacked({...s, board: s.board.map((x,i) => i===sq2?null:x)}, sq, enemyW)){
+        /* ✅ بدون کپی برد — فقط مهرهٔ مهاجم را نادیده می‌گیریم */
+        if(attacked(s, sq, enemyW, sq2)){
           attackerName = this.FA_PIECE[q.toLowerCase()];
           break;
         }

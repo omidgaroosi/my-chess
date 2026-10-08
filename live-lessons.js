@@ -712,11 +712,15 @@ window.LiveLessons = (() => {
   }
 
   /* ---------- API ---------- */
+  let _inited = false;
   return {
     showBookList, openBook, openChapter, openLesson,
     hint, retry, showSolution, nextLesson,
     onStockfishInfo, onStockfishBestmove,
-    init() { attachDelegation(); restorePosition(); },
+    init() {
+      attachDelegation();
+      if(!_inited) { _inited = true; restorePosition(); }
+    },
     _debug() {
       return {
         curBook: curBook ? curBook.id : null,

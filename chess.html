@@ -1449,6 +1449,16 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 "use strict";
 const $=id=>document.getElementById(id);
 
+/* 🔒 جلوگیری از XSS — هر متن حاصل از فایل کاربر باید قبل از درج در HTML از این تابع عبور کند */
+function escapeHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /* ================= هستهٔ مشترک شطرنج ================= */
 const FILES='abcdefgh';
 const GLYPH={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
@@ -1465,23 +1475,27 @@ function initialBoard(){
   return b;
 }
 const initialState=()=>({board:initialBoard(),turn:'w',castling:{K:1,Q:1,k:1,q:1},ep:-1,half:0,full:1});
-function attacked(s,sq,byWhite){
+function attacked(s,sq,byWhite,ignoreSq){
   const r=sq>>3,c=sq&7,P=byWhite?'P':'p',Nn=byWhite?'N':'n',Kk=byWhite?'K':'k',
         Bb=byWhite?'B':'b',Rr=byWhite?'R':'r',Qq=byWhite?'Q':'q';
   const pr=byWhite?r+1:r-1;
   if(pr>=0&&pr<8){
-    if(c>0&&s.board[pr*8+c-1]===P)return true;
-    if(c<7&&s.board[pr*8+c+1]===P)return true;
+    if(c>0&&pr*8+c-1!==ignoreSq&&s.board[pr*8+c-1]===P)return true;
+    if(c<7&&pr*8+c+1!==ignoreSq&&s.board[pr*8+c+1]===P)return true;
   }
   for(const[dr,dc]of N_OFF){const rr=r+dr,cc=c+dc;
-    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Nn)return true;}
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&rr*8+cc!==ignoreSq&&s.board[rr*8+cc]===Nn)return true;}
   for(const[dr,dc]of K_OFF){const rr=r+dr,cc=c+dc;
-    if(rr>=0&&rr<8&&cc>=0&&cc<8&&s.board[rr*8+cc]===Kk)return true;}
+    if(rr>=0&&rr<8&&cc>=0&&cc<8&&rr*8+cc!==ignoreSq&&s.board[rr*8+cc]===Kk)return true;}
   for(const[dr,dc]of B_DIRS){let rr=r+dr,cc=c+dc;
-    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const sq2=rr*8+cc;
+      if(sq2===ignoreSq){rr+=dr;cc+=dc;continue;}
+      const p=s.board[sq2];
       if(p){if(p===Bb||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
   for(const[dr,dc]of R_DIRS){let rr=r+dr,cc=c+dc;
-    while(rr>=0&&rr<8&&cc>=0&&cc<8){const p=s.board[rr*8+cc];
+    while(rr>=0&&rr<8&&cc>=0&&cc<8){const sq2=rr*8+cc;
+      if(sq2===ignoreSq){rr+=dr;cc+=dc;continue;}
+      const p=s.board[sq2];
       if(p){if(p===Rr||p===Qq)return true;break;}rr+=dr;cc+=dc;}}
   return false;
 }
@@ -2871,18 +2885,18 @@ function loadPGN(text) {
     S = makeMove(S, m);
     hist.push({ m, uci: item.uci, san: item.san, before, captured });
     keys.push(keyOf(S));
-    saveAutoState();
   }
+  saveAutoState();  /* ✅ یک بار بعد از حلقه */
 
   if(engine === 'stockfish') sfSend('ucinewgame');
   render();
   Coach.reset();
 
   const lines = [];
-  if(headers.White)  lines.push('⚪ سفید: ' + headers.White);
-  if(headers.Black)  lines.push('⚫ مشکی: ' + headers.Black);
-  if(headers.Event)  lines.push('🏆 ' + headers.Event);
-  if(headers.Result) lines.push('📊 نتیجه: ' + headers.Result);
+  if(headers.White)  lines.push('⚪ سفید: ' + escapeHtml(headers.White));
+  if(headers.Black)  lines.push('⚫ مشکی: ' + escapeHtml(headers.Black));
+  if(headers.Event)  lines.push('🏆 ' + escapeHtml(headers.Event));
+  if(headers.Result) lines.push('📊 نتیجه: ' + escapeHtml(headers.Result));
 
   Coach.say('📄 <b>PGN بارگذاری شد</b> — ' + uciList.length + ' حرکت' +
     (lines.length ? '<br>' + lines.join('<br>') : '') +
@@ -3554,7 +3568,7 @@ const GamesViewer = {
     const el = $('gvCoachBubble');
     if(!el) return;
     if(this.ply === 0) {
-      el.innerHTML = '🎓 <b>مربی:</b> این بازی «' + this.cur.title + '» است. دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ جلو برو. برای تحلیل هر پوزیسیون، دکمهٔ 🐟 پایین را بزن.';
+      el.innerHTML = '🎓 <b>مربی:</b> این بازی «' + escapeHtml(this.cur.title) + '» است. دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ جلو برو. برای تحلیل هر پوزیسیون، دکمهٔ 🐟 پایین را بزن.';
       return;
     }
     const moveNo = Math.ceil(this.ply / 2);
@@ -3722,21 +3736,20 @@ const GamesViewer = {
       /* برچسب تعداد آپلودشده/اصلی */
       const uploadedCount = items.filter(x => x.uploaded).length;
       const badge = uploadedCount ? ' <span style="color:#81c784;font-size:11px">(' + uploadedCount + ' آپلودشده)</span>' : '';
-      html += '<details open><summary>' + gname +
+      html += '<details open><summary>' + escapeHtml(gname) +
         '<span class="cnt">' + items.length + '</span>' + badge +
         '</summary>';
       for(const g of items) {
         html += '<button class="lsn' + (this.cur && this.cur.id === g.id ? ' active' : '') +
           '" onclick="GamesViewer.start(\'' + g.id + '\')">' +
           '<span style="flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-            g.title +
+            escapeHtml(g.title) +
           '</span>' +
-          '<small>' + g.result + '</small>' +
+          '<small>' + escapeHtml(g.result) + '</small>' +
         '</button>';
       }
       html += '</details>';
     }
-
     $('gamesList').innerHTML = html ||
       '<div style="color:#6f7480;padding:10px;font-size:13px">بازی‌ای پیدا نشد 🔍</div>';
 
