@@ -192,6 +192,7 @@ window.LiveLessons = (() => {
     let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
     html += '<div class="read-lesson"><h2>' + L.title + '</h2>';
     for(const p of L.text) html += '<p>' + p + '</p>';
+    if(L.bookNote) html += '<div class="book-note">' + L.bookNote + '</div>';
     if(L.board) {
       html += '<div class="lesson-board-wrap"><div id="lessonBoard" class="lesson-board"></div>';
       if(L.board.caption) html += '<div class="lesson-caption">' + L.board.caption + '</div>';
