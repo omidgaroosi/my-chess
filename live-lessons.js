@@ -24,10 +24,164 @@ window.LiveLessons = (() => {
   let failed = false;
   let attempts = 0;
   let lastMove = null;
+  let _analysis = null;
+  let _analysisHighlight = null;
   /* پاک‌سازی عنوان — حذف پیشوند "پازل X — " */
   function cleanTitle(title) {
     const m = String(title).match(/^پازل\s*\d*\s*[—–-]\s*(.+)$/);
     return m ? m[1] : title;
+  }
+    /* ---------- ادغام با استاک‌فیش ---------- */
+  function engineReadyForLesson() {
+    return typeof engineReady !== 'undefined' && engineReady &&
+           typeof sfSend === 'function' &&
+           typeof engine !== 'undefined' && engine === 'stockfish';
+  }
+
+  /* تبدیل موقعیت فعلی board به FEN — با استفاده از FEN اصلی درس */
+  function buildLessonFEN() {
+    if(!curLesson) return null;
+    if(curLesson.type === 'puzzle' && board) {
+      const orig = curLesson.fen.split(' ');
+      const turn = orig[1] || 'w';
+      const castling = orig[2] || '-';
+      const ep = orig[3] || '-';
+      const half = orig[4] || '0';
+      const full = orig[5] || '1';
+      let placement = '', empty = 0;
+      for(let r = 0; r < 8; r++) {
+        for(let c = 0; c < 8; c++) {
+          const p = board[r * 8 + c];
+          if(!p) empty++;
+          else {
+            if(empty) { placement += empty; empty = 0; }
+            placement += p;
+          }
+        }
+        if(empty) { placement += empty; empty = 0; }
+        if(r < 7) placement += '/';
+      }
+      return placement + ' ' + turn + ' ' + castling + ' ' + ep + ' ' + half + ' ' + full;
+    }
+    if(curLesson.type === 'read' && curLesson.board && curLesson.board.fen) {
+      return curLesson.board.fen;
+    }
+    return null;
+  }
+
+  /* تابع اتصال UCI به SAN (تقریبی) */
+  function uciToSan(uci) {
+    if(!uci || uci.length < 4) return uci;
+    const from = parseSqLocal(uci.slice(0, 2));
+    const to = parseSqLocal(uci.slice(2, 4));
+    const promo = uci[4] || null;
+    const piece = board ? board[from] : null;
+    const files = 'abcdefgh';
+    const targetPiece = board ? board[to] : null;
+    const isCapture = !!targetPiece;
+    const pieceMap = {k:'K', q:'Q', r:'R', b:'B', n:'N', p:''};
+    const letter = piece ? pieceMap[piece.toLowerCase()] : '';
+    let san = letter;
+    if(piece && piece.toLowerCase() === 'p' && isCapture) san += files[from & 7];
+    if(isCapture) san += 'x';
+    san += files[to & 7] + (8 - (to >> 3));
+    if(promo) san += '=' + promo.toUpperCase();
+    return san;
+  }
+
+  /* شروع تحلیل با استاک‌فیش */
+  function analyzeWithStockfish() {
+    if(!curLesson) return;
+    if(!engineReadyForLesson()) {
+      showAnalysisResult('⚠️ استاک‌فیش هنوز آماده نیست. چند ثانیه صبر کن یا صفحه را رفرش کن.');
+      return;
+    }
+    const fen = buildLessonFEN();
+    if(!fen) return;
+
+    _analysis = { fen, score: null, mate: false, depth: 0, bestmove: null, pv: [] };
+    _analysisHighlight = null;
+    window._lessonAnalysis = _analysis;
+
+    if(typeof searchRole !== 'undefined') searchRole = 'lesson';
+    sfSend('setoption name Skill Level value 20');
+    sfSend('position fen ' + fen);
+    sfSend('go depth 15');
+
+    showAnalysisResult('🐟 استاک‌فیش در حال تحلیل… (عمق 0)');
+    if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, null);
+  }
+
+  /* نمایش نتیجه در باکس */
+  function showAnalysisResult(html) {
+    const el = document.getElementById('analysisOutput');
+    if(el) el.innerHTML = html;
+  }
+
+  /* دریافت اطلاعات از استاک‌فیش (از chess.html صدا زده می‌شود) */
+  function onStockfishInfo(line) {
+    if(!_analysis) return;
+    const ms = line.match(/ score (cp|mate) (-?\d+)/);
+    if(ms) {
+      _analysis.mate = ms[1] === 'mate';
+      _analysis.score = +ms[2];
+    }
+    const md = line.match(/ depth (\d+)/);
+    if(md) _analysis.depth = +md[1];
+    const pvm = line.match(/ pv (.+)$/);
+    if(pvm) _analysis.pv = pvm[1].trim().split(/\s+/);
+
+    const turn = curLesson.fen.split(' ')[1];
+    let valTxt = '…';
+    if(_analysis.score !== null) {
+      if(_analysis.mate) {
+        const m = Math.abs(_analysis.score);
+        const whiteWins = _analysis.score > 0;
+        valTxt = 'مات در ' + m + ' به نفع ' + (whiteWins ? 'سفید' : 'مشکی');
+      } else {
+        const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
+        if(Math.abs(v) < 0.3) valTxt = 'متعادل (' + v.toFixed(2) + ')';
+        else valTxt = (v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع سفید';
+      }
+    }
+    showAnalysisResult('🐟 استاک‌فیش: عمق ' + _analysis.depth + ' — ' + valTxt);
+  }
+
+  /* پایان تحلیل */
+  function onStockfishBestmove(token) {
+    if(!_analysis) return;
+    _analysis.bestmove = token;
+
+    const turn = curLesson.fen.split(' ')[1];
+    let evalTxt = 'نامشخص';
+    if(_analysis.mate) {
+      const m = Math.abs(_analysis.score);
+      evalTxt = 'مات در ' + m + ' حرکت به نفع ' +
+        (_analysis.score > 0 ? 'سفید' : 'مشکی');
+    } else if(_analysis.score !== null) {
+      const v = (_analysis.score / 100) * (turn === 'w' ? 1 : -1);
+      if(Math.abs(v) < 0.3) evalTxt = 'متعادل';
+      else if(v > 0) evalTxt = '+' + v.toFixed(2) + ' به نفع سفید';
+      else evalTxt = v.toFixed(2) + ' به نفع مشکی';
+    }
+
+    const bestSan = uciToSan(token);
+    showAnalysisResult(
+      '🐟 <b>تحلیل استاک‌فیش</b><br>' +
+      '📊 ارزیابی: <b>' + evalTxt + '</b><br>' +
+      '🎯 بهترین حرکت: <b>' + bestSan + '</b><br>' +
+      '📏 عمق: ' + _analysis.depth
+    );
+
+    /* هایلایت بهترین حرکت روی صفحه */
+    if(token && token.length >= 4) {
+      const from = parseSqLocal(token.slice(0, 2));
+      const to = parseSqLocal(token.slice(2, 4));
+      _analysisHighlight = { from, to };
+      if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, _analysisHighlight);
+      else if(curLesson.type === 'read' && curLesson.board)
+        renderBoard(parseFENLocal(curLesson.board.fen), [], null, _analysisHighlight);
+    }
   }
   /* ---------- ذخیره ---------- */
   function loadProgress() {
@@ -208,9 +362,15 @@ window.LiveLessons = (() => {
       for(const p of L.points) html += '<li>' + p + '</li>';
       html += '</ul></div>';
     }
+    if(L.board) {
+      html += '<div class="analysis-wrap">' +
+        '<button type="button" data-action="analyze" class="analysis-btn">🐟 تحلیل با استاک‌فیش</button>' +
+        '<div class="analysis-output" id="analysisOutput"></div>' +
+      '</div>';
+    }
     html += '</div>';
     container.innerHTML = html;
-    if(L.board) renderBoard(parseFENLocal(L.board.fen), [], null);
+    if(L.board) renderBoard(parseFENLocal(L.board.fen), [], null, null);
   }
 
   /* ---------- پازل ---------- */
@@ -234,6 +394,10 @@ window.LiveLessons = (() => {
       '<button type="button" data-action="retry">🔄 از اول</button>' +
       '<button type="button" data-action="solution" class="primary">👁 پاسخ</button>' +
     '</div>';
+    html += '<div class="analysis-wrap">' +
+      '<button type="button" data-action="analyze" class="analysis-btn">🐟 تحلیل با استاک‌فیش</button>' +
+      '<div class="analysis-output" id="analysisOutput"></div>' +
+    '</div>';
     html += '<div class="puzzle-explain hidden" id="booksPuzzleExplain"></div>';
     html += '<div id="booksPuzzleNextWrap" class="hidden" style="margin-top:12px">' +
       '<button type="button" data-action="next" class="primary" style="width:100%">درس بعدی ←</button>' +
@@ -244,7 +408,7 @@ window.LiveLessons = (() => {
   }
 
   /* ---------- رندر ---------- */
-  function renderBoard(b, highlights, last) {
+  function renderBoard(b, highlights, last, analysis) {
     const el = document.getElementById('lessonBoard');
     if(!el) return;
     highlights = highlights || [];
@@ -259,6 +423,7 @@ window.LiveLessons = (() => {
       if(highlights.includes(sqName(i))) cls += ' hl';
       if(selectedSq === i) cls += ' sel';
       if(last && (last.from === i || last.to === i)) cls += ' llast';
+      if(analysis && (analysis.from === i || analysis.to === i)) cls += ' analysis-hl';
       const p = b[i];
       html += '<div class="' + cls + '" data-bsq="' + i + '">' +
         (c === 0 ? '<span class="coord rank">' + (8 - r) + '</span>' : '') +
@@ -446,6 +611,7 @@ window.LiveLessons = (() => {
       else if(action === 'retry') retry();
       else if(action === 'solution') showSolution();
       else if(action === 'next') nextLesson();
+      else if(action === 'analyze') analyzeWithStockfish();
     });
   }
 
@@ -453,6 +619,7 @@ window.LiveLessons = (() => {
   return {
     showBookList, openBook, openChapter, openLesson,
     hint, retry, showSolution, nextLesson,
+    onStockfishInfo, onStockfishBestmove,
     init() { attachDelegation(); restorePosition(); },
     _debug() {
       return {

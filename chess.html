@@ -564,6 +564,45 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
   font-weight:700;
   color:#ffd54f;
 }
+/* ---------- باکس تحلیل استاک‌فیش ---------- */
+.analysis-wrap{
+  margin-top:14px;
+  background:#1a2332;
+  border:1px solid #2c3e50;
+  border-radius:12px;
+  padding:12px;
+}
+.analysis-btn{
+  width:100%;
+  font:inherit;
+  font-size:13.5px;
+  font-weight:700;
+  background:#1976d2;
+  border:1px solid #1976d2;
+  color:#fff;
+  border-radius:10px;
+  padding:10px;
+  cursor:pointer;
+  min-height:44px;
+}
+.analysis-btn:hover{background:#1565c0}
+.analysis-output{
+  margin-top:10px;
+  font-size:13px;
+  line-height:2;
+  color:#cfd3dd;
+  text-align:center;
+}
+.analysis-output:empty{display:none}
+.lesson-board .cell.analysis-hl::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  border:3px solid #4caf50;
+  box-sizing:border-box;
+  pointer-events:none;
+  background:rgba(76,175,80,.28);
+}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -1088,6 +1127,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <script src="books-et-2.js"></script>
 <script src="books-et-3.js"></script>
 <script src="books-et-3b.js"></script>
+<script src="books-et-4.js"></script>
 <script src="live-lessons.js"></script>
 <script src="themes.js"></script>
 <script src="pieces.js"></script>
@@ -1813,6 +1853,12 @@ function handleLine(line){
 }
 function onBestmove(token){
   const role=searchRole;searchRole=null;
+  /* بررسی اگر برای درس است */
+  if(role === 'lesson'){
+    if(window.LiveLessons && window.LiveLessons.onStockfishBestmove)
+      window.LiveLessons.onStockfishBestmove(token);
+    return;
+  }
   if(searchGen!==gameId||gameOver){Coach.busy=false;thinking=false;render();return;}
   if(role==='coach'){Coach.bestmove(token);return;}
   /* اگر زمان‌دار است، حداقل ۵۰۰ms صبر کن تا ساعت موتور محسوس بچرخد */
@@ -1840,6 +1886,12 @@ function onBestmove(token){
   applyMove(m);
 }
 function parseInfo(line){
+  /* بررسی اگر برای درس است */
+  if(searchRole === 'lesson'){
+    if(window.LiveLessons && window.LiveLessons.onStockfishInfo)
+      window.LiveLessons.onStockfishInfo(line);
+    return;
+  }
   if(searchGen!==gameId)return;
   const ms=line.match(/ score (cp|mate) (-?\d+)/);if(!ms)return;
   const md=line.match(/ depth (\d+)/);if(md)lastDepth=+md[1];
