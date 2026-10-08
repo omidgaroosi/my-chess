@@ -7,7 +7,7 @@
    - این فایل‌ها هنگام اولین درخواست، cache-first ذخیره می‌شوند
    ============================================================ */
 
-const CACHE = 'chess-cache-v12';
+const CACHE = 'chess-cache-v13';
 
 /* فایل‌های کوچک و ضروری — هنگام نصب SW کش می‌شوند */
 const PRECACHE = [
@@ -16,6 +16,7 @@ const PRECACHE = [
   './coach.js',
   './openings-data.js',
   './games-data.js',
+  './pgn-loader.js',
   './learn-data-1.js',
   './learn-data-2.js',
   './learn-data-3.js',
