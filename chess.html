@@ -1029,6 +1029,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
   <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش</button>
   <button class="tbtn" id="tbtn-puzzle" onclick="switchTab('puzzle')">🧩 پازل</button>
   <button class="tbtn" id="tbtn-books" onclick="switchTab('books')">📖 آموزش زنده</button>
+  <button class="tbtn" id="tbtn-games" onclick="switchTab('games')">📺 سینما</button>
 </div>
 
 <div id="resumeBanner" class="resume-banner hidden">
@@ -1336,6 +1337,78 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
   <div id="booksHeader" class="books-header"></div>
   <div id="booksContent" class="books-content"></div>
 </div>
+<!-- ================= تب سینما (بازی‌های استادان) ================= -->
+<div id="tab-games" class="hidden">
+  <div class="layout">
+    <aside class="side">
+      <div class="prog">
+        <span id="gamesProgressText"></span>
+      </div>
+      <input id="searchGames" type="text" placeholder="🔍 جستجوی بازی…">
+      <div id="gamesList" class="slist"></div>
+    </aside>
+    <main class="content" id="gamesView">
+      <!-- پیام خالی -->
+      <div id="gamesEmpty" class="info-top" style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;margin-bottom:12px">🎬</div>
+        <h2>سینما شطرنج</h2>
+        <p style="color:#9aa0ae;margin-top:8px;line-height:2">
+          یک بازی را از سایدبار انتخاب کن تا مثل فیلم پخش شود.<br>
+          استاک‌فیش نقش مربی را دارد و می‌توانی از او تحلیل بخواهی.
+        </p>
+      </div>
+
+      <!-- پخش‌کننده (پیش‌فرض مخفی) -->
+      <div id="gamesPlayer" class="hidden">
+        <div class="info-top" style="margin-bottom:12px">
+          <h2 id="gvTitle"></h2>
+          <div class="meta" style="margin-top:6px">
+            <span>⚪ <b id="gvWhite"></b></span>
+            &nbsp;|&nbsp;
+            <span>⚫ <b id="gvBlack"></b></span>
+            &nbsp;|&nbsp;
+            <span>🏆 <b id="gvEvent"></b></span>
+            &nbsp;|&nbsp;
+            <span>📅 <b id="gvDate"></b></span>
+            &nbsp;|&nbsp;
+            <span>📊 <b id="gvResult"></b></span>
+          </div>
+          <p id="gvDesc" style="color:#9aa0ae;font-size:12.5px;line-height:2;margin-top:10px"></p>
+        </div>
+
+        <div class="main-row">
+          <div class="board-col card board-card">
+            <div id="gvBoard" style="display:grid;grid-template-columns:repeat(8,1fr);width:min(92vw,460px);aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
+            <div class="caption" id="gvCaption">—</div>
+            <div class="step-controls">
+              <button onclick="gvGoTo(0)" title="شروع">⏮</button>
+              <button onclick="gvGoTo(gvPly-1)" title="قبلی">◀</button>
+              <button id="gvBtnPlay" onclick="gvTogglePlay()">▶️ پخش</button>
+              <button onclick="gvGoTo(gvPly+1)" title="بعدی">▶</button>
+              <button onclick="gvGoTo(gvAllBoards.length-1)" title="پایان">⏭</button>
+            </div>
+            <div class="step-controls" style="margin-top:8px">
+              <button onclick="gvSpeed(-1)" title="کندتر">🐢 کندتر</button>
+              <span id="gvSpeedLabel" style="display:flex;align-items:center;padding:0 12px;color:#9aa0ae;font-size:12px">۱.۰x</span>
+              <button onclick="gvSpeed(1)" title="سریع‌تر">🐇 سریع‌تر</button>
+            </div>
+          </div>
+
+          <div class="comment-col">
+            <div class="coach-bubble" id="gvCoachBubble">
+              🎓 <b>مربی:</b> برای شروع، دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ حرکت‌به‌حرکت جلو برو.
+            </div>
+            <div id="gvMoves" style="background:#191b22;border-radius:12px;padding:10px;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px"></div>
+            <div class="analysis-wrap">
+              <button type="button" class="analysis-btn" onclick="gvAnalyze()">🐟 تحلیل این پوزیسیون با استاک‌فیش</button>
+              <div class="analysis-output" id="gvAnalysisOutput"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
 <footer class="credit">
   ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b><br>
   موتور: Stockfish 19 Lite &nbsp;|&nbsp; طراحی و توسعه: ۱۴۰۳
@@ -1344,6 +1417,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <!-- فایل‌های داده و مربی -->
 <script src="storage.js"></script>
 <script src="pgn.js"></script>
+<script src="games-data.js"></script>
 <script src="coach.js"></script>
 <script src="learn-data-1.js"></script>
 <script src="learn-data-2.js"></script>
@@ -2079,7 +2153,12 @@ function handleLine(line){
     if(!pendingGo&&S.turn===humanColor&&!Coach.busy)setStatus('استاک‌فیش آماده است — نوبت شماست ♙');
     return;
   }
-  if(line.startsWith('bestmove')){onBestmove(line.split(' ')[1]);return;}
+  if(line.startsWith('bestmove')){
+    const token = line.split(' ')[1];
+    if(searchRole === 'viewer'){ GamesViewer.onBestmove(token); return; }
+    onBestmove(token);
+    return;
+  }
   if(line.startsWith('info'))parseInfo(line);
 }
 function onBestmove(token){
@@ -2121,6 +2200,10 @@ function parseInfo(line){
   if(searchRole === 'lesson'){
     if(window.LiveLessons && window.LiveLessons.onStockfishInfo)
       window.LiveLessons.onStockfishInfo(line);
+    return;
+  }
+    if(searchRole === 'viewer'){
+    GamesViewer.onInfo(line);
     return;
   }
   if(searchGen!==gameId)return;
@@ -3259,7 +3342,7 @@ function renderRatingChart(d){
 }
 /* ================= تب‌ها و شروع ================= */
 function switchTab(name){
-  ['game','learn','open','puzzle','books'].forEach(t=>{
+  ['game','learn','open','puzzle','books','games'].forEach(t=>{
     $('tab-'+t).classList.toggle('hidden',t!==name);
     $('tbtn-'+t).classList.toggle('active',t===name);
   });
@@ -3272,10 +3355,13 @@ function switchTab(name){
   if(name==='books'){
     LiveLessons.init();
   }
+    if(name==='games'){
+    GamesViewer.renderList($('searchGames') ? $('searchGames').value : '');
+  }
 }
 $('search').addEventListener('input',e=>renderLearnList(e.target.value));
 $('searchOpen').addEventListener('input',e=>renderOpenList(e.target.value));
-
+if($('searchGames')) $('searchGames').addEventListener('input', e => GamesViewer.renderList(e.target.value));
 /* ============================================================
    📐 محاسبهٔ اندازهٔ صفحهٔ شطرنج — رفع لرزش موبایل
    ------------------------------------------------------------
@@ -3307,7 +3393,321 @@ window.addEventListener('orientationchange',scheduleBoardSize,{passive:true});
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',scheduleBoardSize,{passive:true});
 }
+/* ============================================================
+   🎬 سینما شطرنج — پخش بازی‌های استادان با تحلیل مربی
+   ============================================================ */
+const GamesViewer = {
+  cur: null,
+  allBoards: [],
+  allSans: [],
+  ply: 0,
+  timer: null,
+  speed: 1.0,   /* ضریب سرعت */
+  baseMs: 1200, /* هر حرکت چند میلی‌ثانیه */
+  engineRole: 'viewer',
+  analysisActive: false,
+  lastAnalysis: null,
 
+  /* شروع یک بازی */
+  start(gameId) {
+    const g = GAMES_DB.find(x => x.id === gameId);
+    if(!g) return;
+    this.cur = g;
+    this.ply = 0;
+
+    /* تجزیهٔ PGN */
+    const parsed = ChessPGN.parse(g.pgn);
+    const sanList = parsed.moves.filter(t => /^([KQRBNO]|[a-h])/.test(t) && !/^\d/.test(t));
+    const moves = sanListToUci(sanList);
+
+    /* ساخت آرایهٔ پوزیسیون‌ها */
+    this.allBoards = [initialBoard()];
+    this.allSans = [];
+    let s = initialState();
+    for(const mv of moves) {
+      const legal = legalMoves(s);
+      const found = legal.find(m =>
+        m.from === mv.uci_from || true /* هیچ، فقط برای اطمینان */
+      );
+      /* از همان منطق internal استفاده کن */
+      const from = parseSq(mv.uci.slice(0,2));
+      const to = parseSq(mv.uci.slice(2,4));
+      const promo = mv.uci[4] || null;
+      const real = legal.find(x => x.from === from && x.to === to && (x.promo||null) === promo);
+      if(!real) break;
+      this.allSans.push(sanOf(s, real, legal));
+      s = makeMove(s, real);
+      this.allBoards.push(s.board.slice());
+    }
+
+    /* نمایش هدر و بازنشانی UI */
+    $('gvTitle').textContent = g.title;
+    $('gvWhite').textContent = g.white;
+    $('gvBlack').textContent = g.black;
+    $('gvEvent').textContent = g.event || '—';
+    $('gvDate').textContent  = g.date  || '—';
+    $('gvResult').textContent = g.result || '*';
+    $('gvDesc').textContent = g.description || '';
+    $('gvAnalysisOutput').textContent = '';
+    $('gamesEmpty').classList.add('hidden');
+    $('gamesPlayer').classList.remove('hidden');
+
+    this.goTo(0);
+    this.renderList($('searchGames').value);
+  },
+
+  /* رفتن به یک پلی */
+  goTo(n) {
+    if(!this.cur) return;
+    this.ply = Math.max(0, Math.min(this.allBoards.length - 1, n));
+    this.drawBoard();
+    this.drawMoves();
+    this.drawCoachBubble();
+    this.renderProgress();
+  },
+
+  /* رسم صفحه */
+  drawBoard() {
+    const el = $('gvBoard');
+    if(!el) return;
+    const b = this.allBoards[this.ply];
+    const prev = this.ply > 0 ? this.allSans[this.ply - 1] : null;
+    const last = prev ? this._lastMoveSquares(this.ply - 1) : null;
+    const FILES = 'abcdefgh';
+    let html = '';
+    for(let i = 0; i < 64; i++) {
+      const r = i >> 3, c = i & 7;
+      let cls = 'cell ' + (((r + c) % 2 === 1) ? 'dark' : 'light');
+      if(last && (last.from === i || last.to === i)) cls += ' llast';
+      const p = b[i];
+      html += '<div class="' + cls + '">' +
+        (c === 0 ? '<span class="coord rank">' + (8 - r) + '</span>' : '') +
+        (r === 7 ? '<span class="coord file">' + FILES[c] + '</span>' : '') +
+        (p ? '<span class="piece ' + (isW(p) ? 'w' : 'b') + '">' + pieceSvg(p, isW(p)) + '</span>' : '') +
+        '</div>';
+    }
+    el.innerHTML = html;
+
+    /* کپشن */
+    if(this.ply === 0) {
+      $('gvCaption').textContent = '🏁 وضعیت شروع';
+    } else {
+      const moveNo = Math.ceil(this.ply / 2);
+      const side = (this.ply % 2 === 1) ? '⚪ سفید' : '⚫ مشکی';
+      $('gvCaption').textContent = moveNo + '. ' + this.allSans[this.ply - 1] + ' — ' + side;
+    }
+  },
+
+  /* پیدا کردن خانه‌های آخرین حرکت با شبیه‌سازی مجدد */
+  _lastMoveSquares(plyIndex) {
+    /* ترفند سریع: از موقعیت قبلی + san دوباره محاسبه می‌کنیم */
+    /* برای سادگی، فقط از move list استفاده می‌کنیم که در allSans ذخیره شده */
+    /* در این نسخه، allSans را داریم ولی squares را نگه نداشتیم */
+    /* اصلاح: نگه‌داری در آرایهٔ جداگانه در start */
+    return this._movesSquares ? this._movesSquares[plyIndex] : null;
+  },
+
+  /* رسم لیست حرکات */
+  drawMoves() {
+    const el = $('gvMoves');
+    if(!el) return;
+    let html = '';
+    for(let i = 0; i < this.allSans.length; i++) {
+      if(i % 2 === 0) {
+        html += '<div class="mv"><span class="n">' + (i/2 + 1) + '.</span>';
+      }
+      const cls = (i + 1 === this.ply) ? ' cur' : '';
+      html += '<span class="' + cls + '" style="min-width:64px;display:inline-block;cursor:pointer" onclick="GamesViewer.goTo(' + (i+1) + ')">' + this.allSans[i] + '</span>';
+      if(i % 2 === 1 || i === this.allSans.length - 1) {
+        html += '</div>';
+      }
+    }
+    el.innerHTML = html || '<div style="color:#6f7480;padding:8px;text-align:center">حرکتی موجود نیست</div>';
+
+    /* اسکرول به حرکت فعلی */
+    const cur = el.querySelector('.cur');
+    if(cur) cur.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  },
+
+  /* پیام مربی */
+  drawCoachBubble() {
+    const el = $('gvCoachBubble');
+    if(!el) return;
+    if(this.ply === 0) {
+      el.innerHTML = '🎓 <b>مربی:</b> این بازی «' + this.cur.title + '» است. دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ جلو برو. برای تحلیل هر پوزیسیون، دکمهٔ 🐟 پایین را بزن.';
+      return;
+    }
+    const moveNo = Math.ceil(this.ply / 2);
+    const side = (this.ply % 2 === 1) ? '⚪ سفید' : '⚫ مشکی';
+    el.innerHTML = '🎓 <b>مربی:</b> حرکت ' + moveNo + ' — <b>' + this.allSans[this.ply - 1] + '</b> توسط ' + side + '. ' +
+      '<br><span style="color:#8a8f9c">برای دریافت تحلیل استاک‌فیش، دکمهٔ 🐟 پایین را بزن.</span>';
+  },
+
+  /* پخش/توقف */
+  togglePlay() {
+    if(this.timer) { this.stopPlay(); return; }
+    if(this.ply >= this.allBoards.length - 1) this.goTo(0);
+    $('gvBtnPlay').textContent = '⏸ توقف';
+    $('gvBtnPlay').classList.add('playing');
+    const interval = Math.round(this.baseMs / this.speed);
+    this.timer = setInterval(() => {
+      if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
+      this.goTo(this.ply + 1);
+    }, interval);
+  },
+
+  stopPlay() {
+    if(this.timer) { clearInterval(this.timer); this.timer = null; }
+    const btn = $('gvBtnPlay');
+    if(btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
+  },
+
+  /* تنظیم سرعت */
+  speed(delta) {
+    const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
+    const idx = steps.indexOf(this.speed);
+    let newIdx = Math.max(0, Math.min(steps.length - 1, (idx < 0 ? 1 : idx) + delta));
+    this.speed = steps[newIdx];
+    $('gvSpeedLabel').textContent = this.speed.toFixed(1) + 'x';
+    /* اگر در حال پخش بود، از نو شروع کن */
+    if(this.timer) { this.stopPlay(); this.togglePlay(); }
+  },
+
+  /* تحلیل با استاک‌فیش */
+  gvAnalyze() {
+    if(!this.cur) return;
+    if(!engineReadyForViewer()) {
+      $('gvAnalysisOutput').textContent = '⚠️ استاک‌فیش هنوز آماده نیست. چند لحظه صبر کن.';
+      return;
+    }
+    this.analysisActive = true;
+    this.lastAnalysis = { depth: 0, score: null, mate: false, bestmove: null };
+    $('gvAnalysisOutput').textContent = '🐟 استاک‌فیش در حال تحلیل…';
+
+    /* ساخت FEN از پوزیسیون فعلی */
+    const fen = this._currentFen();
+    try { searchRole = 'viewer'; } catch(e) {}
+    sfSend('setoption name Skill Level value 20');
+    sfSend('position fen ' + fen);
+    sfSend('go depth 15');
+  },
+
+  /* ساخت FEN از موقعیت فعلی */
+  _currentFen() {
+    const b = this.allBoards[this.ply];
+    let placement = '', empty = 0;
+    for(let r = 0; r < 8; r++) {
+      for(let c = 0; c < 8; c++) {
+        const p = b[r * 8 + c];
+        if(!p) empty++;
+        else { if(empty) { placement += empty; empty = 0; } placement += p; }
+      }
+      if(empty) { placement += empty; empty = 0; }
+      if(r < 7) placement += '/';
+    }
+    const turn = (this.ply % 2 === 0) ? 'w' : 'b';
+    return placement + ' ' + turn + ' - - 0 1';
+  },
+
+  /* پیام‌های استاک‌فیش */
+  onInfo(line) {
+    if(!this.analysisActive) return;
+    const ms = line.match(/ score (cp|mate) (-?\d+)/);
+    if(ms) {
+      this.lastAnalysis.mate = ms[1] === 'mate';
+      this.lastAnalysis.score = +ms[2];
+    }
+    const md = line.match(/ depth (\d+)/);
+    if(md) this.lastAnalysis.depth = +md[1];
+    const pvm = line.match(/ pv (.+)$/);
+    if(pvm) this.lastAnalysis.pv = pvm[1].trim().split(/\s+/);
+
+    /* نمایش موقت */
+    let txt = '…';
+    if(this.lastAnalysis.score !== null) {
+      if(this.lastAnalysis.mate) {
+        const m = Math.abs(this.lastAnalysis.score);
+        txt = 'مات در ' + m + ' به نفع ' + (this.lastAnalysis.score > 0 ? 'سفید' : 'مشکی');
+      } else {
+        const turn = (this.ply % 2 === 0) ? 'w' : 'b';
+        const v = (this.lastAnalysis.score / 100) * (turn === 'w' ? 1 : -1);
+        txt = Math.abs(v) < 0.3 ? 'متعادل' : ((v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع ' + (v > 0 ? 'سفید' : 'مشکی'));
+      }
+    }
+    $('gvAnalysisOutput').textContent = '🐟 عمق ' + this.lastAnalysis.depth + ' — ' + txt;
+  },
+
+  onBestmove(token) {
+    if(!this.analysisActive) return;
+    this.analysisActive = false;
+    if(!token || token === '(none)') {
+      $('gvAnalysisOutput').textContent = '🐟 تحلیلی موجود نیست.';
+      return;
+    }
+    let evalTxt = 'نامشخص';
+    if(this.lastAnalysis.mate) {
+      const m = Math.abs(this.lastAnalysis.score);
+      evalTxt = 'مات در ' + m + ' به نفع ' + (this.lastAnalysis.score > 0 ? 'سفید' : 'مشکی');
+    } else if(this.lastAnalysis.score !== null) {
+      const turn = (this.ply % 2 === 0) ? 'w' : 'b';
+      const v = (this.lastAnalysis.score / 100) * (turn === 'w' ? 1 : -1);
+      if(Math.abs(v) < 0.3) evalTxt = 'متعادل';
+      else evalTxt = (v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع ' + (v > 0 ? 'سفید' : 'مشکی');
+    }
+    $('gvAnalysisOutput').innerHTML =
+      '🐟 <b>تحلیل استاک‌فیش</b><br>' +
+      '📊 ارزیابی: <b>' + evalTxt + '</b><br>' +
+      '🎯 بهترین حرکت: <b>' + gvUciToSan(token) + '</b><br>' +
+      '📏 عمق: ' + this.lastAnalysis.depth;
+  },
+
+  /* رندر لیست در سایدبار */
+  renderList(filter) {
+    filter = (filter || '').trim();
+    let html = '';
+    for(const cat of GAMES_CATEGORIES) {
+      const items = GAMES_DB.filter(g => g.category === cat.id &&
+        (!filter || g.title.includes(filter) || g.white.includes(filter) || g.black.includes(filter)));
+      if(!items.length && filter) continue;
+      html += '<details open><summary>' + cat.name + '<span class="cnt">' + items.length + '</span><small>' + cat.desc + '</small></summary>';
+      for(const g of items) {
+        html += '<button class="lsn' + (this.cur && this.cur.id === g.id ? ' active' : '') +
+          '" onclick="GamesViewer.start(\'' + g.id + '\')">' +
+          '<span>' + g.title + '</span>' +
+          '<small>' + g.result + '</small>' +
+        '</button>';
+      }
+      html += '</details>';
+    }
+    $('gamesList').innerHTML = html || '<div style="color:#6f7480;padding:10px;font-size:13px">بازی‌ای پیدا نشد 🔍</div>';
+    $('gamesProgressText').textContent = '🎬 ' + GAMES_DB.length + ' بازی در سینما';
+  },
+
+  renderProgress() {
+    /* نوار پایین صفحه - اختیاری */
+  }
+};
+
+/* تبدیل UCI به SAN برای نمایش */
+function gvUciToSan(uci) {
+  if(!uci || uci.length < 4) return uci;
+  const from = parseSq(uci.slice(0, 2));
+  const to   = parseSq(uci.slice(2, 4));
+  const promo = uci[4] || null;
+  const b = GamesViewer.allBoards[GamesViewer.ply];
+  const turn = (GamesViewer.ply % 2 === 0) ? 'w' : 'b';
+  const fake = { board: b.slice(), turn, castling:{K:0,Q:0,k:0,q:0}, ep:-1, half:0, full:1 };
+  const legal = legalMoves(fake);
+  const m = legal.find(x => x.from === from && x.to === to && (x.promo||null) === promo);
+  return m ? sanOf(fake, m, legal) : uci;
+}
+
+/* بررسی آماده بودن استاک‌فیش برای سینما */
+function engineReadyForViewer() {
+  return typeof engineReady !== 'undefined' && engineReady &&
+         typeof sfSend === 'function' &&
+         typeof engine !== 'undefined' && engine === 'stockfish';
+}
 /* شروع */
 updateBoardSize();
 render();
