@@ -24,7 +24,11 @@ window.LiveLessons = (() => {
   let failed = false;
   let attempts = 0;
   let lastMove = null;
-
+  /* پاک‌سازی عنوان — حذف پیشوند "پازل X — " */
+  function cleanTitle(title) {
+    const m = String(title).match(/^پازل\s*\d*\s*[—–-]\s*(.+)$/);
+    return m ? m[1] : title;
+  }
   /* ---------- ذخیره ---------- */
   function loadProgress() {
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
@@ -166,9 +170,10 @@ window.LiveLessons = (() => {
       } else {
         idx++;
         const done = isSolved(ls.id) ? '✅' : '⬜';
+        /* استفاده از cleanTitle و شمارهٔ خودکار */
         html += '<div class="lesson-row puzzle" data-action="open-lesson" data-lesson-id="' + ls.id + '">' +
           '<span class="lesson-icon">' + done + '</span>' +
-          '<span class="lesson-title">پازل ' + idx + ' — ' + ls.title + '</span>' +
+          '<span class="lesson-title">پازل ' + idx + ' — ' + cleanTitle(ls.title) + '</span>' +
           '<span class="lesson-tag">حل کن</span></div>';
       }
     }
@@ -219,7 +224,7 @@ window.LiveLessons = (() => {
     const container = document.getElementById('booksContent');
     let html = '<button class="back-btn" data-action="back-chapter">← ' + curChapter.title + '</button>';
     html += '<div class="puzzle-lesson">';
-    html += '<h2>' + L.title + '</h2>';
+    html += '<h2>' + cleanTitle(L.title) + '</h2>';
     html += '<div class="puzzle-text">' + L.text[0] + '</div>';
     html += '<div class="lesson-board-wrap"><div id="lessonBoard" class="lesson-board"></div></div>';
     html += '<div class="puzzle-feedback" id="booksPuzzleFeedback">نوبت ' +
