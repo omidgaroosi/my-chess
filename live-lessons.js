@@ -221,15 +221,15 @@ window.LiveLessons = (() => {
     html += '<h2>' + L.title + '</h2>';
     html += '<div class="puzzle-text">' + L.text[0] + '</div>';
     html += '<div class="lesson-board-wrap"><div id="lessonBoard" class="lesson-board"></div></div>';
-    html += '<div class="puzzle-feedback" id="puzzleFeedback">نوبت ' +
+    html += '<div class="puzzle-feedback" id="booksPuzzleFeedback">نوبت ' +
       (turn === 'w' ? '⚪ سفید' : '⚫ مشکی') + ' است — بهترین حرکت را پیدا کن.</div>';
     html += '<div class="puzzle-controls">' +
       '<button type="button" data-action="hint">💡 راهنمایی</button>' +
       '<button type="button" data-action="retry">🔄 از اول</button>' +
       '<button type="button" data-action="solution" class="primary">👁 پاسخ</button>' +
     '</div>';
-    html += '<div class="puzzle-explain hidden" id="puzzleExplain"></div>';
-    html += '<div id="puzzleNextWrap" class="hidden" style="margin-top:12px">' +
+    html += '<div class="puzzle-explain hidden" id="booksPuzzleExplain"></div>';
+    html += '<div id="booksPuzzleNextWrap" class="hidden" style="margin-top:12px">' +
       '<button type="button" data-action="next" class="primary" style="width:100%">درس بعدی ←</button>' +
     '</div>';
     html += '</div>';
@@ -359,15 +359,15 @@ window.LiveLessons = (() => {
     solved = true;
     markSolved(curLesson.id);
     setFeedback('🎉 آفرین! پازل را حل کردی.', 'correct');
-    const ex = document.getElementById('puzzleExplain');
+    const ex = document.getElementById('booksPuzzleExplain');
     if(ex) { ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation; ex.classList.remove('hidden'); }
-    const nw = document.getElementById('puzzleNextWrap');
+    const nw = document.getElementById('booksPuzzleNextWrap');
     if(nw) nw.classList.remove('hidden');
     renderBoard(board, [], lastMove);
   }
 
   function setFeedback(txt, cls) {
-    const el = document.getElementById('puzzleFeedback');
+    const el = document.getElementById('booksPuzzleFeedback');
     if(!el) return;
     el.className = 'puzzle-feedback' + (cls ? ' ' + cls : '');
     el.innerHTML = txt;
@@ -386,10 +386,10 @@ window.LiveLessons = (() => {
   function showSolution() {
     if(!curLesson || solved) return;
     setFeedback('👁 پاسخ: <b>' + curLesson.solutionSan + '</b>', '');
-    const ex = document.getElementById('puzzleExplain');
+    const ex = document.getElementById('booksPuzzleExplain');
     if(ex) { ex.innerHTML = '🎓 <b>توضیح:</b> ' + curLesson.explanation; ex.classList.remove('hidden'); }
     solved = true;
-    const nw = document.getElementById('puzzleNextWrap');
+    const nw = document.getElementById('booksPuzzleNextWrap');
     if(nw) nw.classList.remove('hidden');
   }
   function nextLesson() {
@@ -455,8 +455,10 @@ window.LiveLessons = (() => {
         curLesson: curLesson ? curLesson.id : null,
         boardExists: !!board,
         solved, failed, attempts, stepIndex,
-        feedbackEl: !!document.getElementById('puzzleFeedback'),
+        feedbackEl: !!document.getElementById('booksPuzzleFeedback'),
         boardEl: !!document.getElementById('lessonBoard'),
+        duplicateFeedback: document.querySelectorAll('#puzzleFeedback').length,
+        duplicateExplain: document.querySelectorAll('#puzzleExplain').length,
         delegated: !!document.getElementById('booksContent')?._delegated,
         booksContentCount: document.querySelectorAll('#booksContent').length
       };
