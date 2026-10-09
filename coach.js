@@ -87,6 +87,19 @@ const Coach = {
   /* ============================================================
      🔍 ابزارهای تحلیل وضعیت
      ============================================================ */
+  /* ---------- تحلیل مهره‌های در خطر (نسخهٔ بهبودیافته) ---------- */
+  hangingPieces(s, color){
+    if(window.CoachPatterns) {
+      return window.CoachPatterns.detectHangingPieces(s.board, color).map(h => ({
+        sq: h.sq,
+        val: h.value,
+        san: h.defended 
+          ? h.name + ' تحت فشار (' + h.attackerCount + ' مهاجم در برابر ' + h.defenderCount + ' مدافع)'
+          : h.name + ' بی‌دفاع'
+      }));
+    }
+    return this._hangingPiecesLegacy(s, color);
+  },
 
   // مهره‌های بی‌دفاع: مهره‌ای که حریف آن را زده ولی هیچ‌کس ازش دفاع نمی‌کند
   hangingPieces(s, color){
@@ -299,15 +312,6 @@ const Coach = {
     
     return out;
   },
-
-  /* ---------- کد قدیمی (به‌عنوان پشتیبان) ---------- */
-  _detectTacticsLegacy(s0, s1, m, captured){
-    const out = [];
-    const mover = s0.turn;
-    const byW = mover === 'w';
-    const p = s0.board[m.from];
-    if(!p) return out;
-    const t = p.toLowerCase();
   /* ---------- تشخیص الگوهای تاکتیکی ---------- */
   _detectTactics(s0, s1, m, captured){
     const out = [];
