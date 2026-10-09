@@ -1,69 +1,53 @@
 "use strict";
 /* ============================================================
-   🎓 coach.js — مغز مربی و تحلیلگر بازی
+   🎓 coach.js — مربی هوشمند نسخهٔ 2.0
    ------------------------------------------------------------
-   این فایل به توابع هستهٔ شطرنج در chess.html وابسته است:
-   S, hist, legalMoves, makeMove, sanOf, inCheck, attacked,
-   sqName, parseSq, isW, colorOf, engine, sfSend, LEVELS_SF,
-   level, humanColor, gameOver, thinking, gameId, searchGen,
-   searchRole, searchSide, setStatus, render, chooseAiMove, $
-
-   🔧 برای گسترش مربی:
-   - قوانین توضیح جدید را در تابع describeMove اضافه کن
-   - شروع بازی‌های جدید را به آرایهٔ OPENINGS اضافه کن
-   - نکات راهبردی جدید را در strategicAdvice بنویس
+   قابلیت‌های جدید:
+   - تشخیص تهدیدهای فوری حریف
+   - تحلیل جامع پوزیسیون (مواد، امنیت شاه، فعالیت، پیاده‌ها)
+   - پیشنهاد چندحرکته (PV) با توضیح
+   - تحلیل خطاهای بازیکن با پیشنهاد جایگزین
+   - نکات آموزشی متنی با ارجاع به الگوها
+   ساخته شده توسط امید گروسی
    ============================================================ */
 
 const Coach = {
 
-  /* ---------------- وضعیت مربی ---------------- */
-  move: null,          // حرکت پیشنهادی {from, to, promo, uci, san}
-  busy: false,         // در حال تحلیل است؟
-  pv: [],              // خط اصلی پیشنهادی موتور
-  score: null,         // ارزیابی {mate, v} از دید بازیکن
-  pending: false,      // منتظر آماده‌شدن موتور
-  lastOpening: null,   // آخرین شروع بازی شناسایی‌شده
+  /* ---------------- وضعیت ---------------- */
+  move: null,
+  busy: false,
+  pv: [],
+  score: null,
+  pending: false,
+  lastOpening: null,
   _lastSuggested: null,
   _lastHuman: null,
+  _lastThreats: null,
 
-  /* ---------------- قدرت مربی (همیشه قوی‌تر از حریف) ---------------- */
-  depth(){ return Math.min(LEVELS_SF[level].depth + 5, 18); },
-  skill(){ return 20; },
-
-  /* ---------------- فارسی‌سازی ---------------- */
   FA_PIECE: {k:'شاه', q:'وزیر', r:'رخ', b:'فیل', n:'اسب', p:'پیاده'},
-  FA_VAL:   {p:1, n:3, b:3, r:5, q:9},
-  CENTER:   [27, 28, 35, 36], // d4 e4 d5 e5
+  FA_VAL: {p:1, n:3, b:3, r:5, q:9},
+  CENTER: [27, 28, 35, 36],
 
   /* ============================================================
-     📚 کتابخانهٔ شروع بازی‌ها — برای افزودن، یک آرایهٔ جدید اضافه کن
+     📚 کتابخانهٔ شروع بازی‌ها
      ============================================================ */
   OPENINGS: [
     {san:['e4','e5','Nf3','Nc6','Bb5'], name:'روی لوپز (اسپانیایی)'},
     {san:['e4','e5','Nf3','Nc6','Bc4'], name:'بازی ایتالیایی'},
     {san:['e4','e5','Nf3','Nc6','d4'],  name:'گشایش اسکاتلندی'},
     {san:['e4','e5','Nf3','Nf6'],       name:'دفاع پتروف'},
-    {san:['e4','c5','Nf3','d6'],        name:'سیسیلی (واریانت نایدورف‌گونه)'},
+    {san:['e4','c5','Nf3','d6'],        name:'سیسیلی نایدورف‌گونه'},
     {san:['e4','c5'],                   name:'دفاع سیسیلی'},
     {san:['e4','e6'],                   name:'دفاع فرانسوی'},
     {san:['e4','c6'],                   name:'دفاع کاروکان'},
     {san:['e4','d5'],                   name:'دفاع اسکاندیناوی'},
     {san:['d4','d5','c4','e6'],         name:'گامبی وزیر ردشده'},
     {san:['d4','d5','c4','c6'],         name:'دفاع اسلاو'},
-    {san:['d4','d5','c4','dxc4'],       name:'گامبی وزیر پذیرفته‌شده'},
-    {san:['d4','d5','c4'],              name:'گامبی وزیر'},
+    {san:['d4','d5','c4','dxc4'],       name:'گامبی وزیر پذیرفته'},
     {san:['d4','Nf6','c4','g6'],        name:'دفاع کینگز ایندین'},
     {san:['d4','Nf6','c4','e6'],        name:'دفاع‌های هندی وزیر'},
-    {san:['d4','Nf6','c4','c5'],        name:'دفاع بنونی'},
-    {san:['d4','Nf6'],                  name:'شروع‌های هندی'},
-    {san:['d4','f5'],                   name:'دفاع هلندی'},
-    {san:['c4','e5'],                   name:'شروع انگلیسی معکوس'},
-    {san:['c4'],                        name:'شروع انگلیسی'},
+    {san:['c4','e5'],                   name:'شروع انگلیسی'},
     {san:['Nf3'],                       name:'شروع رتی'},
-    {san:['e4','e5'],                   name:'بازی باز'},
-    {san:['d4','d5'],                   name:'بازی بسته'},
-    {san:['e4'],                        name:'بازی پیادهٔ شاه'},
-    {san:['d4'],                        name:'بازی پیادهٔ وزیر'},
   ],
 
   openingName(){
@@ -80,89 +64,128 @@ const Coach = {
     const n = this.openingName();
     if(n && n !== this.lastOpening){
       this.lastOpening = n;
-      this.say('📖 <b>شروع بازی:</b> ' + n, 'analyst');
+      this.say('📖 <b>شروع بازی:</b> ' + n + '<br><span style="color:#8a8f9c;font-size:11.5px">این گشایش را در کتاب «گشایش‌ها» می‌توانی مطالعه کنی.</span>', 'analyst');
     }
   },
 
   /* ============================================================
-     🔍 ابزارهای تحلیل وضعیت
+     🔍 تحلیل پوزیسیون — با استفاده از CoachAnalyzer
      ============================================================ */
-  /* ---------- تحلیل مهره‌های در خطر (نسخهٔ بهبودیافته) ---------- */
-  hangingPieces(s, color){
-    if(window.CoachPatterns) {
-      return window.CoachPatterns.detectHangingPieces(s.board, color).map(h => ({
-        sq: h.sq,
-        val: h.value,
-        san: h.defended 
-          ? h.name + ' تحت فشار (' + h.attackerCount + ' مهاجم در برابر ' + h.defenderCount + ' مدافع)'
-          : h.name + ' بی‌دفاع'
-      }));
-    }
-    return this._hangingPiecesLegacy(s, color);
+  _analyzer(){
+    return window.CoachAnalyzer || null;
   },
 
-  // مهره‌های بی‌دفاع (نسخهٔ قدیمی — fallback اگر CoachPatterns نبود)
-  _hangingPiecesLegacy(s, color){
-    const res = [], enemyW = color !== 'w';
-    for(let sq = 0; sq < 64; sq++){
-      const p = s.board[sq];
-      if(!p || colorOf(p) !== color) continue;
-      if(p.toLowerCase() === 'k') continue;
-      const iAttacked = attacked(s, sq, enemyW);
-      if(!iAttacked) continue;
-      const iDefended = attacked(s, sq, color === 'w');
-      if(iDefended) continue;
-      /* شناسایی مهاجم اصلی و ارزش مهرهٔ در معرض خطر */
-      const val = this.FA_VAL[p.toLowerCase()] || 0;
-      let attackerName = '';
-      for(let sq2 = 0; sq2 < 64; sq2++){
-        const q = s.board[sq2];
-        if(!q || colorOf(q) === color) continue;
-        /* ✅ بدون کپی برد — فقط مهرهٔ مهاجم را نادیده می‌گیریم */
-        if(attacked(s, sq, enemyW, sq2)){
-          attackerName = this.FA_PIECE[q.toLowerCase()];
-          break;
-        }
-      }
-      const pieceName = this.FA_PIECE[p.toLowerCase()];
-      res.push({
-        sq,
-        val,
-        san: pieceName + ' در ' + sqName(sq) + (attackerName ? ' (در تیررس ' + attackerName + ')' : ' (بی‌دفاع)')
-      });
-    }
-    res.sort((a,b) => b.val - a.val);
-    return res;
+  hangingPieces(s, color){
+    const A = this._analyzer();
+    if(A) return A.detectHanging(s, color).map(h => ({
+      sq: h.sq,
+      val: h.value,
+      san: h.name + ' در ' + h.faSq + (h.defended ? ' (تحت فشار)' : ' (بی‌دفاع)')
+    }));
+    return [];
   },
 
   materialSummary(s){
-    let w = 0, b = 0;
-    for(const p of s.board){
-      if(!p) continue;
-      const v = this.FA_VAL[p.toLowerCase()] || 0;
-      if(isW(p)) w += v; else b += v;
-    }
-    const d = w - b;
-    if(d > 0) return 'مواد: ' + d + ' امتیاز جلویی 💪';
-    if(d < 0) return 'مواد: ' + (-d) + ' امتیاز عقبی ⚠️';
-    return 'مواد: مساوی ⚖️';
+    const A = this._analyzer();
+    if(!A) return 'مواد: نامشخص';
+    const m = A.analyzeMaterial(s, s.turn);
+    const d = m.diff;
+    if(d > 0) return 'مواد: <b style="color:#81c784">+' + d + '</b> به نفع شما';
+    if(d < 0) return 'مواد: <b style="color:#e57373">' + d + '</b> به نفع حریف';
+    return 'مواد: <b>مساوی</b>';
   },
 
-  // تشخیص فاز بازی
   gamePhase(s){
-    let q = 0, r = 0;
-    for(const p of s.board){
-      if(!p) continue;
-      const t = p.toLowerCase();
-      if(t === 'q') q++; else if(t === 'r') r++;
-    }
-    if(q === 0 && r <= 2) return 'endgame';
-    if(s.full <= 10) return 'opening';
+    const A = this._analyzer();
+    if(A) return A.getPhase(s);
     return 'middlegame';
   },
 
   /* ============================================================
-     🧭 قوانین توضیح حرکت — این بخش را می‌توانی گسترش بدهی!
+     🎯 تشخیص تهدیدهای فوری حریف
+     ============================================================ */
+  detectThreats(){
+    const A = this._analyzer();
+    if(!A) return [];
+    const threats = A.detectThreats(S);
+    this._lastThreats = threats;
+    const messages = [];
+    
+    if(threats.critical.length) {
+      for(const t of threats.critical.slice(0, 2)) {
+        messages.push({
+          type: 'critical',
+          text: '⛔ <b>خطر فوری:</b> حریف تهدید <b>' + t.san + '</b> دارد که شما را مات می‌کند! باید همین الان جلویش را بگیری.'
+        });
+      }
+    }
+    
+    if(threats.high.length && !threats.critical.length) {
+      const seen = new Set();
+      for(const t of threats.high.slice(0, 3)) {
+        if(seen.has(t.san)) continue;
+        seen.add(t.san);
+        if(t.type === 'free-piece') {
+          messages.push({
+            type: 'high',
+            text: '⚠️ حریف تهدید می‌کند: <b>' + t.san + '</b> — ' + t.piece + ' شما در ' + A.faSq(t.sq) + ' در خطر است'
+          });
+        } else if(t.type === 'check') {
+          messages.push({
+            type: 'medium',
+            text: '⚡ حریف می‌تواند کیش بدهد: <b>' + t.san + '</b>'
+          });
+        }
+      }
+    }
+    
+    return messages;
+  },
+
+  /* ============================================================
+     📊 گزارش جامع پوزیسیون
+     ============================================================ */
+  positionReport(){
+    const A = this._analyzer();
+    if(!A) return null;
+    const report = A.analyze(S, humanColor);
+    return report;
+  },
+
+  buildReportText(report) {
+    if(!report) return '';
+    const parts = [];
+    
+    /* مواد */
+    const mat = report.material;
+    if(mat.diff > 0) parts.push('💰 مواد: <b>+' + mat.diff + '</b> به نفع شما');
+    else if(mat.diff < 0) parts.push('💰 مواد: <b>' + mat.diff + '</b> به نفع حریف');
+    else parts.push('💰 مواد: <b>مساوی</b>');
+    
+    /* امنیت شاه */
+    const ks = report.kingSafety;
+    if(ks.score >= 75) parts.push('🛡️ شاه شما در امنیت است');
+    else if(ks.score >= 50) parts.push('🛡️ شاه شما نسبتاً امن');
+    else if(ks.score >= 30) parts.push('⚠️ شاه شما آسیب‌پذیر است');
+    else parts.push('🚨 <b>شاه شما در خطر جدی است</b>');
+    
+    /* فعالیت */
+    const act = report.activity;
+    if(act.inactive.length >= 2) {
+      parts.push('💤 ' + act.inactive.length + ' مهرهٔ شما غیرفعالند: ' + 
+        act.inactive.map(x => x.name + ' ' + x.faSq).slice(0, 3).join('، '));
+    }
+    
+    /* پیاده‌ها */
+    const pn = report.pawns;
+    if(pn.isolated > 0) parts.push('🏝️ ' + pn.isolated + ' پیادهٔ ایزوله دارید');
+    if(pn.doubled > 0) parts.push('⚠️ پیاده‌های دوبله دارید');
+    
+    return parts.join(' • ');
+  },
+
+  /* ============================================================
+     📖 قوانین توضیح حرکت
      ============================================================ */
   describeMove(s0, m){
     const parts = [];
@@ -172,7 +195,6 @@ const Coach = {
     const s1 = makeMove(s0, m);
     const captured = s0.board[m.to] || (m.ep ? (mover === 'w' ? 'p' : 'P') : null);
 
-    /* ۱) ماهیت حرکت */
     if(m.castle){
       parts.push((m.castle === 'K' || m.castle === 'k')
         ? 'قلعهٔ کوتاه — شاه در گوشهٔ امن قرار می‌گیرد و رخ به بازی می‌آید'
@@ -182,14 +204,14 @@ const Coach = {
       const wasDefended = attacked(s0, m.to, mover !== 'w');
       parts.push('گرفتن ' + this.FA_PIECE[captured.toLowerCase()] +
         ' در ' + sqName(m.to) + ' (' + capVal + ' امتیاز)' +
-        (wasDefended ? '' : ' که بی‌دفاع بود 🎯'));
+        (wasDefended ? '' : ' <b>که بی‌دفاع بود</b> 🎯'));
     } else {
       parts.push('حرکت ' + this.FA_PIECE[t] + ' از ' + sqName(m.from) + ' به ' + sqName(m.to));
     }
     if(m.promo) parts.push('ارتقای پیاده به ' + this.FA_PIECE[m.promo] + ' 🎉');
-    if(inCheck(s1, s1.turn)) parts.push('کیش — حریف مجبور به پاسخ فوری است');
+    if(inCheck(s1, s1.turn)) parts.push('<b>کیش</b> — حریف مجبور به پاسخ فوری است');
 
-    /* ۲) تهدیدهای جدید که این حرکت ساخت (مرتب‌شده بر اساس ارزش) */
+    /* تهدیدهای جدید */
     if(!m.castle && t !== 'k'){
       const threats = [], byW = mover === 'w';
       for(let sq = 0; sq < 64; sq++){
@@ -198,7 +220,7 @@ const Coach = {
         const isNew = attacked(s1, sq, byW) && !attacked(s0, sq, byW);
         if(!isNew) continue;
         const val = this.FA_VAL[q.toLowerCase()] || 0;
-        threats.push({ name: this.FA_PIECE[q.toLowerCase()] + ' در ' + sqName(sq), val });
+        threats.push({ name: this.FA_PIECE[q.toLowerCase()] + ' ' + sqName(sq), val });
       }
       threats.sort((a,b) => b.val - a.val);
       if(threats.length){
@@ -206,16 +228,15 @@ const Coach = {
       }
     }
 
-    /* ۳) شناسایی الگوهای تاکتیکی (چنگال / آچمز / سیخ / حملهٔ برخاست) */
-    const tactics = this._detectTactics(s0, s1, m, captured);
+    /* تشخیص تاکتیک‌ها با موتور جدید */
+    const tactics = this._detectTacticsNew(s0, s1, m, captured);
     if(tactics.length) parts.push(tactics.join('؛ '));
 
-    /* ۴) حرکت‌های آموزشی بر اساس فاز بازی */
+    /* اصول شروع بازی */
     if(s0.full <= 10){
       if(t === 'p' && this.CENTER.includes(m.to)){
         const files = ['a','b','c','d','e','f','g','h'];
-        parts.push('اشغال مرکز با پیادهٔ ' + files[m.to & 7] + (8 - (m.to >> 3)) +
-          ' — بهترین راه کنترل میدان');
+        parts.push('اشغال مرکز — بهترین راه کنترل میدان');
       }
       if((t === 'n' || t === 'b') && ((mover === 'w' && m.from >= 56) || (mover === 'b' && m.from < 8))){
         parts.push('گسترش مهرهٔ سبک — طبق اصول شروع بازی ✅');
@@ -223,341 +244,113 @@ const Coach = {
       if(t === 'q'){
         parts.push('⚠️ خروج زودهنگام وزیر — بهتر است بعد از گسترش مهره‌ها وارد شود');
       }
-      /* پیاده‌های جناح شاه */
-      if(t === 'p' && !m.castle && m.from >= 48){
-        const toFile = m.to & 7;
-        if(toFile <= 2 || toFile >= 5){
-          parts.push('⚠️ حرکت پیادهٔ جناح شاه در شروع — ممکن است سپر شاه را ضعیف کند');
-        }
-      }
-      /* رخ در شروع */
-      if(t === 'r' && s0.full <= 8){
-        parts.push('⚠️ حرکت زودهنگام رخ — در شروع بازی معمولاً توصیه نمی‌شود');
-      }
     }
 
-    /* ۵) حرکت دستی شاه وقتی حق قلعه وجود دارد */
-    const castlingRights = mover === 'w'
-      ? (s0.castling.K || s0.castling.Q)
-      : (s0.castling.k || s0.castling.q);
-    if(t === 'k' && !m.castle && s0.full > 8 && castlingRights){
-      parts.push('⚠️ حرکت دستی شاه — بهتر بود ابتدا قلعه می‌رفت');
-    }
-
-    /* ۶) وضعیت پس از حرکت: آیا مهره‌ای بی‌دفاع رها شده؟ */
+    /* هشدار مهرهٔ بی‌دفاع */
     if(!m.castle && t !== 'k'){
       const hang = this.hangingPieces(s1, mover);
       if(hang.length && hang[0].val >= 3){
-        parts.push('⚠️ توجه: ' + hang[0].san + ' بعد از این حرکت بی‌دفاع می‌شود');
+        parts.push('<b>⚠️ هشدار:</b> ' + hang[0].san + ' بعد از این حرکت بی‌دفاع می‌شود');
       }
     }
 
     return parts;
   },
-  /* ---------- تشخیص الگوهای تاکتیکی با موتور جدید ---------- */
-  _detectTactics(s0, s1, m, captured){
+
+  /* ============================================================
+     🎯 تشخیص تاکتیک‌ها با CoachPatterns
+     ============================================================ */
+  _detectTacticsNew(s0, s1, m, captured){
     const out = [];
-    
-    // اگر موتور الگوها در دسترس نیست، از کد قدیمی استفاده کن
-    if(!window.CoachPatterns) {
-      return this._detectTacticsLegacy(s0, s1, m, captured);
-    }
-    
     const P = window.CoachPatterns;
-    
-    // ۱) چنگال
+    if(!P) return out;
+
+    /* چنگال */
     const fork = P.detectFork(s0, m, s1);
     if(fork && fork.totalValue >= 3) {
-      out.push(P.describeFork(fork));
+      out.push('🎯 <b>چنگال</b> — ' + fork.pieceName + ' هم‌زمان به ' + 
+        fork.targets.slice(0, 2).map(t => t.name).join(' و ') + ' حمله می‌کند');
     }
-    
-    // ۲) آچمز جدید (بعد از حرکت)
+
+    /* آچمز */
     const pins = P.detectPins(s1.board, s0.turn === 'w');
     for(const pin of pins) {
-      // فقط آچمزهایی که از این حرکت به‌وجود آمده‌اند
       if(pin.attackerSq === m.to) {
-        out.push(P.describePin(pin));
+        out.push('📌 <b>آچمز</b> — ' + pin.pinnedName + ' نمی‌تواند حرکت کند');
+        break;
       }
     }
-    
-    // ۳) سیخ جدید
+
+    /* سیخ */
     const skewers = P.detectSkewers(s1.board, s0.turn === 'w');
     for(const sk of skewers) {
       if(sk.attackerSq === m.to) {
-        out.push(P.describeSkewer(sk));
-      }
-    }
-    
-    // ۴) کیش دوگانه
-    const dc = P.detectDoubleCheck(s1.board, s1.turn === 'w');
-    if(dc) {
-      const tempBoard = s1.board;
-      const attackerNames = dc.attackers.map(sq => 
-        P.FA_PIECE[tempBoard[sq].toLowerCase()] + ' در ' + P.sqName(sq)
-      );
-      out.push('⚡ **کیش دوگانه**: ' + attackerNames.join(' و ') + 
-        ' هم‌زمان شاه را کیش می‌دهند. حریف فقط می‌تواند فرار کند — نه بزند، نه راه را ببندد.');
-    }
-    
-    // ۵) ضعف عرض آخر حریف
-    const br = P.detectBackRankWeakness(s1.board, s1.turn);
-    if(br && br.vulnerable && !dc) {
-      out.push(P.describeBackRank(br));
-    }
-    
-    // اگر موتور جدید هیچ الگویی پیدا نکرد، از کد قدیمی استفاده کن
-    if(out.length === 0) {
-      return this._detectTacticsLegacy(s0, s1, m, captured);
-    }
-    
-    return out;
-  },
-  /* ---------- تشخیص الگوهای تاکتیکی (نسخهٔ قدیمی — fallback اگر CoachPatterns نبود) ---------- */
-  _detectTacticsLegacy(s0, s1, m, captured){
-    const out = [];
-    const mover = s0.turn;
-    const byW = mover === 'w';
-    const p = s0.board[m.from];
-    if(!p) return out;
-    const t = p.toLowerCase();
-
-    /* چنگال: مهره‌ای که هم‌زمان به دو مهرهٔ ارزشمند حمله می‌کند */
-    if(!m.castle){
-      const targets = [];
-      for(let sq = 0; sq < 64; sq++){
-        const q = s1.board[sq];
-        if(!q || colorOf(q) === mover) continue;
-        if(attacked(s1, sq, byW) && !attacked(s0, sq, byW)){
-          const val = this.FA_VAL[q.toLowerCase()] || 0;
-          if(q.toLowerCase() !== 'k') targets.push({ name: this.FA_PIECE[q.toLowerCase()] + ' در ' + sqName(sq), val, kind:'piece' });
-          else targets.push({ name: 'شاه', val: 100, kind:'king' });
-        }
-      }
-      if(targets.length >= 2){
-        const hasKing = targets.some(x => x.kind === 'king');
-        const hasBigPiece = targets.some(x => x.kind === 'piece' && x.val >= 5);
-        if(hasKing && hasBigPiece){
-          out.push('🎯 چنگال به شاه و مهرهٔ سنگین!');
-        } else if(targets.filter(x => x.kind === 'piece').length >= 2){
-          const sum = targets.filter(x => x.kind === 'piece').reduce((a,x) => a + x.val, 0);
-          if(sum >= 6){
-            out.push('🎯 چنگال — دو مهرهٔ ارزشمند هم‌زمان تهدید می‌شوند');
-          }
-        }
-      }
-    }
-
-    /* آچمز: مهره‌ای که بین مهرهٔ دوربرد و شاه/وزیر حریف قرار می‌گیرد */
-    if((t === 'b' || t === 'r' || t === 'q')){
-      const enemyK = s1.board.indexOf(mover === 'w' ? 'k' : 'K');
-      if(enemyK >= 0){
-        const r1 = m.to >> 3, c1 = m.to & 7;
-        const r2 = enemyK >> 3, c2 = enemyK & 7;
-        const dr = Math.sign(r2 - r1), dc = Math.sign(c2 - c1);
-        const straight = (r1 === r2) || (c1 === c2);
-        const diagonal = Math.abs(r2 - r1) === Math.abs(c2 - c1);
-        const canPin = (t === 'r' && straight) || (t === 'b' && diagonal) || (t === 'q' && (straight || diagonal));
-        if(canPin){
-          /* بین مهرهٔ ما و شاه، دقیقاً یک مهرهٔ حریف هست؟ */
-          let between = [], rr = r1 + dr, cc = c1 + dc;
-          while(rr !== r2 || cc !== c2){
-            const sq = rr*8 + cc;
-            if(s1.board[sq]) between.push(s1.board[sq]);
-            rr += dr; cc += dc;
-          }
-          if(between.length === 1){
-            const mid = between[0];
-            const midVal = this.FA_VAL[mid.toLowerCase()] || 0;
-            if(midVal >= 3){
-              out.push('📌 آچمز ' + this.FA_PIECE[mid.toLowerCase()] + ' حریف — نمی‌تواند فرار کند');
-            }
-          }
-        }
-      }
-    }
-
-    /* حملهٔ برخاست: مهرهٔ پشتی که با حرکت این مهره، حمله‌اش آزاد شده */
-    /* بررسی ساده: اگر مهرهٔ جلویی از مسیر یک مهرهٔ دوربرد خودی کنار رفته و هدف جدیدی تهدید شده */
-    if(t === 'n' || t === 'p'){
-      const backDir = [B_DIRS, R_DIRS].flat();
-      for(const [dr, dc] of backDir){
-        let rr = (m.from >> 3) - dr, cc = (m.from & 7) - dc;
-        let found = null;
-        while(rr >= 0 && rr < 8 && cc >= 0 && cc < 8){
-          const sq = rr*8 + cc;
-          if(s0.board[sq]){ found = { sq, piece: s0.board[sq] }; break; }
-          rr -= dr; cc -= dc;
-        }
-        if(!found) continue;
-        const backP = found.piece, bt = backP.toLowerCase();
-        if((bt === 'b' || bt === 'r' || bt === 'q') && isW(backP) === byW){
-          /* حالا با نگاه از مهرهٔ پشتی، آیا خانه‌ای جدید تهدید می‌شود؟ */
-          const dirs = bt === 'b' ? B_DIRS : bt === 'r' ? R_DIRS : B_DIRS.concat(R_DIRS);
-          for(const [dr2, dc2] of dirs){
-            let rr2 = (found.sq >> 3) + dr2, cc2 = (found.sq & 7) + dc2;
-            while(rr2 >= 0 && rr2 < 8 && cc2 >= 0 && cc2 < 8){
-              const sq2 = rr2*8 + cc2;
-              const q = s1.board[sq2];
-              if(q){
-                if(colorOf(q) !== mover && !attacked(s0, sq2, byW)){
-                  out.push('⚡ حملهٔ برخاست — ' + this.FA_PIECE[bt] + ' پشت این حرکت به ' + this.FA_PIECE[q.toLowerCase()] + ' ' + sqName(sq2) + ' حمله می‌کند');
-                }
-                break;
-              }
-              rr2 += dr2; cc2 += dc2;
-            }
-          }
-          break;
-        }
+        out.push('🗡️ <b>سیخ</b> — ' + sk.frontName + ' فرار می‌کند و ' + 
+          sk.behindName + ' شکار می‌شود');
+        break;
       }
     }
 
     return out;
   },
 
-  // نکات راهبردی کلی بر اساس وضعیت فعلی (برای بازیکن)
+  /* ============================================================
+     💬 نکات راهبردی
+     ============================================================ */
   strategicAdvice(s){
+    const report = this.positionReport();
+    if(!report) return [];
+    
     const parts = [];
-    const phase = this.gamePhase(s);
+    const phase = report.phase;
     const myW = s.turn === 'w';
 
-    /* ---- فاز شروع بازی ---- */
     if(phase === 'opening'){
-      const rights = myW ? (s.castling.K || s.castling.Q) : (s.castling.k || s.castling.q);
       const myK = s.board.indexOf(myW ? 'K' : 'k');
       const kOnHome = myW ? myK === 60 : myK === 4;
+      const rights = myW ? (s.castling.K || s.castling.Q) : (s.castling.k || s.castling.q);
       if(rights && kOnHome){
-        const developedCount = this._developedCount(s, myW);
-        if(developedCount >= 3){
-          parts.push('گسترش خوبی داشته‌ای — الان زمان قلعه رفتن است تا شاه امن شود 🛡️');
-        } else {
-          parts.push('هدف اصلی: گسترش اسب‌ها و فیل‌ها، سپس قلعه');
-        }
+        parts.push('گسترش بده، سپس زود قلعه برو');
       }
-      /* کنترل مرکز */
-      if(!this._controlsCenter(s, myW)){
-        parts.push('مرکز صفحه را از دست نده — با پیاده یا مهره کنترلش کن');
+      if(report.centerControl.mine < 2){
+        parts.push('مرکز را کنترل کن — با پیاده یا مهره');
       }
     }
 
-    /* ---- فاز وسط بازی ---- */
     if(phase === 'middlegame'){
-      const myK = s.board.indexOf(myW ? 'K' : 'k');
-      const enemyW = !myW;
-      /* اگر شاه در مرکز است و قلعه نرفته */
-      const kFile = myK & 7;
-      if(kFile >= 3 && kFile <= 4 && (s.castling.K || s.castling.Q || s.castling.k || s.castling.q)){
-        parts.push('⚠️ شاهت هنوز در مرکز است — قلعه رفتن یا فرار به جناح امن را در اولویت بگذار');
+      if(report.kingSafety.score < 50){
+        parts.push('⚠️ امنیت شاهت را جدی بگیر');
       }
-      /* تعویض مفید */
-      const myMat = this._material(s, myW);
-      const opMat = this._material(s, !myW);
-      if(myMat > opMat + 2){
-        parts.push('تو جلوتری — به دنبال تعویض مهره‌ها و ساده‌سازی برای رسیدن به پایان بازی برنده باش');
-      } else if(opMat > myMat + 2){
-        parts.push('تو عقب هستی — بازی را پیچیده نگه دار و از تعویض‌های بی‌دلیل پرهیز کن');
+      if(report.material.diff > 2){
+        parts.push('جلوتری — به دنبال تعویض مهره و ساده‌سازی باش');
+      } else if(report.material.diff < -2){
+        parts.push('عقبی — بازی را پیچیده نگه دار');
+      }
+      if(report.activity.inactive.length >= 2){
+        parts.push('مهره‌های غیرفعال را فعال کن: ' + 
+          report.activity.inactive.slice(0, 2).map(x => x.name + ' ' + x.faSq).join('، '));
       }
     }
 
-    /* ---- فاز پایان بازی ---- */
     if(phase === 'endgame'){
-      let myP = 0, opP = 0;
-      for(const p of s.board){
-        if(p && p.toLowerCase() === 'p'){
-          if(isW(p) === myW) myP++; else opP++;
-        }
+      parts.push('شاه را به مرکز بیاور — در پایان بازی یک مهرهٔ جنگنده است');
+      if(report.pawns.isolated > 0){
+        parts.push('مراقب پیاده‌های ایزوله باش');
       }
-      if(myP > opP){
-        parts.push('پیادهٔ اضافی داری — آن را به سمت ارتقا پیش ببر 🚀');
-      } else if(opP > myP){
-        parts.push('حریف پیادهٔ اضافی دارد — روی متوقف کردن پیادهٔ رونده‌اش تمرکز کن');
-      }
-      parts.push('در پایان بازی، شاه یک مهرهٔ جنگنده است — آن را به مرکز بیاور');
     }
 
-    /* ---- هشدار مهره‌های بی‌دفاع (اولویت اول) ---- */
-    const hang = this.hangingPieces(s, s.turn);
+    /* هشدار مهره‌های بی‌دفاع (اولویت اول) */
+    const hang = report.hanging;
     if(hang.length){
       const top = hang[0];
-      if(top.val >= 5){
-        parts.unshift('🚨 خطر فوری: ' + top.san + ' — این مهرهٔ ارزشمند در تیررس است!');
-      } else if(top.val >= 3){
-        parts.unshift('⚠️ ' + top.san + ' بی‌دفاع است — یا آن را نجات بده یا از حملهٔ متقابل استفاده کن');
-      } else {
-        parts.push('مراقب باش: ' + hang.slice(0,2).map(h => h.san).join(' و'));
-      }
-    }
-
-    /* ---- اگر حریف شاه را در خطر دارد، به حمله تشویق کن ---- */
-    const enemyW = !myW;
-    const enemyK = s.board.indexOf(enemyW ? 'K' : 'k');
-    if(enemyK >= 0){
-      const enemyKingExposed = this._isKingExposed(s, enemyW);
-      if(enemyKingExposed && phase !== 'endgame'){
-        parts.push('👑 شاه حریف ناامن است — به دنبال حمله و باز کردن خطوط به سمت او باش');
+      if(top.value >= 5){
+        parts.unshift('🚨 <b>خطر فوری:</b> ' + top.name + ' ' + top.faSq + ' در خطر است!');
+      } else if(top.value >= 3){
+        parts.unshift('⚠️ ' + top.name + ' ' + top.faSq + ' بی‌دفاع است');
       }
     }
 
     return parts;
-  },
-
-  /* ---------- توابع کمکی ---------- */
-  _developedCount(s, white){
-    let n = 0;
-    const homeSquares = white ? [57, 58, 59, 61, 62] : [1, 2, 3, 5, 6];
-    for(const sq of homeSquares){
-      const p = s.board[sq];
-      if(p && (p.toLowerCase() === 'n' || p.toLowerCase() === 'b')) n++;
-    }
-    /* ۵ خانهٔ اولیه - اگر پشت سفید ۰ باشد یعنی همه گسترش یافته */
-    return 5 - n;
-  },
-
-  _controlsCenter(s, white){
-    const centerFiles = [3, 4];
-    for(let sq = 0; sq < 64; sq++){
-      const p = s.board[sq];
-      if(!p || isW(p) !== white) continue;
-      if(p.toLowerCase() === 'p'){
-        const file = sq & 7;
-        if(file >= 3 && file <= 4) return true;
-      }
-    }
-    /* کنترل غیرمستقیم با مهره‌های سبک در مرکز */
-    for(const sq of [27, 28, 35, 36]){
-      const p = s.board[sq];
-      if(p && isW(p) === white) return true;
-    }
-    return false;
-  },
-
-  _material(s, white){
-    let m = 0;
-    for(const p of s.board){
-      if(!p || isW(p) !== white) continue;
-      m += this.FA_VAL[p.toLowerCase()] || 0;
-    }
-    return m;
-  },
-
-  _isKingExposed(s, white){
-    const k = s.board.indexOf(white ? 'K' : 'k');
-    if(k < 0) return false;
-    const r = k >> 3, c = k & 7;
-    /* فرض کن اگر شاه قلعه نرفته و در مرکز است، ناامن است */
-    const notCastled = (c >= 3 && c <= 4);
-    /* یا اگر پیاده‌های اطرافش حرکت کرده‌اند */
-    let shieldMissing = 0;
-    const shieldRanks = white ? [-1] : [1];
-    for(const dr of shieldRanks){
-      for(const dc of [-1, 0, 1]){
-        const rr = r + dr, cc = c + dc;
-        if(rr < 0 || rr > 7 || cc < 0 || cc > 7) continue;
-        const p = s.board[rr*8 + cc];
-        if(!p || p.toLowerCase() !== 'p' || isW(p) !== white) shieldMissing++;
-      }
-    }
-    return notCastled || shieldMissing >= 2;
   },
 
   /* ============================================================
@@ -576,29 +369,35 @@ const Coach = {
       if(Math.abs(v) < 0.3) t = 'وضعیت تقریباً مساوی ⚖️';
       else t = (v > 0 ? '+' : '') + v.toFixed(1) + ' پیاده به نفع ' + (v > 0 ? 'تو 😊' : 'حریف ⚠️');
     }
-    return t + ' (' + this.materialSummary(S) + ')';
+    return t;
   },
 
+  /* پیام PV چندحرکته با توضیح */
   pvText(maxN){
     let s = S; const out = [];
     for(let i = 0; i < Math.min(this.pv.length, maxN); i++){
       const token = this.pv[i];
       const from = parseSq(token.slice(0,2)), to = parseSq(token.slice(2,4)), promo = token[4] || null;
       const mv = legalMoves(s).find(x => x.from === from && x.to === to && (x.promo || null) === (promo || null));
-      if(!mv){ out.push(token); break; }
-      out.push(sanOf(s, mv, legalMoves(s)).replace(/[+#]$/, ''));
+      if(!mv) break;
+      const san = sanOf(s, mv, legalMoves(s)).replace(/[+#]$/, '');
+      /* آیا این حرکت ما یا حریف است؟ */
+      const isOurMove = (i % 2 === 0);
+      const marker = isOurMove ? '' : '<span style="color:#8a8f9c;font-size:11px">↩</span> ';
+      out.push(marker + san);
       s = makeMove(s, mv);
     }
-    return out.join('، ');
+    return out.join(' → ');
   },
 
   say(html, cls){
     const log = $('coachLog');
+    if(!log) return;
     const div = document.createElement('div');
     div.className = 'msg ' + (cls || 'coach');
     div.innerHTML = html;
     log.appendChild(div);
-    while(log.children.length > 40) log.removeChild(log.firstChild);
+    while(log.children.length > 50) log.removeChild(log.firstChild);
     log.scrollTop = log.scrollHeight;
   },
 
@@ -627,7 +426,7 @@ const Coach = {
     setStatus('🎓 مربی در حال تحلیل…'); render();
     setTimeout(() => {
       if(searchGen !== gameId || gameOver){ this.busy = false; render(); return; }
-      const d = Math.min([1,2,3,4,4][level] + 1, 4); // مربی همیشه یک عمق بیشتر
+      const d = Math.min([1,2,3,4,4][level] + 1, 4);
       const res = chooseAiMove(S, d, 0);
       this.busy = false;
       if(searchGen !== gameId || gameOver){ render(); return; }
@@ -652,19 +451,30 @@ const Coach = {
     const uci = token || (sqName(m.from) + sqName(m.to) + (m.promo || ''));
     this.move = {from:m.from, to:m.to, promo:m.promo || null, uci, san};
 
-    const reasons = this.describeMove(S, m);
-    const advice  = this.strategicAdvice(S);
-    const op      = this.openingName();
+    /* پیام اصلی پیشنهاد */
+    let txt = '🎓 <b>پیشنهاد مربی:</b> <span style="color:#ffd54f;font-size:14px">' + san + '</span>';
+    txt += ' <span style="color:#8a8f9c;font-size:11px">(' + uci + ')</span>';
+    txt += ' — خانه‌هایش روی صفحه سبز شد';
 
-    let txt = '🎓 <b>پیشنهاد مربی:</b> ' + san + ' <span style="color:#8a8f9c">(' + uci + ')</span> — خانه‌هایش روی صفحه سبز شد';
-    if(op)            txt += '<br>📖 <b>شروع بازی:</b> ' + op;
-    if(reasons.length) txt += '<br>🧭 <b>دلیل حرکت:</b> ' + reasons.join('؛ ') + '.';
-    if(advice.length)  txt += '<br>🛡️ <b>نکتهٔ راهبردی:</b> ' + advice.join('؛ ') + '.';
-    if(this.score)     txt += '<br>⚖️ <b>ارزیابی:</b> ' + this.evalText();
-    if(this.pv.length > 1) txt += '<br>🔮 <b>ادامهٔ پیشنهادی:</b> ' + this.pvText(4);
+    /* دلیل حرکت */
+    const reasons = this.describeMove(S, m);
+    if(reasons.length) txt += '<br>🧭 <b>دلیل:</b> ' + reasons.join('؛ ');
+
+    /* نکات راهبردی */
+    const advice = this.strategicAdvice(S);
+    if(advice.length)  txt += '<br>🛡️ <b>نکتهٔ راهبردی:</b> ' + advice.slice(0, 3).join('؛ ');
+
+    /* ارزیابی */
+    if(this.score) txt += '<br>⚖️ <b>ارزیابی:</b> ' + this.evalText();
+
+    /* ادامهٔ پیشنهادی */
+    if(this.pv.length > 1) {
+      txt += '<br>🔮 <b>ادامهٔ پیشنهادی:</b> ' + this.pvText(6);
+    }
+
     this.say(txt, 'coach');
 
-    setStatus('نوبت شماست ♙ (پیشنهاد مربی: ' + san + ')');
+    setStatus('نوبت شماست ♙ (پیشنهاد: ' + san + ')');
     render();
   },
 
@@ -678,27 +488,35 @@ const Coach = {
   },
 
   /* ============================================================
-     🔗 قلاب‌هایی که chess.html صدا می‌زند
+     🔗 قلاب‌ها
      ============================================================ */
 
-  // بعد از حرکت حریف: توضیح + هشدار + مربی خودکار
   afterOpponentMove(){
     const h = hist[hist.length - 1];
     if(h){
       const reasons = this.describeMove(h.before, h.m);
-      let txt = '🔍 <b>حرکت حریف:</b> ' + h.san;
-      if(reasons.length) txt += '<br><b>تحلیل:</b> ' + reasons.join('؛ ') + '.';
+      let txt = '🔍 <b>حرکت حریف:</b> <span style="color:#ffd54f">' + h.san + '</span>';
+      if(reasons.length) txt += '<br><b>تحلیل:</b> ' + reasons.join('؛ ');
+      
+      /* هشدار مهره‌های بی‌دفاع */
       const hang = this.hangingPieces(S, humanColor);
-      if(hang.length)
-        txt += '<br>⚠️ <b>هشدار:</b> ' + hang.slice(0,2).map(x => x.san).join(' و ')
-             + ' بی‌دفاع شده و حریف می‌تواند آن را بگیرد!';
+      if(hang.length && hang[0].val >= 3)
+        txt += '<br>⚠️ <b>هشدار:</b> ' + hang.slice(0,2).map(x => x.san).join(' و ');
+      
       this.say(txt, 'analyst');
     }
     this.checkOpeningChange();
+
+    /* تهدیدهای فوری */
+    const threats = this.detectThreats();
+    if(threats.length){
+      const txt = threats.map(t => t.text).join('<br>');
+      this.say(txt, threats[0].type === 'critical' ? 'sys' : 'analyst');
+    }
+
     if($('chkAutoCoach').checked && !gameOver) this.go();
   },
 
-  // قبل از اعمال حرکت بازیکن
   onHumanMove(m, humanSan, humanUci){
     const suggested = this.move;
     this.stop();
@@ -707,33 +525,37 @@ const Coach = {
     this._lastHuman = {san: humanSan, uci: humanUci};
   },
 
-  // بعد از اعمال حرکت بازیکن
   afterHumanMove(){
     const suggested = this._lastSuggested, human = this._lastHuman;
     this._lastSuggested = null; this._lastHuman = null;
     this.checkOpeningChange();
     if(gameOver) return;
+    
     if(suggested && human){
       if(human.uci === suggested.uci)
-        this.say('👏 آفرین! دقیقاً حرکت پیشنهادی مربی را بازی کردی.', 'sys');
-      else
-        this.say('حرکت تو: <b>' + human.san + '</b> — پیشنهاد مربی: <b>' + suggested.san
-               + '</b> بود. ببینیم چه می‌شود!', 'sys');
+        this.say('👏 <b>آفرین!</b> دقیقاً حرکت پیشنهادی مربی را بازی کردی.', 'sys');
+      else {
+        /* تحلیل دقیق‌تر: چرا حرکت کاربر متفاوت بود؟ */
+        const hang = this.hangingPieces(S, humanColor);
+        if(hang.length && hang[0].val >= 3){
+          this.say('⚠️ <b>مراقب باش:</b> ' + hang[0].san + ' بی‌دفاع است — حریف می‌تواند آن را بگیرد!', 'sys');
+        } else {
+          this.say('حرکت تو: <b>' + human.san + '</b> — پیشنهاد مربی: <b>' + suggested.san + '</b> بود. هر دو منطقی‌اند، ادامه بده!', 'sys');
+        }
+      }
     }
-    const hang = this.hangingPieces(S, humanColor);
-    if(hang.length)
-      this.say('⚠️ مراقب باش: ' + hang.slice(0,2).map(x => x.san).join(' و ')
-             + ' بی‌دفاع است و حریف می‌تواند آن را بگیرد!', 'sys');
   },
 
   reset(){
     this.stop();
     this.move = null; this.pv = []; this.score = null;
     this.pending = false; this.lastOpening = null;
+    this._lastThreats = null;
     this.say('— بازی جدید شروع شد —', 'sys');
-    if(humanColor === 'b') return; // حریف اول بازی می‌کند؛ بعد از حرکتش تحلیل می‌شود
-    if($('chkAutoCoach').checked)
-      this.say('🎓 مربی: پیشنهاد شروع: پیادهٔ شاه (e4) یا وزیر (d4) را دو خانه جلو ببر، سپس اسب‌ها و فیل‌ها را بگسترش کن و زود قلعه برو 🛡️', 'sys');
+    if(humanColor === 'b') return;
+    if($('chkAutoCoach').checked) {
+      this.say('🎓 <b>مربی:</b> برای شروع، پیادهٔ شاه (e4) یا وزیر (d4) را دو خانه جلو ببر، سپس اسب‌ها و فیل‌ها را گسترش بده و زود قلعه برو.', 'sys');
+    }
   },
 
   stop(){
@@ -749,7 +571,7 @@ const Coach = {
      ============================================================ */
   init(){
     $('btnCoach').addEventListener('click', () => this.go());
-    this.say('🎓 مربی آماده است! من فقط راهنمایی می‌کنم و اجازهٔ جابه‌جایی مهره‌ها را ندارم — تصمیم نهایی با توست. اگر به پیشنهاد من گوش کنی، چون همیشه قوی‌تر از حریف محاسبه می‌کنم، شانس بردت بالا می‌رود 💪', 'sys');
+    this.say('🎓 <b>مربی هوشمند آماده است!</b> من شما را در هر مرحله راهنمایی می‌کنم: تهدیدهای حریف را تشخیص می‌دهم، بهترین حرکت را پیشنهاد می‌دهم، دلیلش را توضیح می‌دهم و نکات آموزشی می‌گویم. تصمیم نهایی با شماست!', 'sys');
   },
 
   updateButton(){
@@ -764,10 +586,9 @@ const Coach = {
     const el = $('strengthInfo');
     if(!el) return;
     if(engine === 'stockfish')
-      el.textContent = '⚖️ حریف: عمق ' + LEVELS_SF[level].depth + ' با مهارت ' + LEVELS_SF[level].skill
-        + ' — مربی: عمق ' + this.depth() + ' با مهارت ' + this.skill()
-        + ' (همیشه قوی‌تر). اگر به مربی گوش کنی، شانس برد با توست!';
+      el.innerHTML = '⚖️ حریف: عمق ' + LEVELS_SF[level].depth + ' — مربی: عمق ' + this.depth() + 
+        ' (قوی‌تر از حریف) + تحلیل تهدیدها و پیشنهادهای آموزشی';
     else
-      el.textContent = '⚖️ در موتور ساده، مربی همیشه یک سطح عمیق‌تر و بدون خطای تصادفی محاسبه می‌کند.';
+      el.innerHTML = '⚖️ در موتور ساده، مربی با تحلیل عمیق‌تر و تشخیص تهدیدها کمک می‌کند.';
   },
 };
