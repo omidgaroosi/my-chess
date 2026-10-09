@@ -312,8 +312,8 @@ const Coach = {
     
     return out;
   },
-  /* ---------- تشخیص الگوهای تاکتیکی ---------- */
-  _detectTactics(s0, s1, m, captured){
+  /* ---------- تشخیص الگوهای تاکتیکی (نسخهٔ قدیمی — fallback اگر CoachPatterns نبود) ---------- */
+  _detectTacticsLegacy(s0, s1, m, captured){
     const out = [];
     const mover = s0.turn;
     const byW = mover === 'w';
