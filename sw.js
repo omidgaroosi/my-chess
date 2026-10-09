@@ -20,6 +20,7 @@ const PRECACHE = [
   './games-data.js',
   './pgn-loader.js',
   './coach.js',
+  './coach-patterns.js',
   './learn-data-1.js',
   './learn-data-2.js',
   './learn-data-3.js',

@@ -241,7 +241,73 @@ const Coach = {
 
     return parts;
   },
+  /* ---------- تشخیص الگوهای تاکتیکی با موتور جدید ---------- */
+  _detectTactics(s0, s1, m, captured){
+    const out = [];
+    
+    // اگر موتور الگوها در دسترس نیست، از کد قدیمی استفاده کن
+    if(!window.CoachPatterns) {
+      return this._detectTacticsLegacy(s0, s1, m, captured);
+    }
+    
+    const P = window.CoachPatterns;
+    
+    // ۱) چنگال
+    const fork = P.detectFork(s0, m, s1);
+    if(fork && fork.totalValue >= 3) {
+      out.push(P.describeFork(fork));
+    }
+    
+    // ۲) آچمز جدید (بعد از حرکت)
+    const pins = P.detectPins(s1.board, s0.turn === 'w');
+    for(const pin of pins) {
+      // فقط آچمزهایی که از این حرکت به‌وجود آمده‌اند
+      if(pin.attackerSq === m.to) {
+        out.push(P.describePin(pin));
+      }
+    }
+    
+    // ۳) سیخ جدید
+    const skewers = P.detectSkewers(s1.board, s0.turn === 'w');
+    for(const sk of skewers) {
+      if(sk.attackerSq === m.to) {
+        out.push(P.describeSkewer(sk));
+      }
+    }
+    
+    // ۴) کیش دوگانه
+    const dc = P.detectDoubleCheck(s1.board, s1.turn === 'w');
+    if(dc) {
+      const tempBoard = s1.board;
+      const attackerNames = dc.attackers.map(sq => 
+        P.FA_PIECE[tempBoard[sq].toLowerCase()] + ' در ' + P.sqName(sq)
+      );
+      out.push('⚡ **کیش دوگانه**: ' + attackerNames.join(' و ') + 
+        ' هم‌زمان شاه را کیش می‌دهند. حریف فقط می‌تواند فرار کند — نه بزند، نه راه را ببندد.');
+    }
+    
+    // ۵) ضعف عرض آخر حریف
+    const br = P.detectBackRankWeakness(s1.board, s1.turn);
+    if(br && br.vulnerable && !dc) {
+      out.push(P.describeBackRank(br));
+    }
+    
+    // اگر موتور جدید هیچ الگویی پیدا نکرد، از کد قدیمی استفاده کن
+    if(out.length === 0) {
+      return this._detectTacticsLegacy(s0, s1, m, captured);
+    }
+    
+    return out;
+  },
 
+  /* ---------- کد قدیمی (به‌عنوان پشتیبان) ---------- */
+  _detectTacticsLegacy(s0, s1, m, captured){
+    const out = [];
+    const mover = s0.turn;
+    const byW = mover === 'w';
+    const p = s0.board[m.from];
+    if(!p) return out;
+    const t = p.toLowerCase();
   /* ---------- تشخیص الگوهای تاکتیکی ---------- */
   _detectTactics(s0, s1, m, captured){
     const out = [];
