@@ -51,6 +51,7 @@ const PRECACHE = [
   './themes.js',
   './pieces.js',
   './rating.js',
+  './lesson-board.js',
   './manifest.webmanifest',
   './icon.svg'
 ];

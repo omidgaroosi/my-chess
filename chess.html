@@ -859,6 +859,63 @@ button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
 @media(max-width:520px){
   .pl-two-col{grid-template-columns:1fr}
 }
+/* ---------- 🎓 صفحهٔ درس تعاملی ---------- */
+.lesson-mode-tabs{
+  display:flex;gap:6px;margin-bottom:10px;background:#191b22;padding:5px;border-radius:10px;
+}
+.mode-btn{
+  flex:1;font:inherit;font-size:13px;min-height:40px;border:1px solid #3a3e50;
+  background:transparent;color:#9aa0ae;border-radius:8px;cursor:pointer;
+  transition:background .15s;
+}
+.mode-btn:hover{background:#2b2e3b}
+.mode-btn.active{background:#c9973c;color:#fff;font-weight:700;border-color:#c9973c}
+
+.lesson-step-controls,
+.lesson-try-controls{
+  display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap;
+}
+.lesson-step-controls button{
+  flex:1;min-width:44px;font:inherit;font-size:15px;min-height:44px;border-radius:10px;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;cursor:pointer;
+}
+.lesson-step-controls button:hover{background:#3d4157}
+.step-counter{
+  font-family:'Courier New',monospace;color:#9aa0ae;font-size:13px;
+  padding:0 12px;min-width:60px;text-align:center;
+}
+.lesson-try-controls button{
+  flex:1;font:inherit;font-size:13px;min-height:44px;border-radius:10px;
+  border:1px solid #3a3e50;background:#2b2e3b;color:#fff;cursor:pointer;
+}
+.lesson-try-controls button.primary{
+  background:#1976d2;border-color:#1976d2;font-weight:700;
+}
+.lesson-try-controls button:hover{background:#3d4157}
+.lesson-try-controls button.primary:hover{background:#1565c0}
+
+.lesson-feedback{
+  margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;
+  line-height:2;background:#191b22;border:1px solid #313444;min-height:40px;
+}
+.lesson-feedback.coach{background:#1a2332;border-color:#1976d2;color:#90caf9}
+.lesson-feedback.error{background:#3a1e1e;border-color:#8d3b3b;color:#e57373}
+.lesson-feedback.info{background:#26364d;border-color:#3b5f8d;color:#90caf9}
+
+.try-correct{
+  background:#1e3325;color:#a5d6a7;border:1px solid #2e7d32;
+  padding:8px 12px;border-radius:8px;font-size:13px;line-height:2;
+}
+.try-wrong{
+  background:#3a1e1e;color:#e57373;border:1px solid #8d3b3b;
+  padding:8px 12px;border-radius:8px;font-size:13px;line-height:2;
+}
+
+.lcell.sel{box-shadow:inset 0 0 0 3px #ffd54f}
+.lcell.coach-hl::after{
+  content:'';position:absolute;inset:0;border:3px solid #4caf50;box-sizing:border-box;
+  background:rgba(76,175,80,.25);pointer-events:none;
+}
 /* ---------- فوتر ---------- */
 .credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
   padding:12px;line-height:2}
@@ -1483,6 +1540,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <script src="themes.js"></script>
 <script src="pieces.js"></script>
 <script src="rating.js"></script>
+<script src="lesson-board.js"></script>
 
 <script>
 "use strict";
@@ -2216,10 +2274,21 @@ function handleLine(line){
   if(line.startsWith('bestmove')){
     const token = line.split(' ')[1];
     if(searchRole === 'viewer'){ GamesViewer.onBestmove(token); return; }
+    if(searchRole === 'lesson-board'){
+      if(window.LessonBoard) LessonBoard.onStockfishBestmove(token);
+      searchRole = null;
+      return;
+    }
     onBestmove(token);
     return;
   }
-  if(line.startsWith('info'))parseInfo(line);
+  if(line.startsWith('info')){
+    if(searchRole === 'lesson-board'){
+      if(window.LessonBoard) LessonBoard.onStockfishInfo(line);
+      return;
+    }
+    parseInfo(line);
+  }
 }
 function onBestmove(token){
   const role=searchRole;searchRole=null;
@@ -2360,17 +2429,13 @@ function openLesson(idx){
     +'<div class="intro">'+L.intro+'</div>';
   for(const p of L.parts)html+='<div class="part"><h3>'+p.h+'</h3><p>'+p.p+'</p></div>';
   if(L.board){
-    html+='<div class="card board-card"><div id="lboard"></div>'
-      +'<div class="caption">'+(L.board.caption||'')+'</div>';
-    if(L.board.steps&&L.board.steps.length){
-      html+='<div class="step-controls">'
-        +'<button onclick="stepGo(0)">⏮</button>'
-        +'<button onclick="stepGo(lCur-1)">◀</button>'
-        +'<button onclick="stepGo(lCur+1)">▶</button>'
-        +'<button onclick="stepGo(999)">⏭</button></div>'
-        +'<div class="step-text" id="stepText"></div>';
-    }
-    html+='</div>';
+    html += '<div class="card board-card">' +
+              '<div id="lboard"></div>' +
+              '<div class="caption">' + (L.board.caption || '') + '</div>' +
+              '<div id="lboard-controls" style="width:100%;margin-top:10px"></div>' +
+              '<div class="step-text" id="lboard-text" style="width:100%"></div>' +
+              '<div class="lesson-feedback" id="lboard-feedback" style="width:100%"></div>' +
+            '</div>';
   }
   if(L.coach)html+='<div class="coach-bubble">🎓 <b>نکتهٔ مربی:</b> '+L.coach+'</div>';
   if(L.points&&L.points.length){
@@ -2390,7 +2455,9 @@ function openLesson(idx){
     +'<button '+(idx===0?'disabled':'')+' onclick="openLesson('+(idx-1)+')">درس قبلی</button>'
     +'<button '+(idx===LEARN_DB.length-1?'disabled':'')+' onclick="openLesson('+(idx+1)+')">درس بعدی</button></div>';
   $('lessonView').innerHTML=html;
-  if(L.board)initLearnSteps(L);
+  if(L.board && window.LessonBoard){
+    LessonBoard.init(L, 'lboard');
+  }
   if(L.quiz&&L.quiz.fen)renderBoardEl($('quizBoard'),parseFEN(L.quiz.fen),[],null);
   renderQuizOptions();
   renderLearnList($('search').value);
