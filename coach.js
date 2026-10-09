@@ -101,8 +101,8 @@ const Coach = {
     return this._hangingPiecesLegacy(s, color);
   },
 
-  // مهره‌های بی‌دفاع: مهره‌ای که حریف آن را زده ولی هیچ‌کس ازش دفاع نمی‌کند
-  hangingPieces(s, color){
+  // مهره‌های بی‌دفاع (نسخهٔ قدیمی — fallback اگر CoachPatterns نبود)
+  _hangingPiecesLegacy(s, color){
     const res = [], enemyW = color !== 'w';
     for(let sq = 0; sq < 64; sq++){
       const p = s.board[sq];

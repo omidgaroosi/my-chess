@@ -490,7 +490,7 @@ window.CoachPatterns = (function() {
     return lines.join(' ');
   }
 
-  function describeDoubleCheck(dc, opts) {
+  function describeDoubleCheck(dc, board, opts) {
     const lines = [];
     const attackerNames = dc.attackers.map(sq => FA_PIECE[board[sq].toLowerCase()] + ' در ' + sqName(sq));
     lines.push('⚡ **کیش دوگانه**: ' + attackerNames.join(' و ') + 
