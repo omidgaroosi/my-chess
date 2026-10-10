@@ -45,14 +45,14 @@ window.LessonBoard = (() => {
   /* ================= حالت‌ها ================= */
   function setMode(mode) {
     if (!state) return;
-    if (mode === state.mode) return;
+    /* ✅ حالا حتی اگر همان حالت باشد، ریست می‌کند */
     state.mode = mode;
     state.selectedSq = null;
     state.lastMove = null;
     state.coachSuggestion = null;
+    stopPlay();  /* توقف پخش خودکار در هر تغییر حالت */
 
     if (mode === 'try') {
-      /* شروع از موقعیت پایه */
       state.board = parseFEN(state.baseFen);
       state.tryHistory = [];
       state.tryAttempts = 0;
@@ -61,6 +61,56 @@ window.LessonBoard = (() => {
     }
     render();
   }
+
+  /* ============================================================
+     ▶️ پخش خودکار در حالت دمو
+     ============================================================ */
+  let _playTimer = null;
+  let _isPlaying = false;
+
+  function togglePlay() {
+    if (!state || state.mode !== 'demo') return;
+    if (_isPlaying) {
+      stopPlay();
+      return;
+    }
+    if (state.stepIndex >= state.steps.length) {
+      state.stepIndex = 0;
+      render();
+    }
+    _isPlaying = true;
+    render();
+    _scheduleNextStep();
+  }
+
+  function _scheduleNextStep() {
+    if (_playTimer) clearTimeout(_playTimer);
+    _playTimer = setTimeout(() => {
+      if (!state || !_isPlaying) return;
+      if (state.stepIndex >= state.steps.length) {
+        stopPlay();
+        return;
+      }
+      nextStep();
+      if (state.stepIndex >= state.steps.length) {
+        stopPlay();
+        return;
+      }
+      _scheduleNextStep();
+    }, 1600);
+  }
+
+  function stopPlay() {
+    _isPlaying = false;
+    if (_playTimer) {
+      clearTimeout(_playTimer);
+      _playTimer = null;
+    }
+    /* اگر در حالت دمو هستیم، دکمه را به حالت اولیه برگردان */
+    if (state && state.mode === 'demo') render();
+  }
+
+  function isPlaying() { return _isPlaying; }
 
   /* ================= پخش دمو ================= */
   function nextStep() {
@@ -360,6 +410,8 @@ window.LessonBoard = (() => {
     if (state.mode === 'demo') {
       const n = state.steps.length;
       const i = state.stepIndex;
+      const playIcon = _isPlaying ? '⏸ توقف' : '▶️ پخش';
+      const playCls = _isPlaying ? 'mode-btn playing' : 'mode-btn play-btn';
       return '<div class="lesson-mode-tabs">' +
         '<button class="mode-btn active" onclick="LessonBoard.setMode(\'demo\')">🎬 نمایش دمو</button>' +
         (state.try ? '<button class="mode-btn" onclick="LessonBoard.setMode(\'try\')">🎮 بازی من</button>' : '') +
@@ -370,6 +422,9 @@ window.LessonBoard = (() => {
         '<span class="step-counter">' + i + ' / ' + n + '</span>' +
         '<button onclick="LessonBoard.nextStep()" title="بعدی">▶</button>' +
         '<button onclick="LessonBoard.goToStep(' + n + ')" title="پایان">⏭</button>' +
+        '</div>' +
+        '<div class="lesson-try-controls" style="margin-top:6px">' +
+        '<button class="' + playCls + '" onclick="LessonBoard.togglePlay()">' + playIcon + '</button>' +
         '</div>';
     } else {
       return '<div class="lesson-mode-tabs">' +
@@ -465,6 +520,7 @@ window.LessonBoard = (() => {
   return {
     init, setMode,
     nextStep, prevStep, goToStep,
+    togglePlay, stopPlay, isPlaying,
     resetTry, askCoach, askStockfish,
     onStockfishInfo, onStockfishBestmove,
     getState: () => state
