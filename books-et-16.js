@@ -32,7 +32,7 @@
      📗 فصل ۸ — Overcoming Resistance (تمرین‌های ۴۳ تا ۴۶)
      ============================================================ */
 
-  const ch8 = book.chapters.find(c => c.id === 'ch8');
+  const ch8 = book.chapters.find(c => c.id === 'et-ch8' || c.id === 'ch8');
   if(!ch8) { console.error('ch8 پیدا نشد'); return; }
 
   /* پازل ۴۳ را حذف کن (کاملاً اشتباه بود) */

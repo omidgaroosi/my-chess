@@ -13,8 +13,8 @@
   const book = BOOKS_DB.find(b => b.id === 'essential-tactics');
   if(!book) { console.error('essential-tactics پیدا نشد'); return; }
 
-  const ch6 = book.chapters.find(c => c.id === 'ch6');
-  if(!ch6) { console.error('فصل ch6 پیدا نشد'); return; }
+  const ch6 = book.chapters.find(c => c.id === 'ch6' || c.id === 'et-ch6');
+  if(!ch6) { console.error('ch6 پیدا نشد'); return; }
 
   /* ============================================================
      ۱) حذف تمام پازل‌های اشتباه/ساختگی
