@@ -76,12 +76,22 @@ const Coach = {
   },
 
   hangingPieces(s, color){
-    const A = this._analyzer();
-    if(A) return A.detectHanging(s, color).map(h => ({
-      sq: h.sq,
-      val: h.value,
-      san: h.name + ' در ' + h.faSq + (h.defended ? ' (تحت فشار)' : ' (بی‌دفاع)')
-    }));
+    /* 🛡️ این تابع هرگز نباید throw کند */
+    try {
+      const A = this._analyzer();
+      if(A && typeof A.detectHanging === 'function') {
+        const list = A.detectHanging(s, color);
+        if(Array.isArray(list)) {
+          return list.map(h => ({
+            sq: h.sq,
+            val: h.value,
+            san: h.name + ' در ' + h.faSq + (h.defended ? ' (تحت فشار)' : ' (بی‌دفاع)')
+          }));
+        }
+      }
+    } catch(e) {
+      console.warn('⚠️ hangingPieces fallback:', e);
+    }
     return [];
   },
 
@@ -228,9 +238,11 @@ const Coach = {
       }
     }
 
-    /* تشخیص تاکتیک‌ها با موتور جدید */
-    const tactics = this._detectTacticsNew(s0, s1, m, captured);
-    if(tactics.length) parts.push(tactics.join('؛ '));
+    /* تشخیص تاکتیک‌ها با موتور جدید (امن) */
+    try {
+      const tactics = this._detectTacticsNew(s0, s1, m, captured);
+      if(tactics && tactics.length) parts.push(tactics.join('؛ '));
+    } catch(e) { console.warn('⚠️ tactics skipped:', e); }
 
     /* اصول شروع بازی */
     if(s0.full <= 10){
@@ -246,13 +258,15 @@ const Coach = {
       }
     }
 
-    /* هشدار مهرهٔ بی‌دفاع */
-    if(!m.castle && t !== 'k'){
-      const hang = this.hangingPieces(s1, mover);
-      if(hang.length && hang[0].val >= 3){
-        parts.push('<b>⚠️ هشدار:</b> ' + hang[0].san + ' بعد از این حرکت بی‌دفاع می‌شود');
+    /* هشدار مهرهٔ بی‌دفاع (امن) */
+    try {
+      if(!m.castle && t !== 'k'){
+        const hang = this.hangingPieces(s1, mover);
+        if(hang && hang.length && hang[0].val >= 3){
+          parts.push('<b>⚠️ هشدار:</b> ' + hang[0].san + ' بعد از این حرکت بی‌دفاع می‌شود');
+        }
       }
-    }
+    } catch(e) { console.warn('⚠️ hanging check skipped:', e); }
 
     return parts;
   },
@@ -262,35 +276,39 @@ const Coach = {
      ============================================================ */
   _detectTacticsNew(s0, s1, m, captured){
     const out = [];
-    const P = window.CoachPatterns;
-    if(!P) return out;
+    /* 🛡️ این تابع هرگز نباید throw کند */
+    try {
+      const P = window.CoachPatterns;
+      if(!P) return out;
 
-    /* چنگال */
-    const fork = P.detectFork(s0, m, s1);
-    if(fork && fork.totalValue >= 3) {
-      out.push('🎯 <b>چنگال</b> — ' + fork.pieceName + ' هم‌زمان به ' + 
-        fork.targets.slice(0, 2).map(t => t.name).join(' و ') + ' حمله می‌کند');
-    }
-
-    /* آچمز */
-    const pins = P.detectPins(s1.board, s0.turn === 'w');
-    for(const pin of pins) {
-      if(pin.attackerSq === m.to) {
-        out.push('📌 <b>آچمز</b> — ' + pin.pinnedName + ' نمی‌تواند حرکت کند');
-        break;
+      /* چنگال */
+      const fork = P.detectFork ? P.detectFork(s0, m, s1) : null;
+      if(fork && fork.totalValue >= 3) {
+        out.push('🎯 <b>چنگال</b> — ' + fork.pieceName + ' هم‌زمان به ' + 
+          fork.targets.slice(0, 2).map(t => t.name).join(' و ') + ' حمله می‌کند');
       }
-    }
 
-    /* سیخ */
-    const skewers = P.detectSkewers(s1.board, s0.turn === 'w');
-    for(const sk of skewers) {
-      if(sk.attackerSq === m.to) {
-        out.push('🗡️ <b>سیخ</b> — ' + sk.frontName + ' فرار می‌کند و ' + 
-          sk.behindName + ' شکار می‌شود');
-        break;
+      /* آچمز */
+      const pins = P.detectPins ? P.detectPins(s1.board, s0.turn === 'w') : [];
+      for(const pin of pins) {
+        if(pin.attackerSq === m.to) {
+          out.push('📌 <b>آچمز</b> — ' + pin.pinnedName + ' نمی‌تواند حرکت کند');
+          break;
+        }
       }
-    }
 
+      /* سیخ */
+      const skewers = P.detectSkewers ? P.detectSkewers(s1.board, s0.turn === 'w') : [];
+      for(const sk of skewers) {
+        if(sk.attackerSq === m.to) {
+          out.push('🗡️ <b>سیخ</b> — ' + sk.frontName + ' فرار می‌کند و ' + 
+            sk.behindName + ' شکار می‌شود');
+          break;
+        }
+      }
+    } catch(e) {
+      console.warn('⚠️ _detectTacticsNew fallback:', e);
+    }
     return out;
   },
 
@@ -298,10 +316,12 @@ const Coach = {
      💬 نکات راهبردی
      ============================================================ */
   strategicAdvice(s){
-    const report = this.positionReport();
-    if(!report) return [];
-    
-    const parts = [];
+    /* 🛡️ این تابع هرگز نباید throw کند */
+    try {
+      const report = this.positionReport();
+      if(!report) return [];
+      
+      const parts = [];
     const phase = report.phase;
     const myW = s.turn === 'w';
 
@@ -350,7 +370,11 @@ const Coach = {
       }
     }
 
-    return parts;
+      return parts;
+    } catch(e) {
+      console.warn('⚠️ strategicAdvice fallback:', e);
+      return [];
+    }
   },
 
   /* ============================================================
@@ -446,36 +470,47 @@ const Coach = {
   },
 
   finish(m, token){
+    /* 🛡️ این تابع هرگز نباید throw کند — چون در این صورت render نمی‌شود */
     const legal = legalMoves(S);
     const san = sanOf(S, m, legal);
     const uci = token || (sqName(m.from) + sqName(m.to) + (m.promo || ''));
+
+    /* ⚡ اول از همه: این خط حتماً باید اجرا شود */
     this.move = {from:m.from, to:m.to, promo:m.promo || null, uci, san};
 
-    /* پیام اصلی پیشنهاد */
+    /* 🛡️ هر بخش ممکن است خطا بدهد، اما نگذاریم finish کامل شود */
+    let reasons = [], advice = [], op = null;
+    try { reasons = this.describeMove(S, m) || []; }
+    catch(e) { console.error('❌ describeMove:', e); }
+    try { advice = this.strategicAdvice(S) || []; }
+    catch(e) { console.error('❌ strategicAdvice:', e); }
+    try { op = this.openingName(); }
+    catch(e) { console.error('❌ openingName:', e); }
+
+    /* ساخت پیام */
     let txt = '🎓 <b>پیشنهاد مربی:</b> <span style="color:#ffd54f;font-size:14px">' + san + '</span>';
     txt += ' <span style="color:#8a8f9c;font-size:11px">(' + uci + ')</span>';
     txt += ' — خانه‌هایش روی صفحه سبز شد';
-
-    /* دلیل حرکت */
-    const reasons = this.describeMove(S, m);
+    if(op) txt += '<br>📖 <b>شروع بازی:</b> ' + op;
     if(reasons.length) txt += '<br>🧭 <b>دلیل:</b> ' + reasons.join('؛ ');
-
-    /* نکات راهبردی */
-    const advice = this.strategicAdvice(S);
     if(advice.length)  txt += '<br>🛡️ <b>نکتهٔ راهبردی:</b> ' + advice.slice(0, 3).join('؛ ');
-
-    /* ارزیابی */
     if(this.score) txt += '<br>⚖️ <b>ارزیابی:</b> ' + this.evalText();
 
-    /* ادامهٔ پیشنهادی */
-    if(this.pv.length > 1) {
-      txt += '<br>🔮 <b>ادامهٔ پیشنهادی:</b> ' + this.pvText(6);
-    }
+    try {
+      if(this.pv.length > 1) {
+        txt += '<br>🔮 <b>ادامهٔ پیشنهادی:</b> ' + this.pvText(6);
+      }
+    } catch(e) { console.error('❌ pvText:', e); }
 
-    this.say(txt, 'coach');
+    try { this.say(txt, 'coach'); }
+    catch(e) { console.error('❌ say:', e); }
 
-    setStatus('نوبت شماست ♙ (پیشنهاد: ' + san + ')');
-    render();
+    try { setStatus('نوبت شماست ♙ (پیشنهاد: ' + san + ')'); }
+    catch(e) {}
+
+    /* 🎯 مهم‌ترین خط: باید حتماً اجرا شود تا صفحه رنگ شود */
+    try { render(); }
+    catch(e) { console.error('❌ render:', e); }
   },
 
   parseInfo(line){
@@ -592,3 +627,31 @@ const Coach = {
       el.innerHTML = '⚖️ در موتور ساده، مربی با تحلیل عمیق‌تر و تشخیص تهدیدها کمک می‌کند.';
   },
 };
+/* ============================================================
+   🔬 ابزار تشخیص سریع — در کنسول مرورگر قابل استفاده است
+   ============================================================ */
+window.__coachDebug = function() {
+  console.log('===== 🎓 مربی — وضعیت فعلی =====');
+  console.log('engine:', typeof engine !== 'undefined' ? engine : '?');
+  console.log('engineReady:', typeof engineReady !== 'undefined' ? engineReady : '?');
+  console.log('searchRole:', typeof searchRole !== 'undefined' ? searchRole : '?');
+  console.log('searchGen / gameId:', typeof searchGen, '/', typeof gameId);
+  console.log('busy:', Coach.busy);
+  console.log('move:', Coach.move);
+  console.log('score:', Coach.score);
+  console.log('pv length:', Coach.pv.length);
+  console.log('CoachAnalyzer:', typeof window.CoachAnalyzer);
+  console.log('CoachPatterns:', typeof window.CoachPatterns);
+  console.log('hangingPieces test:', Coach.hangingPieces(S, 'w'));
+  console.log('describeMove test:', (function(){
+    try { 
+      const legal = legalMoves(S);
+      if(legal.length) {
+        return Coach.describeMove(S, legal[0]);
+      }
+      return 'no legal moves';
+    } catch(e) { return '❌ ' + e.message; }
+  })());
+  console.log('=================================');
+};
+console.log('💡 برای تشخیص، در کنسول بنویس: __coachDebug()');
