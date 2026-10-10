@@ -1038,6 +1038,196 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
   h1{font-size:16px}
   .tbtn{font-size:11px;padding:4px 6px}
 }
+/* ============================================================
+   🎓 آکادمی — استایل صفحهٔ درس تعاملی (نسخهٔ 2.0)
+   ============================================================ */
+
+/* --- نوار انتخاب حالت (دمو / بازی من) --- */
+.lesson-mode-tabs{
+  display:flex !important;
+  gap:6px;
+  margin-bottom:10px;
+  background:#191b22;
+  padding:5px;
+  border-radius:10px;
+  width:100%;
+  box-sizing:border-box;
+}
+.mode-btn{
+  flex:1;
+  font:inherit;
+  font-size:13px;
+  min-height:40px;
+  border:1px solid #3a3e50;
+  background:transparent;
+  color:#9aa0ae;
+  border-radius:8px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.mode-btn:hover{background:#2b2e3b}
+.mode-btn.active{background:#c9973c;color:#fff;font-weight:700;border-color:#c9973c}
+
+/* --- کنترل‌های گام‌به‌گام دمو --- */
+.lesson-step-controls{
+  display:flex !important;
+  gap:6px;
+  align-items:center;
+  margin-bottom:10px;
+  width:100%;
+  box-sizing:border-box;
+}
+.lesson-step-controls button{
+  flex:1;
+  min-width:44px;
+  font:inherit;
+  font-size:15px;
+  min-height:44px;
+  border-radius:10px;
+  border:1px solid #3a3e50;
+  background:#2b2e3b;
+  color:#fff;
+  cursor:pointer;
+}
+.lesson-step-controls button:hover{background:#3d4157}
+.step-counter{
+  font-family:'Courier New',monospace;
+  color:#9aa0ae;
+  font-size:13px;
+  padding:0 12px;
+  min-width:60px;
+  text-align:center;
+}
+
+/* --- کنترل‌های حالت بازی من --- */
+.lesson-try-controls{
+  display:flex !important;
+  gap:6px;
+  align-items:center;
+  margin-bottom:10px;
+  width:100%;
+  box-sizing:border-box;
+}
+.lesson-try-controls button{
+  flex:1;
+  font:inherit;
+  font-size:13px;
+  min-height:44px;
+  border-radius:10px;
+  border:1px solid #3a3e50;
+  background:#2b2e3b;
+  color:#fff;
+  cursor:pointer;
+}
+.lesson-try-controls button.primary{
+  background:#1976d2;
+  border-color:#1976d2;
+  font-weight:700;
+}
+.lesson-try-controls button:hover{background:#3d4157}
+.lesson-try-controls button.primary:hover{background:#1565c0}
+
+/* --- متن توضیحی زیر صفحه --- */
+#lboard-text, .step-text{
+  background:#191b22;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:2.1;
+  color:#cfd3dd;
+  width:100%;
+  min-height:44px;
+  box-sizing:border-box;
+  margin-top:6px;
+}
+
+/* --- بازخورد مربی --- */
+.lesson-feedback{
+  margin-top:10px;
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:13px;
+  line-height:2;
+  background:#191b22;
+  border:1px solid #313444;
+  min-height:40px;
+  width:100%;
+  box-sizing:border-box;
+}
+.lesson-feedback.coach{background:#1a2332;border-color:#1976d2;color:#90caf9}
+.lesson-feedback.error{background:#3a1e1e;border-color:#8d3b3b;color:#e57373}
+.lesson-feedback.info{background:#26364d;border-color:#3b5f8d;color:#90caf9}
+.lesson-feedback:empty{display:none}
+
+/* --- بازخورد حالت تمرین --- */
+.try-correct{
+  background:#1e3325;color:#a5d6a7;border:1px solid #2e7d32;
+  padding:8px 12px;border-radius:8px;font-size:13px;line-height:2;
+}
+.try-wrong{
+  background:#3a1e1e;color:#e57373;border:1px solid #8d3b3b;
+  padding:8px 12px;border-radius:8px;font-size:13px;line-height:2;
+}
+
+/* --- صفحهٔ شطرنج درس --- */
+#lboard{
+  --lesson-size:min(92vw,460px);
+  --lcell:calc(var(--lesson-size) / 8);
+  display:grid !important;
+  grid-template-columns:repeat(8,1fr);
+  width:var(--lesson-size);
+  aspect-ratio:1;
+  border-radius:10px;
+  overflow:hidden;
+  direction:ltr;
+  user-select:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  touch-action:pan-y;
+  margin:0 auto;
+}
+#lboard .lcell{position:relative}
+#lboard .lcell.light{background:#efd9b4}
+#lboard .lcell.dark{background:#b28356}
+#lboard .lcell.sel{box-shadow:inset 0 0 0 3px #ffd54f}
+#lboard .lcell.hl::after{
+  content:'';position:absolute;inset:8%;border-radius:50%;
+  border:calc(var(--lcell)*.07) solid rgba(76,175,80,.95)
+}
+#lboard .lcell.llast::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,213,79,.45)
+}
+#lboard .lcell.coach-hl::after{
+  content:'';position:absolute;inset:0;
+  border:3px solid #4caf50;box-sizing:border-box;
+  background:rgba(76,175,80,.28);pointer-events:none
+}
+#lboard .lpiece{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+#lboard .lpiece svg{
+  width:85%;height:85%;display:block;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))
+}
+#lboard .lc{
+  position:absolute;font-size:calc(var(--lcell)*.22);font-weight:700;opacity:.85;
+  pointer-events:none;user-select:none;
+}
+#lboard .lc.rank{top:3%;left:6%}
+#lboard .lc.file{bottom:2%;right:6%}
+#lboard .lcell.light .lc{color:#b28356}
+#lboard .lcell.dark .lc{color:#efd9b4}
+
+/* --- دکمه‌های بزرگ اصلی --- */
+.read-lesson .card.board-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  width:100%;
+}
 </style>
 <style>
 /* ============================================================
@@ -2456,7 +2646,13 @@ function openLesson(idx){
     +'<button '+(idx===LEARN_DB.length-1?'disabled':'')+' onclick="openLesson('+(idx+1)+')">درس بعدی</button></div>';
   $('lessonView').innerHTML=html;
   if(L.board && window.LessonBoard){
-    LessonBoard.init(L, 'lboard');
+    setTimeout(function(){
+      try {
+        LessonBoard.init(L, 'lboard');
+      } catch(e) {
+        console.error('❌ LessonBoard.init:', e);
+      }
+    }, 50);
   }
   if(L.quiz&&L.quiz.fen)renderBoardEl($('quizBoard'),parseFEN(L.quiz.fen),[],null);
   renderQuizOptions();
