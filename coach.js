@@ -28,6 +28,10 @@ const Coach = {
   FA_VAL: {p:1, n:3, b:3, r:5, q:9},
   CENTER: [27, 28, 35, 36],
 
+  /* ---------------- قدرت مربی (همیشه قوی‌تر از حریف) ---------------- */
+  depth(){ return Math.min(LEVELS_SF[level].depth + 5, 18); },
+  skill(){ return 20; },
+
   /* ============================================================
      📚 کتابخانهٔ شروع بازی‌ها
      ============================================================ */
@@ -439,9 +443,13 @@ const Coach = {
     searchSide = S.turn;
     this.pv = []; this.score = null;
     setStatus('🎓 مربی در حال تحلیل…'); render();
-    sfSend('setoption name Skill Level value ' + this.skill());
+    
+    const skillVal = (typeof this.skill === 'function') ? this.skill() : 20;
+    const depthVal = (typeof this.depth === 'function') ? this.depth() : 15;
+    
+    sfSend('setoption name Skill Level value ' + skillVal);
     sfSend('position startpos' + (hist.length ? ' moves ' + hist.map(h => h.uci).join(' ') : ''));
-    sfSend('go depth ' + this.depth());
+    sfSend('go depth ' + depthVal);
   },
 
   aiGo(){
@@ -620,11 +628,22 @@ const Coach = {
   updateStrengthInfo(){
     const el = $('strengthInfo');
     if(!el) return;
-    if(engine === 'stockfish')
-      el.innerHTML = '⚖️ حریف: عمق ' + LEVELS_SF[level].depth + ' — مربی: عمق ' + this.depth() + 
+    
+    /* 🛡️ محاسبهٔ امن عمق مربی */
+    let coachDepth = '?';
+    try {
+      coachDepth = (typeof this.depth === 'function') ? this.depth() : '?';
+    } catch(e) {
+      console.warn('⚠️ depth() error:', e);
+    }
+    
+    if(engine === 'stockfish') {
+      const oppDepth = (typeof LEVELS_SF !== 'undefined' && LEVELS_SF[level]) ? LEVELS_SF[level].depth : '?';
+      el.innerHTML = '⚖️ حریف: عمق ' + oppDepth + ' — مربی: عمق ' + coachDepth + 
         ' (قوی‌تر از حریف) + تحلیل تهدیدها و پیشنهادهای آموزشی';
-    else
+    } else {
       el.innerHTML = '⚖️ در موتور ساده، مربی با تحلیل عمیق‌تر و تشخیص تهدیدها کمک می‌کند.';
+    }
   },
 };
 /* ============================================================
