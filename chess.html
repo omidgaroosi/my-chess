@@ -1242,6 +1242,151 @@ summary .cnt{float:left;color:#81c784;font-size:11px;font-weight:400}
   gap:8px;
   width:100%;
 }
+/* ============================================================
+   🎬 سینما — گروه‌بندی فایل‌ها و تحلیل کامل بازی
+   ============================================================ */
+
+/* ---------- آیتم بازی در سایدبار ---------- */
+.lsn.uploaded{
+  background:linear-gradient(90deg,rgba(25,118,210,.06),transparent);
+  border-inline-start:3px solid #1976d2;
+}
+.gv-item-text{flex:1;min-width:0;text-align:right;overflow:hidden}
+.gv-players{
+  display:block;font-size:12.5px;color:#e9e7e2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.gv-vs{color:#8a8f9c;font-size:11px;margin:0 3px}
+.gv-meta{
+  display:block;color:#6f7480;font-size:10.5px;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.gv-result{
+  color:#9aa0ae;font-family:'Courier New',monospace;
+  font-size:11px;flex:none;margin-inline-start:6px;
+}
+
+/* ---------- هدر گروه ---------- */
+.games-group-header{
+  padding:8px 10px;font-size:12px;font-weight:700;color:#ffd54f;
+  letter-spacing:.3px;
+  border-bottom:1px solid #313444;
+  margin-top:6px;
+}
+.games-group{
+  background:#191b22;border-radius:10px;padding:8px 10px;margin-bottom:4px;
+}
+.games-group summary{
+  cursor:pointer;font-size:13px;font-weight:700;color:#e9e7e2;
+  line-height:1.9;display:flex;align-items:center;gap:6px;
+}
+.games-group summary .group-name{
+  flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.games-group summary .group-date{
+  color:#6f7480;font-size:10.5px;font-weight:400;
+}
+.uploaded-group{
+  border:1px solid #1976d2;background:#161d2b;
+}
+.uploaded-group summary{color:#90caf9}
+.group-actions{
+  display:flex;gap:4px;margin:6px 0;
+}
+.group-btn{
+  flex:1;font:inherit;font-size:11.5px;min-height:30px;padding:2px 8px;
+  background:#2b2e3b;border:1px solid #3a3e50;border-radius:6px;
+  color:#9aa0ae;cursor:pointer;
+}
+.group-btn:hover{background:#3d4157;color:#fff}
+.group-btn.danger:hover{background:#3a1e1e;color:#e57373;border-color:#8d3b3b}
+
+/* ---------- نام فایل بازی فعلی ---------- */
+.gv-file-name{
+  font-size:11.5px;color:#90caf9;margin-top:8px;
+  background:#161d2b;padding:4px 10px;border-radius:6px;
+  display:inline-block;border:1px solid #1976d2;
+}
+.gv-file-name.hidden{display:none}
+
+/* ---------- دکمهٔ تحلیل کامل ---------- */
+.full-game-btn{
+  background:#7b1fa2 !important;
+  border-color:#7b1fa2 !important;
+  margin-top:6px;
+}
+.full-game-btn:hover{background:#6a1b9a !important}
+
+/* ---------- پنل نتایج تحلیل ---------- */
+.gv-coach-panel{
+  margin-top:12px;background:#1a1a1a;border:1px solid #2c2c2c;
+  border-radius:12px;padding:12px;
+}
+.gv-coach-panel.hidden{display:none}
+.gv-coach-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c2c2c;
+}
+.gv-coach-head h3{
+  margin:0;font-size:14px;color:#ab47bc;
+}
+.gv-coach-close{
+  background:transparent;border:none;color:#9aa0ae;font-size:18px;
+  cursor:pointer;padding:4px 8px;min-height:auto;
+}
+.gv-coach-close:hover{color:#e57373}
+.gv-coach-progress{
+  font-size:12.5px;color:#cfd3dd;padding:6px 10px;
+  background:#0d1117;border-radius:8px;margin-bottom:10px;
+  min-height:30px;line-height:1.9;
+}
+.gv-coach-summary{margin-bottom:10px}
+.gv-summary-row{
+  display:flex;align-items:center;gap:12px;
+  padding:8px 12px;background:#0d1117;border-radius:8px;
+  margin-bottom:8px;
+}
+.gv-avg{
+  font-family:'Courier New',monospace;font-size:24px;font-weight:700;
+}
+.gv-lbl{font-size:14px;color:#cfd3dd;font-weight:700}
+.gv-quality-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:6px;
+}
+.gv-q-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 10px;background:#0d1117;border:1px solid #2c2c2c;
+  border-radius:6px;font-size:12px;
+}
+.gv-q-count{font-family:'Courier New',monospace;font-size:15px;font-weight:700}
+.gv-coach-list{
+  max-height:340px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:3px;
+  background:#0d1117;border-radius:8px;padding:6px;
+}
+.gv-move-row{
+  display:grid;
+  grid-template-columns:44px 70px 30px 50px 1fr;
+  align-items:center;gap:6px;
+  padding:6px 8px;border-radius:6px;cursor:pointer;
+  font-size:12.5px;background:#161b22;
+  transition:background .12s;
+}
+.gv-move-row:hover{background:#2b2e3b}
+.gv-move-lbl{color:#8a8f9c;font-family:'Courier New',monospace}
+.gv-move-san{
+  color:#e9e7e2;font-family:'Courier New',monospace;font-weight:700;
+}
+.gv-move-q{font-size:14px;font-weight:700;text-align:center}
+.gv-move-eval{
+  color:#9aa0ae;font-family:'Courier New',monospace;
+  font-size:11px;text-align:left;direction:ltr;
+}
+.gv-suggest{
+  grid-column:1 / -1;font-size:11.5px;color:#8a8f9c;
+  padding-top:2px;padding-inline-start:44px;
+}
 </style>
 <style>
 /* ============================================================
@@ -1693,8 +1838,19 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
             </div>
             <div id="gvMoves" style="background:#191b22;border-radius:12px;padding:10px;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px"></div>
             <div class="analysis-wrap">
-<button type="button" class="analysis-btn" onclick="GamesViewer.gvAnalyze()">🐟 تحلیل این پوزیسیون با استاک‌فیش</button>
+              <button type="button" class="analysis-btn" onclick="GamesViewer.gvAnalyze()">🐟 تحلیل این پوزیسیون</button>
+              <button type="button" class="analysis-btn full-game-btn" onclick="GamesViewer.gvAnalyzeFull()">🎓 تحلیل کامل بازی (هر حرکت)</button>
               <div class="analysis-output" id="gvAnalysisOutput"></div>
+            </div>
+
+            <div id="gvCoachPanel" class="gv-coach-panel hidden">
+              <div class="gv-coach-head">
+                <h3>🎓 تحلیل کامل بازی</h3>
+                <button class="gv-coach-close" onclick="GamesViewer.closeCoachPanel()">✕</button>
+              </div>
+              <div id="gvCoachProgress" class="gv-coach-progress"></div>
+              <div id="gvCoachSummary" class="gv-coach-summary"></div>
+              <div id="gvCoachList" class="gv-coach-list"></div>
             </div>
           </div>
         </div>
@@ -1712,6 +1868,7 @@ button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
 <script src="pgn.js"></script>
 <script src="games-data.js"></script>
 <script src="pgn-loader.js"></script>
+<script src="games-coach.js"></script>
 <script src="coach-patterns.js"></script>
 <script src="coach-analyzer.js"></script>
 <script src="coach.js"></script>
@@ -2486,12 +2643,20 @@ function handleLine(line){
       searchRole = null;
       return;
     }
+    if(searchRole === 'games-coach'){
+      if(window.GamesCoach) GamesCoach.onBestmove(token);
+      return;
+    }
     onBestmove(token);
     return;
   }
   if(line.startsWith('info')){
     if(searchRole === 'lesson-board'){
       if(window.LessonBoard) LessonBoard.onStockfishInfo(line);
+      return;
+    }
+    if(searchRole === 'games-coach'){
+      if(window.GamesCoach) GamesCoach.onInfo(line);
       return;
     }
     parseInfo(line);
@@ -3737,21 +3902,29 @@ if(window.visualViewport){
 /* ============================================================
    🎬 سینما شطرنج — پخش بازی‌های استادان با تحلیل مربی
    ============================================================ */
+/* ============================================================
+   🎬 سینما شطرنج — پخش بازی‌های استادان با تحلیل مربی
+   ============================================================ */
 const GamesViewer = {
+
+  /* ---------------- وضعیت ---------------- */
   cur: null,
-  allGames: [],           /* ← کتابخانهٔ زنده (ادغام GAMES_DB + آپلودشده) */
+  allGames: [],
   allBoards: [],
   allSans: [],
-  moveSquares: [],        /* ← برای هایلایت آخرین حرکت */
+  moveSquares: [],
   ply: 0,
   timer: null,
-  _speed: 1.0,       /* ✅ نام عوض شد تا با تابع speed تداخل نکند */
-  speedIdx: 1,     /* ✅ index آرایهٔ steps — پیش‌فرض: 1 = 1.0x */
+  _speed: 1.0,
+  speedIdx: 1,
   baseMs: 1200,
   analysisActive: false,
   lastAnalysis: null,
+  _coachResults: null,
 
-  /* بارگذاری مجدد کتابخانه از GAMES_DB + localStorage */
+  /* ============================================================
+     بارگذاری مجدد کتابخانه
+     ============================================================ */
   reloadLibrary() {
     const base = (typeof GAMES_DB !== 'undefined') ? GAMES_DB : [];
     this.allGames = window.PGNLoader
@@ -3759,53 +3932,80 @@ const GamesViewer = {
       : base.slice();
   },
 
-  /* شروع یک بازی */
+  /* ============================================================
+     شروع یک بازی
+     ============================================================ */
   start(gameId) {
     const g = this.allGames.find(x => x.id === gameId);
-    if(!g) return;
+    if (!g) return;
     this.cur = g;
     this.ply = 0;
     this.stopPlay();
 
-    /* دو مسیر: بازی اصلی با pgn متنی، یا آپلودشده با sans آرایه */
+    /* استخراج SAN */
     let sanList;
-    if(Array.isArray(g.sans) && g.sans.length) {
+    if (Array.isArray(g.sans) && g.sans.length) {
       sanList = g.sans.slice();
-    } else if(g.pgn) {
+    } else if (g.pgn) {
       const parsed = ChessPGN.parse(g.pgn);
       sanList = parsed.moves.filter(t => /^([KQRBNO]|[a-h])/.test(t) && !/^\d/.test(t));
     } else {
       sanList = [];
     }
 
-    /* تجزیه به UCI و ساخت پوزیسیون‌ها */
+    /* بازسازی پوزیسیون‌ها */
     this.allBoards = [initialBoard()];
     this.allSans = [];
     this.moveSquares = [];
     let s = initialState();
-    for(const san of sanList) {
+    for (const san of sanList) {
       const legal = legalMoves(s);
       const clean = san.replace(/[+#]/g, '');
       let found = null;
-      for(const m of legal) {
+      for (const m of legal) {
         const s1 = sanOf(s, m, legal);
-        if(s1 === san || s1.replace(/[+#]/g, '') === clean) { found = m; break; }
+        if (s1 === san || s1.replace(/[+#]/g, '') === clean) {
+          found = m;
+          break;
+        }
       }
-      if(!found) break;
+      if (!found) break;
       this.allSans.push(sanOf(s, found, legal));
       this.moveSquares.push({ from: found.from, to: found.to });
       s = makeMove(s, found);
       this.allBoards.push(s.board.slice());
     }
 
-    /* نمایش هدر و بازنشانی UI */
+    /* هدر بازی */
     $('gvTitle').textContent = g.title;
-    $('gvWhite').textContent = g.white;
-    $('gvBlack').textContent = g.black;
+    $('gvWhite').textContent = g.white + (g.whiteElo ? ' (' + g.whiteElo + ')' : '');
+    $('gvBlack').textContent = g.black + (g.blackElo ? ' (' + g.blackElo + ')' : '');
     $('gvEvent').textContent = g.event || '—';
     $('gvDate').textContent  = g.date  || '—';
     $('gvResult').textContent = g.result || '*';
     $('gvDesc').textContent = g.description || '';
+
+    /* نام فایل (اگر آپلودی) */
+    let fileNameEl = $('gvFileName');
+    if (!fileNameEl) {
+      const metaDiv = $('gvTitle').parentElement;
+      fileNameEl = document.createElement('div');
+      fileNameEl.id = 'gvFileName';
+      fileNameEl.className = 'gv-file-name';
+      metaDiv.appendChild(fileNameEl);
+    }
+    if (g.fileName) {
+      fileNameEl.innerHTML = '📄 فایل: <b>' + escapeHtml(g.fileName) + '</b>';
+      fileNameEl.classList.remove('hidden');
+    } else {
+      fileNameEl.classList.add('hidden');
+    }
+
+    /* پاک کردن تحلیل قبلی */
+    this._coachResults = null;
+    const oldPanel = $('gvCoachPanel');
+    if (oldPanel) oldPanel.classList.add('hidden');
+
     $('gvAnalysisOutput').textContent = '';
     $('gamesEmpty').classList.add('hidden');
     $('gamesPlayer').classList.remove('hidden');
@@ -3814,29 +4014,32 @@ const GamesViewer = {
     this.renderList($('searchGames') ? $('searchGames').value : '');
   },
 
-  /* رفتن به یک پلی */
+  /* ============================================================
+     رفتن به یک پلی
+     ============================================================ */
   goTo(n) {
-    if(!this.cur) return;
+    if (!this.cur) return;
     this.ply = Math.max(0, Math.min(this.allBoards.length - 1, n));
     this.drawBoard();
     this.drawMoves();
     this.drawCoachBubble();
-    this.renderProgress();
   },
 
-  /* رسم صفحه */
+  /* ============================================================
+     رسم صفحه
+     ============================================================ */
   drawBoard() {
     const el = $('gvBoard');
-    if(!el) return;
+    if (!el) return;
     const b = this.allBoards[this.ply];
     const prev = this.ply > 0 ? this.allSans[this.ply - 1] : null;
     const last = prev ? this._lastMoveSquares(this.ply - 1) : null;
     const FILES = 'abcdefgh';
     let html = '';
-    for(let i = 0; i < 64; i++) {
+    for (let i = 0; i < 64; i++) {
       const r = i >> 3, c = i & 7;
       let cls = 'cell ' + (((r + c) % 2 === 1) ? 'dark' : 'light');
-      if(last && (last.from === i || last.to === i)) cls += ' llast';
+      if (last && (last.from === i || last.to === i)) cls += ' llast';
       const p = b[i];
       html += '<div class="' + cls + '">' +
         (c === 0 ? '<span class="coord rank">' + (8 - r) + '</span>' : '') +
@@ -3845,11 +4048,9 @@ const GamesViewer = {
         '</div>';
     }
     el.innerHTML = html;
-    /* ✅ محافظت از جابه‌جایی صفحه در موبایل هنگام تعویض محتوا */
     el.style.touchAction = 'pan-y';
 
-    /* کپشن */
-    if(this.ply === 0) {
+    if (this.ply === 0) {
       $('gvCaption').textContent = '🏁 وضعیت شروع';
     } else {
       const moveNo = Math.ceil(this.ply / 2);
@@ -3858,46 +4059,49 @@ const GamesViewer = {
     }
   },
 
-  /* پیدا کردن خانه‌های آخرین حرکت با شبیه‌سازی مجدد */
   _lastMoveSquares(plyIndex) {
     return this.moveSquares[plyIndex] || null;
   },
 
-  /* رسم لیست حرکات */
+  /* ============================================================
+     رسم لیست حرکات
+     ============================================================ */
   drawMoves() {
     const el = $('gvMoves');
-    if(!el) return;
+    if (!el) return;
     let html = '';
-    for(let i = 0; i < this.allSans.length; i++) {
-      if(i % 2 === 0) {
+    for (let i = 0; i < this.allSans.length; i++) {
+      if (i % 2 === 0) {
         html += '<div class="mv"><span class="n">' + (i/2 + 1) + '.</span>';
       }
       const cls = (i + 1 === this.ply) ? ' cur' : '';
       html += '<span class="' + cls + '" style="min-width:64px;display:inline-block;cursor:pointer" onclick="GamesViewer.goTo(' + (i+1) + ')">' + this.allSans[i] + '</span>';
-      if(i % 2 === 1 || i === this.allSans.length - 1) {
+      if (i % 2 === 1 || i === this.allSans.length - 1) {
         html += '</div>';
       }
     }
     el.innerHTML = html || '<div style="color:#6f7480;padding:8px;text-align:center">حرکتی موجود نیست</div>';
 
-    /* ✅ اسکرول فقط داخل کانتینر لیست حرکات — بدون تأثیر روی صفحهٔ اصلی */
     const cur = el.querySelector('.cur');
-    if(cur) {
+    if (cur) {
       const elRect = el.getBoundingClientRect();
       const curRect = cur.getBoundingClientRect();
-      if(curRect.top < elRect.top) {
+      if (curRect.top < elRect.top) {
         el.scrollTop -= (elRect.top - curRect.top);
-      } else if(curRect.bottom > elRect.bottom) {
+      } else if (curRect.bottom > elRect.bottom) {
         el.scrollTop += (curRect.bottom - elRect.bottom);
       }
     }
   },
-  /* پیام مربی */
+
+  /* ============================================================
+     پیام مربی
+     ============================================================ */
   drawCoachBubble() {
     const el = $('gvCoachBubble');
-    if(!el) return;
-    if(this.ply === 0) {
-      el.innerHTML = '🎓 <b>مربی:</b> این بازی «' + escapeHtml(this.cur.title) + '» است. دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ جلو برو. برای تحلیل هر پوزیسیون، دکمهٔ 🐟 پایین را بزن.';
+    if (!el) return;
+    if (this.ply === 0) {
+      el.innerHTML = '🎓 <b>مربی:</b> این بازی «' + escapeHtml(this.cur.title) + '» است. دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ جلو برو. برای تحلیل هر پوزیسیون، دکمهٔ 🐟 پایین را بزن. برای تحلیل کامل، «🎓 تحلیل کامل بازی» را انتخاب کن.';
       return;
     }
     const moveNo = Math.ceil(this.ply / 2);
@@ -3906,12 +4110,14 @@ const GamesViewer = {
       '<br><span style="color:#8a8f9c">برای دریافت تحلیل استاک‌فیش، دکمهٔ 🐟 پایین را بزن.</span>';
   },
 
-   /* ---------- پخش — با setTimeout بازگشتی ---------- */
+  /* ============================================================
+     پخش
+     ============================================================ */
   togglePlay() {
-    if(this.timer) { this.stopPlay(); return; }
-    if(this.ply >= this.allBoards.length - 1) this.goTo(0);
+    if (this.timer) { this.stopPlay(); return; }
+    if (this.ply >= this.allBoards.length - 1) this.goTo(0);
     const btn = $('gvBtnPlay');
-    if(btn) { btn.textContent = '⏸ توقف'; btn.classList.add('playing'); }
+    if (btn) { btn.textContent = '⏸ توقف'; btn.classList.add('playing'); }
     this._scheduleNextStep();
   },
 
@@ -3921,31 +4127,32 @@ const GamesViewer = {
   },
 
   _playStep() {
-    if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
+    if (this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
     this.goTo(this.ply + 1);
-    if(this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
+    if (this.ply >= this.allBoards.length - 1) { this.stopPlay(); return; }
     this._scheduleNextStep();
   },
 
   stopPlay() {
-    if(this.timer) { clearTimeout(this.timer); this.timer = null; }
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
     const btn = $('gvBtnPlay');
-    if(btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
+    if (btn) { btn.textContent = '▶️ پخش'; btn.classList.remove('playing'); }
   },
 
-  /* ---------- تنظیم سرعت (تابع) ---------- */
+  /* ============================================================
+     تنظیم سرعت
+     ============================================================ */
   speed(delta) {
     const steps = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0];
     let idx = parseInt(this.speedIdx, 10);
-    if(!Number.isFinite(idx) || idx < 0 || idx >= steps.length) idx = 1;
+    if (!Number.isFinite(idx) || idx < 0 || idx >= steps.length) idx = 1;
 
     const newIdx = Math.max(0, Math.min(steps.length - 1, idx + delta));
     this.speedIdx = newIdx;
     this._speed = steps[newIdx];
 
-    /* به‌روزرسانی برچسب با اعداد فارسی */
     const label = $('gvSpeedLabel');
-    if(label) {
+    if (label) {
       const faDigits = '۰۱۲۳۴۵۶۷۸۹';
       const txt = this._speed.toFixed(1).replace(/\d/g, d => faDigits[d]);
       label.textContent = txt + 'x';
@@ -3954,23 +4161,19 @@ const GamesViewer = {
       label.classList.add('speed-bump');
     }
 
-    /* اگر در حال پخشیم، مرحلهٔ بعدی با سرعت جدید */
-    if(this.timer) {
+    if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
       this._scheduleNextStep();
     }
   },
 
-  /* 🔢 تبدیل اعداد لاتین به فارسی برای نمایش سرعت */
-  _formatSpeed(s) {
-    return String(s.toFixed(1)).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-  },
-
-  /* تحلیل با استاک‌فیش */
+  /* ============================================================
+     تحلیل یک پوزیسیون
+     ============================================================ */
   gvAnalyze() {
-    if(!this.cur) return;
-    if(!engineReadyForViewer()) {
+    if (!this.cur) return;
+    if (!engineReadyForViewer()) {
       $('gvAnalysisOutput').textContent = '⚠️ استاک‌فیش هنوز آماده نیست. چند لحظه صبر کن.';
       return;
     }
@@ -3978,7 +4181,6 @@ const GamesViewer = {
     this.lastAnalysis = { depth: 0, score: null, mate: false, bestmove: null };
     $('gvAnalysisOutput').textContent = '🐟 استاک‌فیش در حال تحلیل…';
 
-    /* ساخت FEN از پوزیسیون فعلی */
     const fen = this._currentFen();
     try { searchRole = 'viewer'; } catch(e) {}
     sfSend('setoption name Skill Level value 20');
@@ -3986,40 +4188,37 @@ const GamesViewer = {
     sfSend('go depth 15');
   },
 
-  /* ساخت FEN از موقعیت فعلی */
   _currentFen() {
     const b = this.allBoards[this.ply];
     let placement = '', empty = 0;
-    for(let r = 0; r < 8; r++) {
-      for(let c = 0; c < 8; c++) {
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
         const p = b[r * 8 + c];
-        if(!p) empty++;
-        else { if(empty) { placement += empty; empty = 0; } placement += p; }
+        if (!p) empty++;
+        else { if (empty) { placement += empty; empty = 0; } placement += p; }
       }
-      if(empty) { placement += empty; empty = 0; }
-      if(r < 7) placement += '/';
+      if (empty) { placement += empty; empty = 0; }
+      if (r < 7) placement += '/';
     }
     const turn = (this.ply % 2 === 0) ? 'w' : 'b';
     return placement + ' ' + turn + ' - - 0 1';
   },
 
-  /* پیام‌های استاک‌فیش */
   onInfo(line) {
-    if(!this.analysisActive) return;
+    if (!this.analysisActive) return;
     const ms = line.match(/ score (cp|mate) (-?\d+)/);
-    if(ms) {
+    if (ms) {
       this.lastAnalysis.mate = ms[1] === 'mate';
       this.lastAnalysis.score = +ms[2];
     }
     const md = line.match(/ depth (\d+)/);
-    if(md) this.lastAnalysis.depth = +md[1];
+    if (md) this.lastAnalysis.depth = +md[1];
     const pvm = line.match(/ pv (.+)$/);
-    if(pvm) this.lastAnalysis.pv = pvm[1].trim().split(/\s+/);
+    if (pvm) this.lastAnalysis.pv = pvm[1].trim().split(/\s+/);
 
-    /* نمایش موقت */
     let txt = '…';
-    if(this.lastAnalysis.score !== null) {
-      if(this.lastAnalysis.mate) {
+    if (this.lastAnalysis.score !== null) {
+      if (this.lastAnalysis.mate) {
         const m = Math.abs(this.lastAnalysis.score);
         txt = 'مات در ' + m + ' به نفع ' + (this.lastAnalysis.score > 0 ? 'سفید' : 'مشکی');
       } else {
@@ -4032,20 +4231,20 @@ const GamesViewer = {
   },
 
   onBestmove(token) {
-    if(!this.analysisActive) return;
+    if (!this.analysisActive) return;
     this.analysisActive = false;
-    if(!token || token === '(none)') {
+    if (!token || token === '(none)') {
       $('gvAnalysisOutput').textContent = '🐟 تحلیلی موجود نیست.';
       return;
     }
     let evalTxt = 'نامشخص';
-    if(this.lastAnalysis.mate) {
+    if (this.lastAnalysis.mate) {
       const m = Math.abs(this.lastAnalysis.score);
       evalTxt = 'مات در ' + m + ' به نفع ' + (this.lastAnalysis.score > 0 ? 'سفید' : 'مشکی');
-    } else if(this.lastAnalysis.score !== null) {
+    } else if (this.lastAnalysis.score !== null) {
       const turn = (this.ply % 2 === 0) ? 'w' : 'b';
       const v = (this.lastAnalysis.score / 100) * (turn === 'w' ? 1 : -1);
-      if(Math.abs(v) < 0.3) evalTxt = 'متعادل';
+      if (Math.abs(v) < 0.3) evalTxt = 'متعادل';
       else evalTxt = (v > 0 ? '+' : '') + v.toFixed(2) + ' به نفع ' + (v > 0 ? 'سفید' : 'مشکی');
     }
     $('gvAnalysisOutput').innerHTML =
@@ -4055,72 +4254,257 @@ const GamesViewer = {
       '📏 عمق: ' + this.lastAnalysis.depth;
   },
 
-  /* رندر لیست در سایدبار */
+  /* ============================================================
+     رندر لیست بازی‌ها — گروه‌بندی شده
+     ============================================================ */
   renderList(filter) {
     filter = (filter || '').trim();
     const lf = filter.toLowerCase();
 
-    /* فیلتر */
-    const matched = this.allGames.filter(g => {
-      if(!lf) return true;
-      return (g.title || '').toLowerCase().includes(lf) ||
-             (g.white || '').toLowerCase().includes(lf) ||
-             (g.black || '').toLowerCase().includes(lf) ||
-             (g.event || '').toLowerCase().includes(lf) ||
-             (g.opening || '').toLowerCase().includes(lf) ||
-             (g.eco || '').toLowerCase().includes(lf);
-    });
-
-    /* گروه‌بندی داینامیک */
-    const groups = {};
-    for(const g of matched) {
-      const key = g.categoryFA || '📁 بارگذاری‌شده';
-      if(!groups[key]) groups[key] = [];
-      groups[key].push(g);
-    }
+    const baseGames = (typeof GAMES_DB !== 'undefined' ? GAMES_DB : [])
+      .filter(g => {
+        if (!lf) return true;
+        return (g.title || '').toLowerCase().includes(lf) ||
+               (g.white || '').toLowerCase().includes(lf) ||
+               (g.black || '').toLowerCase().includes(lf) ||
+               (g.event || '').toLowerCase().includes(lf);
+      });
 
     let html = '';
-    const groupNames = Object.keys(groups).sort((a, b) => {
-      /* دسته‌های اصلی اول */
-      const baseOrder = ['شاهکارهای کلاسیک','شاهکارهای معاصر','درس‌های کلاسیک'];
-      const ai = baseOrder.indexOf(a), bi = baseOrder.indexOf(b);
-      if(ai >= 0 && bi < 0) return -1;
-      if(bi >= 0 && ai < 0) return 1;
-      if(ai >= 0 && bi >= 0) return ai - bi;
-      /* بقیه الفبایی */
-      return a.localeCompare(b, 'fa');
-    });
 
-    for(const gname of groupNames) {
-      const items = groups[gname];
-      /* برچسب تعداد آپلودشده/اصلی */
-      const uploadedCount = items.filter(x => x.uploaded).length;
-      const badge = uploadedCount ? ' <span style="color:#81c784;font-size:11px">(' + uploadedCount + ' آپلودشده)</span>' : '';
-      html += '<details open><summary>' + escapeHtml(gname) +
-        '<span class="cnt">' + items.length + '</span>' + badge +
-        '</summary>';
-      for(const g of items) {
-        html += '<button class="lsn' + (this.cur && this.cur.id === g.id ? ' active' : '') +
-          '" onclick="GamesViewer.start(\'' + g.id + '\')">' +
-          '<span style="flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-            escapeHtml(g.title) +
-          '</span>' +
-          '<small>' + escapeHtml(g.result) + '</small>' +
-        '</button>';
+    /* ---------- گروه‌های اصلی GAMES_DB ---------- */
+    if (baseGames.length) {
+      const baseGroups = {};
+      for (const g of baseGames) {
+        const key = g.categoryFA || 'درس‌های کلاسیک';
+        if (!baseGroups[key]) baseGroups[key] = [];
+        baseGroups[key].push(g);
       }
-      html += '</details>';
+      const order = ['شاهکارهای کلاسیک', 'شاهکارهای معاصر', 'درس‌های کلاسیک'];
+      const keys = Object.keys(baseGroups).sort((a, b) => {
+        const ai = order.indexOf(a), bi = order.indexOf(b);
+        if (ai >= 0 && bi < 0) return -1;
+        if (bi >= 0 && ai < 0) return 1;
+        if (ai >= 0 && bi >= 0) return ai - bi;
+        return a.localeCompare(b, 'fa');
+      });
+
+      html += '<div class="games-group-header">📚 کتابخانهٔ اصلی</div>';
+
+      for (const gname of keys) {
+        const items = baseGroups[gname];
+        html += '<details open class="games-group">';
+        html += '<summary>' + escapeHtml(gname) +
+                '<span class="cnt">' + items.length + '</span></summary>';
+        for (const g of items) {
+          html += this._renderGameItem(g, lf);
+        }
+        html += '</details>';
+      }
     }
+
+    /* ---------- فایل‌های آپلودی ---------- */
+    const lib = window.PGNLoader ? PGNLoader.loadLibrary() : { fileGroups: [] };
+    const fileGroups = lib.fileGroups || [];
+
+    if (fileGroups.length) {
+      html += '<div class="games-group-header">📁 فایل‌های آپلودی</div>';
+
+      for (const group of fileGroups) {
+        const groupGames = group.games.filter(g => {
+          if (!lf) return true;
+          return (g.white || '').toLowerCase().includes(lf) ||
+                 (g.black || '').toLowerCase().includes(lf) ||
+                 (g.event || '').toLowerCase().includes(lf);
+        });
+        if (!groupGames.length && lf) continue;
+
+        const dt = new Date(group.uploadedAt);
+        const dateStr = dt.toLocaleDateString('fa-IR');
+        const timeStr = dt.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+        html += '<details open class="games-group uploaded-group">';
+        html += '<summary>' +
+                '<span class="group-name">📄 ' + escapeHtml(group.name) + '</span>' +
+                '<span class="cnt">' + group.games.length + '</span>' +
+                '<small class="group-date">' + dateStr + ' — ' + timeStr + '</small>' +
+                '</summary>';
+
+        html += '<div class="group-actions">' +
+                '<button class="group-btn" onclick="event.stopPropagation();GamesViewer.exportGroup(\'' + group.id + '\')" title="دانلود PGN">📥</button>' +
+                '<button class="group-btn danger" onclick="event.stopPropagation();GamesViewer.deleteGroup(\'' + group.id + '\')" title="حذف این فایل">🗑</button>' +
+                '</div>';
+
+        for (const g of groupGames) {
+          html += this._renderGameItem(g, lf);
+        }
+        html += '</details>';
+      }
+    }
+
     $('gamesList').innerHTML = html ||
       '<div style="color:#6f7480;padding:10px;font-size:13px">بازی‌ای پیدا نشد 🔍</div>';
 
-    const total = this.allGames.length;
-    const up = this.allGames.filter(g => g.uploaded).length;
-    $('gamesProgressText').innerHTML = '🎬 ' + total + ' بازی' +
-      (up ? ' <span style="color:#81c784;font-size:11px">(' + up + ' آپلودشده)</span>' : '');
+    const total = (typeof GAMES_DB !== 'undefined' ? GAMES_DB.length : 0) +
+                  (window.PGNLoader ? PGNLoader.stats().count : 0);
+    const uploadedCount = window.PGNLoader ? PGNLoader.stats().count : 0;
+    const groupCount = fileGroups.length;
+    $('gamesProgressText').innerHTML =
+      '🎬 ' + total + ' بازی' +
+      (uploadedCount ? ' <span style="color:#81c784;font-size:11px">(' +
+        uploadedCount + ' آپلود در ' + groupCount + ' فایل)</span>' : '');
   },
 
-  renderProgress() {
-    /* نوار پایین صفحه - اختیاری */
+  /* ---------- رندر یک آیتم بازی ---------- */
+  _renderGameItem(g, lf) {
+    const isActive = this.cur && this.cur.id === g.id;
+    const cls = 'lsn' + (isActive ? ' active' : '') + (g.uploaded ? ' uploaded' : '');
+    const white = escapeHtml(g.white || '?');
+    const black = escapeHtml(g.black || '?');
+    return '<button class="' + cls + '" onclick="GamesViewer.start(\'' + g.id + '\')">' +
+      '<span class="gv-item-text">' +
+        '<span class="gv-players">⚪ ' + white + ' <span class="gv-vs">vs</span> ⚫ ' + black + '</span>' +
+        '<small class="gv-meta">' + escapeHtml(g.event || '—') + ' • ' + escapeHtml(g.date || '?') + '</small>' +
+      '</span>' +
+      '<small class="gv-result">' + escapeHtml(g.result || '*') + '</small>' +
+    '</button>';
+  },
+
+  /* ---------- حذف گروه ---------- */
+  deleteGroup(groupId) {
+    if (!confirm('تمام بازی‌های این فایل حذف شوند؟')) return;
+    if (window.PGNLoader) {
+      PGNLoader.removeFileGroup(groupId);
+      this.reloadLibrary();
+      this.renderList($('searchGames') ? $('searchGames').value : '');
+      if (this.cur && this.cur.fileGroupId === groupId) {
+        this.cur = null;
+        $('gamesEmpty').classList.remove('hidden');
+        $('gamesPlayer').classList.add('hidden');
+      }
+    }
+  },
+
+  /* ---------- دانلود یک گروه ---------- */
+  exportGroup(groupId) {
+    if (!window.PGNLoader) return;
+    const pgn = PGNLoader.exportGroupAsPGN(groupId);
+    if (!pgn) return;
+    const lib = PGNLoader.loadLibrary();
+    const group = lib.fileGroups.find(g => g.id === groupId);
+    const name = (group ? group.name : 'games').replace(/\.pgn$/i, '');
+    const blob = new Blob([pgn], { type: 'application/x-chess-pgn;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name + '.pgn';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  },
+
+  /* ============================================================
+     🎓 تحلیل کامل بازی
+     ============================================================ */
+  gvAnalyzeFull() {
+    if (!this.cur) return;
+    if (!window.GamesCoach) {
+      alert('ماژول تحلیل بارگذاری نشده است.');
+      return;
+    }
+    if (GamesCoach.isActive()) {
+      GamesCoach.stopAnalysis();
+      return;
+    }
+
+    const panel = $('gvCoachPanel');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+    $('gvCoachProgress').innerHTML = '⏳ در حال آماده‌سازی...';
+    $('gvCoachSummary').innerHTML = '';
+    $('gvCoachList').innerHTML = '';
+
+    const self = this;
+    GamesCoach.startAnalysis(this.cur, {
+      onStart: function(total) {
+        $('gvCoachProgress').innerHTML = '⏳ در حال تحلیل ۰ از ' + total + ' حرکت...';
+      },
+      onProgress: function(idx, total, pos) {
+        const pct = Math.round(100 * idx / total);
+        $('gvCoachProgress').innerHTML =
+          '⏳ تحلیل حرکت ' + (idx + 1) + ' از ' + total + ' — ' +
+          '<span style="color:#ffd54f">' + escapeHtml(pos.san) + '</span> ' +
+          '<span style="color:#8a8f9c">(' + pct + '%)</span>';
+      },
+      onComplete: function(results) {
+        self._coachResults = results;
+        self._renderCoachResults(results);
+      },
+      onError: function(msg) {
+        $('gvCoachProgress').innerHTML = '❌ ' + msg;
+      }
+    });
+  },
+
+  _renderCoachResults(results) {
+    const total = results.length;
+    const counts = { brilliant: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
+    let sumScore = 0;
+    for (const r of results) {
+      counts[r.quality] = (counts[r.quality] || 0) + 1;
+      sumScore += (GamesCoach.QUALITY[r.quality] || GamesCoach.QUALITY.good).score;
+    }
+    const avgScore = total > 0 ? Math.round(sumScore / total) : 0;
+
+    const rating = avgScore >= 90 ? { label: '🏆 عالی', color: '#4caf50' }
+                : avgScore >= 75 ? { label: '👍 خوب', color: '#81c784' }
+                : avgScore >= 55 ? { label: '💪 متوسط', color: '#ffd54f' }
+                : avgScore >= 35 ? { label: '📚 نیاز به تمرین', color: '#ff9800' }
+                : { label: '🌱 در حال یادگیری', color: '#e57373' };
+
+    let html = '<div class="gv-summary-row">' +
+      '<span class="gv-avg" style="color:' + rating.color + '">' + avgScore + '%</span>' +
+      '<span class="gv-lbl">' + rating.label + '</span>' +
+      '</div><div class="gv-quality-grid">';
+    for (const key of ['brilliant', 'best', 'excellent', 'good', 'inaccuracy', 'mistake', 'blunder']) {
+      const q = GamesCoach.QUALITY[key];
+      if (!counts[key]) continue;
+      html += '<div class="gv-q-item" style="border-color:' + q.color + '">' +
+        '<span style="color:' + q.color + ';font-weight:700">' + q.icon + ' ' + q.label + '</span>' +
+        '<span class="gv-q-count" style="color:' + q.color + '">' + counts[key] + '</span>' +
+        '</div>';
+    }
+    html += '</div>';
+    $('gvCoachSummary').innerHTML = html;
+
+    let listHtml = '';
+    for (const r of results) {
+      const q = GamesCoach.QUALITY[r.quality] || GamesCoach.QUALITY.good;
+      const moveLabel = (r.color === 'w' ? '⚪' : '⚫') + ' ' + r.moveNumber + (r.color === 'w' ? '.' : '…');
+      const evalTxt = r.mate
+        ? 'مات ' + Math.abs(r.eval)
+        : (r.eval !== null ? (r.eval >= 0 ? '+' : '') + (r.eval / 100).toFixed(1) : '—');
+      const suggest = (r.quality !== 'best' && r.bestSan && r.bestSan !== '?')
+        ? '<div class="gv-suggest">پیشنهاد: <b style="color:#ffd54f">' + escapeHtml(r.bestSan) + '</b></div>'
+        : '';
+      listHtml += '<div class="gv-move-row" onclick="GamesViewer.goTo(' + (r.idx + 1) + ')">' +
+        '<div class="gv-move-lbl">' + moveLabel + '</div>' +
+        '<div class="gv-move-san">' + escapeHtml(r.san) + '</div>' +
+        '<div class="gv-move-q" style="color:' + q.color + '">' + q.icon + '</div>' +
+        '<div class="gv-move-eval">' + evalTxt + '</div>' +
+        suggest +
+        '</div>';
+    }
+    $('gvCoachList').innerHTML = listHtml;
+    $('gvCoachProgress').innerHTML = '✅ تحلیل کامل شد — ' + total + ' حرکت';
+  },
+
+  closeCoachPanel() {
+    if (window.GamesCoach && GamesCoach.isActive()) {
+      GamesCoach.stopAnalysis();
+    }
+    const p = $('gvCoachPanel');
+    if (p) p.classList.add('hidden');
   }
 };
 
