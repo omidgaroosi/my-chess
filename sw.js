@@ -24,6 +24,7 @@ const PRECACHE = [
   './coach.js',
   './learn-data-1.js',
   './learn-data-1-v2.js',
+  './learn-data-1-v3.js',
   './learn-data-2.js',
   './learn-data-3.js',
   './learn-data-4.js',
