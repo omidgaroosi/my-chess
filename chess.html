@@ -3942,13 +3942,15 @@ const GamesViewer = {
     this.ply = 0;
     this.stopPlay();
 
-    /* استخراج SAN */
+    /* ✅ استخراج SAN و نوشتن آن روی خود آبجکت بازی (برای GamesCoach) */
     let sanList;
     if (Array.isArray(g.sans) && g.sans.length) {
       sanList = g.sans.slice();
     } else if (g.pgn) {
       const parsed = ChessPGN.parse(g.pgn);
       sanList = parsed.moves.filter(t => /^([KQRBNO]|[a-h])/.test(t) && !/^\d/.test(t));
+      /* ✅ مهم: ذخیرهٔ sans روی آبجکت اصلی تا GamesCoach هم ببیند */
+      g.sans = sanList.slice();
     } else {
       sanList = [];
     }
@@ -4576,7 +4578,9 @@ function gvOnFileSelected(ev) {
             gvSetStatus('⚠️ هیچ بازی‌ای در فایل پیدا نشد.', '#e57373');
             return;
           }
-          const res = window.PGNLoader.save(games);
+          /* ✅ استفاده از API جدید addFileGroup با نام فایل */
+          const fileName = (file.name || '').replace(/\.pgn$/i, '') || 'بدون نام';
+          const res = window.PGNLoader.addFileGroup(fileName, games);
           if(!res.ok) {
             gvSetStatus('❌ خطا: ' + (res.error || 'نامشخص'), '#e57373');
             return;
@@ -4587,8 +4591,7 @@ function gvOnFileSelected(ev) {
 
           const parts = [];
           parts.push('✅ ' + games.length + ' بازی خوانده شد');
-          parts.push(res.added + ' جدید اضافه شد');
-          if(res.dropped) parts.push(res.dropped + ' تکراری/اضافه حذف شد');
+          parts.push('در فایل «' + fileName + '» ذخیره شد');
           gvSetStatus(parts.join(' • '), '#81c784');
 
           if(res.warn) {

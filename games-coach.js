@@ -28,7 +28,26 @@ window.GamesCoach = (() => {
   function startAnalysis(game, callbacks) {
     callbacks = callbacks || {};
 
-    if (!game || !Array.isArray(game.sans) || !game.sans.length) {
+    if (!game) {
+      callbacks.onError && callbacks.onError('بازی نامعتبر است');
+      return;
+    }
+
+    /* ✅ نرمال‌سازی: اگر sans خالی است ولی pgn متنی موجود است، از آن استخراج کن */
+    if ((!Array.isArray(game.sans) || !game.sans.length) && game.pgn) {
+      try {
+        if (typeof ChessPGN !== 'undefined' && ChessPGN.parse) {
+          const parsed = ChessPGN.parse(game.pgn);
+          game.sans = parsed.moves.filter(t =>
+            /^([KQRBNO]|[a-h])/.test(t) && !/^\d/.test(t)
+          );
+        }
+      } catch(e) {
+        console.warn('⚠️ خطا در استخراج sans از pgn:', e);
+      }
+    }
+
+    if (!Array.isArray(game.sans) || !game.sans.length) {
       callbacks.onError && callbacks.onError('بازی حرکتی ندارد');
       return;
     }
