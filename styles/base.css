@@ -1,0 +1,132 @@
+/* ============================================================
+   🎨 base.css — پایه: reset، تم، تب‌ها، دکمه‌ها، تخته‌شطرنج
+   ============================================================ */
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --size:320px;
+  --cell:40px;
+  --panel-max:400px;
+  --sq-light:#efd9b4;
+  --sq-dark:#b28356;
+  --coord-light:#b28356;
+  --coord-dark:#efd9b4;
+  --piece-w:#fdfdfd;
+  --piece-b:#141414;
+  --piece-w-shadow:0 2px 3px rgba(0,0,0,.6);
+  --piece-b-shadow:0 1px 2px rgba(255,255,255,.22);
+}
+
+html,body{
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  background:radial-gradient(1200px 600px at 50% -100px,#242836,#14151b 60%);
+  color:#e9e7e2;
+  font-family:"Segoe UI",Tahoma,sans-serif;
+  min-height:100dvh;
+  padding:max(10px,env(safe-area-inset-top))
+          max(10px,env(safe-area-inset-right))
+          max(10px,env(safe-area-inset-bottom))
+          max(10px,env(safe-area-inset-left));
+  touch-action:manipulation;
+  overscroll-behavior-y:contain;
+}
+
+h1{text-align:center;font-size:20px;margin-bottom:4px;padding:0 8px;line-height:1.6}
+.subtitle{text-align:center;font-size:12px;color:#9aa0ae;margin-bottom:12px}
+.subtitle b{color:#ffd54f}
+.hidden{display:none!important}
+
+/* ---------- تب‌ها ---------- */
+.tabs{display:flex;gap:4px;max-width:720px;margin:0 auto 14px;background:#20222b;
+  border:1px solid #313444;border-radius:14px;padding:5px}
+.tbtn{flex:1;font:inherit;font-size:13px;font-weight:700;min-height:44px;border:none;
+  border-radius:10px;background:transparent;color:#9aa0ae;cursor:pointer;padding:6px 8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s}
+.tbtn.active{background:#c9973c;color:#fff}
+
+/* ---------- صفحه‌های شطرنج (مشترک) ---------- */
+#board,#lboard,#quizBoard,#mini-board{display:grid;grid-template-columns:repeat(8,1fr);
+  aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;
+  -webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+#board{width:var(--size);height:var(--size)}
+#lboard,#mini-board{width:min(90vw,400px)}
+#quizBoard{width:min(80vw,300px)}
+
+.cell{position:relative}
+.cell.light{background:var(--sq-light)}
+.cell.dark{background:var(--sq-dark)}
+.cell.last::before,.cell.llast::before{content:'';position:absolute;inset:0;background:rgba(255,213,79,.42)}
+.cell.coach::before{content:'';position:absolute;inset:0;background:rgba(76,175,80,.5)}
+.cell.coach{box-shadow:inset 0 0 0 3px #4caf50}
+.cell.sel{box-shadow:inset 0 0 0 3px #ffd54f}
+.cell.check::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle,rgba(255,60,60,.8) 12%,rgba(255,60,60,0) 72%)}
+.cell.hl::after{content:'';position:absolute;inset:8%;border-radius:50%;
+  border:calc(var(--cell)*.07) solid rgba(76,175,80,.95)}
+
+.piece{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  padding:2%;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));
+  transition:filter .15s}
+.piece svg{width:100%;height:100%;display:block}
+.piece.w svg{filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+.piece.b svg{filter:drop-shadow(0 1px 0 rgba(255,255,255,.1))}
+
+.dot{position:absolute;left:50%;top:50%;width:34%;height:34%;transform:translate(-50%,-50%);
+  border-radius:50%;background:rgba(25,25,25,.35);pointer-events:none}
+.dot.cap{width:88%;height:88%;background:transparent;
+  border:calc(var(--cell)*.06) solid rgba(25,25,25,.4)}
+
+.coord{position:absolute;font-size:calc(var(--cell)*.2);font-weight:700;opacity:.85;
+  pointer-events:none;user-select:none}
+.coord.rank{top:3%;left:6%}.coord.file{bottom:2%;right:6%}
+.cell.light .coord{color:var(--coord-light)}
+.cell.dark .coord{color:var(--coord-dark)}
+
+/* ---------- پنل پایه ---------- */
+.panel{width:100%;max-width:var(--panel-max);background:#20222b;border:1px solid #313444;
+  border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:14px;color:#ffd54f}
+
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row label{font-size:12px;color:#9aa0ae;display:flex;flex-direction:column;gap:4px;
+  flex:1;min-width:120px}
+
+select,button{font:inherit;font-size:14px;border-radius:10px;border:1px solid #3a3e50;
+  background:#2b2e3b;color:#fff;padding:10px 12px;min-height:46px}
+button{cursor:pointer;transition:background .15s;flex:1}
+button:hover{background:#3d4157}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:#c9973c;border-color:#c9973c;font-weight:700}
+button.coachbtn{background:#2e7d32;border-color:#2e7d32;font-weight:700}
+
+.empty{color:#666;text-align:center;padding:10px;font-size:12px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#9aa0ae;
+  min-height:32px;cursor:pointer}
+.hint{font-size:11px;color:#6f7480;line-height:2}
+
+/* ---------- فوتر ---------- */
+.credit{text-align:center;font-size:12px;color:#6f7480;margin:20px auto 8px;
+  padding:12px;line-height:2}
+.credit b{color:#ffd54f;font-weight:700}
+
+/* ---------- Media queries پایه ---------- */
+@media(max-width:700px){
+  h1{font-size:18px;margin-bottom:2px}
+  .subtitle{font-size:11px;margin-bottom:10px}
+  .tabs{gap:3px;padding:4px;margin-bottom:10px}
+  .tbtn{font-size:12px;min-height:42px}
+  .panel{padding:12px}
+}
+@media(max-width:380px){
+  h1{font-size:16px}
+  .tbtn{font-size:11px;padding:4px 6px}
+}

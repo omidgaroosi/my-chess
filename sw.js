@@ -61,7 +61,9 @@ const PRECACHE = [
   './rating.js',
   './lesson-board.js',
   './manifest.webmanifest',
-  './icon.svg'
+  './icon.svg',
+  './styles/base.css',
+  './styles/mobile.css'
 ];
 
 /* نصب: کش کردن فایل‌های ضروری */

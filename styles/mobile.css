@@ -1,0 +1,50 @@
+/* ============================================================
+   🛠️ mobile.css — اصلاح اسکرول موبایل
+   ------------------------------------------------------------
+   این فایل باید آخرین فایل CSS بارگذاری شود تا override
+   درستی روی سایر استایل‌ها داشته باشد.
+   ============================================================ */
+
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body {
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto !important;
+  touch-action: auto !important;
+  min-height: 100dvh;
+  height: auto !important;
+}
+
+.board-frame {
+  contain: none !important;
+}
+
+#board,
+#lboard,
+#mini-board,
+#quizBoard {
+  touch-action: pan-y !important;
+}
+
+button, .tbtn, .opt, .lsn, .op-item, select, input[type="checkbox"] {
+  touch-action: manipulation;
+}
+
+#moves, #coachLog, .slist, #openMoves, #lessonView, #openView {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: auto;
+}
+
+.app, .layout, .content, .stage, .panel {
+  position: relative;
+}
+
+@media (max-width: 700px) {
+  body {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
