@@ -63,6 +63,7 @@ const PRECACHE = [
   './manifest.webmanifest',
   './icon.svg',
   './styles/base.css',
+  './styles/game.css',
   './styles/mobile.css'
 ];
 
