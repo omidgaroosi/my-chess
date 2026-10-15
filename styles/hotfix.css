@@ -1,0 +1,174 @@
+/* ============================================================
+   🔧 hotfix.css — رفع مشکلات خاصیت‌های کلاس‌های دروس و گشایش
+   ------------------------------------------------------------
+   این فایل بعد از tabs.css بارگذاری می‌شود تا از specificity
+   بالاتری برخوردار باشد.
+   ============================================================ */
+
+/* ---------- درس‌های آکادمی و آیتم‌های گشایش ---------- */
+button.lsn,
+button.op-item {
+  display: flex !important;
+  width: 100% !important;
+  align-items: center !important;
+  gap: 6px !important;
+  text-align: right !important;
+  background: transparent !important;
+  border: none !important;
+  color: #e9e7e2 !important;
+  font: inherit !important;
+  font-size: 12.5px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  min-height: 40px !important;
+  line-height: 1.7 !important;
+  box-sizing: border-box !important;
+}
+
+button.lsn:hover,
+button.op-item:hover {
+  background: #2b2e3b !important;
+}
+
+button.lsn.active,
+button.op-item.active {
+  background: #3a3f52 !important;
+  color: #ffd54f !important;
+  font-weight: 700 !important;
+}
+
+button.lsn small,
+button.op-item small {
+  margin-inline-start: auto !important;
+  color: #6f7480 !important;
+  white-space: nowrap !important;
+  font-size: 11px !important;
+}
+
+/* ---------- لیست درس‌ها در سایدبار ---------- */
+.slist {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  max-height: 60vh !important;
+  overflow: auto !important;
+}
+
+.slist details {
+  display: block !important;
+  width: 100% !important;
+  background: #191b22 !important;
+  border-radius: 10px !important;
+  padding: 8px 10px !important;
+  box-sizing: border-box !important;
+}
+
+.slist summary {
+  display: block !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ffd54f !important;
+  line-height: 1.9 !important;
+  padding: 4px 0 !important;
+}
+
+.slist summary small {
+  display: block !important;
+  color: #6f7480 !important;
+  font-weight: 400 !important;
+  font-size: 11px !important;
+}
+
+.slist summary .cnt {
+  float: left !important;
+  color: #81c784 !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+}
+
+/* ---------- چیدمان سایدبار و محتوا ---------- */
+.layout {
+  display: flex !important;
+  gap: 16px !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  align-items: flex-start !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+}
+
+.side {
+  width: 320px !important;
+  max-width: 100% !important;
+  background: #20222b !important;
+  border: 1px solid #313444 !important;
+  border-radius: 14px !important;
+  padding: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+/* ---------- حذف flex:1 پیش‌فرض دکمه‌ها در لیست‌ها ---------- */
+button.lsn,
+button.op-item,
+button.group-btn,
+button.back-btn,
+button.reset-link,
+button.hint-btn {
+  flex: none !important;
+}
+
+/* ---------- دکمه‌های Reset/Back ---------- */
+.reset-link {
+  background: none !important;
+  border: none !important;
+  color: #6f7480 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  min-height: auto !important;
+  padding: 4px !important;
+  width: 100% !important;
+  display: block !important;
+}
+.reset-link:hover {
+  color: #e57373 !important;
+}
+
+.back-btn {
+  background: none !important;
+  border: 1px solid #3a3e50 !important;
+  color: #9aa0ae !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  margin-bottom: 14px !important;
+  width: auto !important;
+  display: inline-block !important;
+  min-height: auto !important;
+}
+
+/* ---------- Media queries ---------- */
+@media (max-width: 700px) {
+  .side {
+    width: 100% !important;
+  }
+  .slist {
+    max-height: 320px !important;
+  }
+}

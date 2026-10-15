@@ -65,6 +65,7 @@ const PRECACHE = [
   './styles/base.css',
   './styles/game.css',
   './styles/tabs.css',
+  './styles/hotfix.css',
   './styles/mobile.css'
 ];
 
