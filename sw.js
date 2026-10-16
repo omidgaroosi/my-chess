@@ -63,6 +63,7 @@ const PRECACHE = [
   './js/chess-core.js',
   './js/chess-game.js',
   './js/chess-records.js',
+  './js/chess-tabs.js',
   './manifest.webmanifest',
   './icon.svg',
   './styles/base.css',
