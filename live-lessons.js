@@ -183,16 +183,11 @@ window.LiveLessons = (() => {
     _analysis = { fen, score: null, mate: false, depth: 0, bestmove: null, pv: [] };
     _analysisHighlight = null;
 
-    try {
-      if(typeof searchRole !== 'undefined') window.searchRole = 'lesson';
-    } catch(e){}
-
-    /* استفاده از متغیرهای global chess.html */
-    try { searchRole = 'lesson'; } catch(e){}
-
-    sfSend('setoption name Skill Level value 20');
-    sfSend('position fen ' + fen);
-    sfSend('go depth 15');
+    beginEngineSearch('lesson', {
+      depth: 15,
+      skill: 20,
+      position: 'fen ' + fen
+    });
 
     showAnalysisResult('🐟 استاک‌فیش در حال تحلیل…');
     if(curLesson.type === 'puzzle') renderBoard(board, [], lastMove, null);

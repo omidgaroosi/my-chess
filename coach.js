@@ -439,17 +439,20 @@ const Coach = {
 
   sfGo(){
     if(!engineReady){ this.pending = true; return; }
-    this.busy = true; searchRole = 'coach'; searchGen = gameId;
+    this.busy = true;
     searchSide = S.turn;
     this.pv = []; this.score = null;
     setStatus('🎓 مربی در حال تحلیل…'); render();
-    
+
     const skillVal = (typeof this.skill === 'function') ? this.skill() : 20;
     const depthVal = (typeof this.depth === 'function') ? this.depth() : 15;
-    
-    sfSend('setoption name Skill Level value ' + skillVal);
-    sfSend('position startpos' + (hist.length ? ' moves ' + hist.map(h => h.uci).join(' ') : ''));
-    sfSend('go depth ' + depthVal);
+    const position = 'startpos' + (hist.length ? ' moves ' + hist.map(h => h.uci).join(' ') : '');
+
+    beginEngineSearch('coach', {
+      depth: depthVal,
+      skill: skillVal,
+      position: position
+    });
   },
 
   aiGo(){

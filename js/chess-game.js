@@ -526,9 +526,7 @@ function opponentGo(){
 function sfOpponentGo(){
   if(!engineReady){ pendingGo = true; return; }
   thinking = true;
-  searchGen = gameId;
   searchSide = S.turn;
-  searchRole = 'opponent';
   lastEval = null;
   lastDepth = 0;
   render();
@@ -540,10 +538,13 @@ function sfOpponentGo(){
     else if(remaining < 15000) maxDepth = Math.min(maxDepth, 4);
     else if(remaining < 30000) maxDepth = Math.min(maxDepth, 8);
   }
-  sfSend('setoption name Skill Level value ' + LEVELS_SF[level].skill);
-  sfSend('position startpos' + (hist.length ? ' moves ' + hist.map(h => h.uci).join(' ') : ''));
+  const position = 'startpos' + (hist.length ? ' moves ' + hist.map(h => h.uci).join(' ') : '');
   onBestmove._t0 = Date.now();
-  sfSend('go depth ' + maxDepth);
+  beginEngineSearch('opponent', {
+    depth: maxDepth,
+    skill: LEVELS_SF[level].skill,
+    position: position
+  });
 }
 
 function aiOpponentGo(){
@@ -571,6 +572,54 @@ function aiOpponentGo(){
 
 /* ================= اتصال به استاک‌فیش ================= */
 function sfSend(t){ if(sf) sf.postMessage(t); }
+
+/* ============================================================
+   🔄 هماهنگی جستجوهای استاک‌فیش
+   ------------------------------------------------------------
+   برای جلوگیری از تداخل پاسخ‌ها بین تحلیل‌های مختلف، هر شروع
+   جستجو ابتدا جستجوی قبلی را متوقف می‌کند و bestmove ارسال‌شده
+   توسط آن را دور می‌ریزد. این کار از race condition بین تب‌ها
+   (بازی، سینما، کتاب‌ها، آکادمی) جلوگیری می‌کند.
+   ============================================================ */
+let _engineBusy = false;
+let _pendingStopResolve = null;
+
+function stopEngineSearch() {
+  if (!sf || !engineReady || !_engineBusy) return Promise.resolve();
+  /* ✅ role را پاک کن تا پاسخ‌های قدیمی به هندلر اشتباه نروند */
+  searchRole = null;
+  return new Promise(resolve => {
+    _pendingStopResolve = resolve;
+    try { sfSend('stop'); } catch (e) {
+      _pendingStopResolve = null;
+      _engineBusy = false;
+      resolve();
+      return;
+    }
+    /* ضمانت: اگر به هر دلیل bestmove نیامد، بعد از ۵۰۰ms رها کن */
+    setTimeout(() => {
+      if (_pendingStopResolve === resolve) {
+        _pendingStopResolve = null;
+        _engineBusy = false;
+        resolve();
+      }
+    }, 500);
+  });
+}
+
+function beginEngineSearch(role, config) {
+  /* config: { depth, skill, position } */
+  return stopEngineSearch().then(() => {
+    _engineBusy = true;
+    searchRole = role;
+    searchGen = gameId;
+    if (config.skill !== undefined) {
+      sfSend('setoption name Skill Level value ' + config.skill);
+    }
+    sfSend('position ' + config.position);
+    sfSend('go depth ' + config.depth);
+  });
+}
 
 function switchToAI(msg){
   engine = 'ai';
@@ -619,8 +668,20 @@ function handleLine(line){
     if(!pendingGo && S.turn === humanColor && !Coach.busy) setStatus('استاک‌فیش آماده است — نوبت شماست ♙');
     return;
   }
+
   if(line.startsWith('bestmove')){
     const token = line.split(' ')[1];
+
+    /* ✅ اگر این bestmove مربوط به جستجوی متوقف‌شده است، دور بریز */
+    if(_pendingStopResolve){
+      const r = _pendingStopResolve;
+      _pendingStopResolve = null;
+      _engineBusy = false;
+      r();
+      return;
+    }
+    _engineBusy = false;
+
     if(searchRole === 'viewer'){ GamesViewer.onBestmove(token); return; }
     if(searchRole === 'lesson-board'){
       if(window.LessonBoard) LessonBoard.onStockfishBestmove(token);
@@ -634,7 +695,11 @@ function handleLine(line){
     onBestmove(token);
     return;
   }
+
   if(line.startsWith('info')){
+    /* ✅ پاسخ‌های info که در حین stop کردن می‌رسند را نادیده بگیر */
+    if(_pendingStopResolve) return;
+
     if(searchRole === 'lesson-board'){
       if(window.LessonBoard) LessonBoard.onStockfishInfo(line);
       return;
@@ -646,7 +711,6 @@ function handleLine(line){
     parseInfo(line);
   }
 }
-
 function onBestmove(token){
   const role = searchRole;
   searchRole = null;
@@ -820,6 +884,11 @@ function resumeSavedGame(){
   const banner = $('resumeBanner');
   if(banner) banner.classList.add('hidden');
   if(!data) return;
+
+  /* ✅ هر جستجوی در جریانی را لغو کن تا با بازی بازیابی‌شده تداخل نکند */
+  abortAllSearches();
+  gameId++;
+
   try{
     S = data.S;
     hist = data.hist || [];

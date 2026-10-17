@@ -822,10 +822,12 @@ const GamesViewer = {
     this.lastAnalysis = {depth:0, score:null, mate:false, bestmove:null};
     document.getElementById('gvAnalysisOutput').textContent = '🐟 استاک‌فیش در حال تحلیل…';
     const fen = this._currentFen();
-    try { searchRole = 'viewer'; } catch(e){}
-    sfSend('setoption name Skill Level value 20');
-    sfSend('position fen ' + fen);
-    sfSend('go depth 15');
+
+    beginEngineSearch('viewer', {
+      depth: 15,
+      skill: 20,
+      position: 'fen ' + fen
+    });
   },
 
   _currentFen(){
@@ -1132,14 +1134,21 @@ function gvUciToSan(uci){
   const from = parseSq(uci.slice(0, 2));
   const to = parseSq(uci.slice(2, 4));
   const promo = uci[4] || null;
-  const b = GamesViewer.allBoards[GamesViewer.ply];
-  const turn = (GamesViewer.ply % 2 === 0) ? 'w' : 'b';
+
+  /* ✅ محافظت در برابر ply خارج از محدوده یا allBoards بارگذاری‌نشده */
+  const boards = GamesViewer && GamesViewer.allBoards;
+  if (!boards || !Array.isArray(boards) || boards.length === 0) return uci;
+  const ply = GamesViewer.ply;
+  if (typeof ply !== 'number' || ply < 0 || ply >= boards.length) return uci;
+  const b = boards[ply];
+  if (!b) return uci;
+
+  const turn = (ply % 2 === 0) ? 'w' : 'b';
   const fake = {board: b.slice(), turn, castling: {K:0,Q:0,k:0,q:0}, ep: -1, half: 0, full: 1};
   const legal = legalMoves(fake);
   const m = legal.find(x => x.from === from && x.to === to && (x.promo || null) === promo);
   return m ? sanOf(fake, m, legal) : uci;
 }
-
 /* ============================================================
    📁 آپلود PGN سینما
    ============================================================ */

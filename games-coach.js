@@ -106,11 +106,11 @@ window.GamesCoach = (() => {
     _state._bestPv = [];
     _state._bestMove = null;
 
-    try { if (typeof searchRole !== 'undefined') searchRole = 'games-coach'; } catch(e) {}
-
-    sfSend('setoption name Skill Level value 20');
-    sfSend('position fen ' + pos.fen);
-    sfSend('go depth ' + _state.analysisDepth);
+    beginEngineSearch('games-coach', {
+      depth: _state.analysisDepth,
+      skill: 20,
+      position: 'fen ' + pos.fen
+    });
 
     if (_state.callbacks.onProgress) {
       _state.callbacks.onProgress(_state.idx, _state.positions.length, pos);

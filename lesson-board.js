@@ -279,12 +279,13 @@ window.LessonBoard = (() => {
     }
     state.engineThinking = true;
     setFeedback('🎓 مربی در حال تحلیل این پوزیسیون…', 'info');
-    try { searchRole = 'lesson-board'; } catch (e) {}
-    try { searchGen = -1; } catch (e) {}   /* اطمینان از اینکه با بازی اصلی تداخل نکند */
     try { searchSide = currentFen().split(' ')[1]; } catch (e) {}
-    sfSend('setoption name Skill Level value 20');
-    sfSend('position fen ' + currentFen());
-    sfSend('go depth 15');
+
+    beginEngineSearch('lesson-board', {
+      depth: 15,
+      skill: 20,
+      position: 'fen ' + currentFen()
+    });
   }
 
   function askStockfish() {
