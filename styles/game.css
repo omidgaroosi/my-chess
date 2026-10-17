@@ -77,13 +77,162 @@
 .msg b{color:#ffd54f}
 
 /* ---------- Overlay + Promotion ---------- */
-.overlay{position:absolute;inset:0;background:rgba(13,14,20,.85);backdrop-filter:blur(3px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  border-radius:14px;z-index:5;text-align:center;padding:20px}
-.loadbar{width:70%;height:10px;border-radius:6px;background:#333;overflow:hidden}
-#loadFill{height:100%;width:0%;background:linear-gradient(90deg,#c9973c,#ffd54f);
-  transition:width .2s}
-#loadText{font-size:12px;color:#cfd3dd;direction:ltr}
+/* ============================================================
+   ⏳ بارگذاری بازی — Overlay حرفه‌ای
+   ============================================================ */
+
+.loader-overlay {
+  background: radial-gradient(circle at center, rgba(20, 24, 35, 0.95) 0%, rgba(13, 14, 20, 0.98) 100%);
+  backdrop-filter: blur(8px);
+  gap: 20px;
+  padding: 30px 20px;
+  border-radius: 14px;
+}
+
+/* ---------- اسپینر مرکزی ---------- */
+.loader-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #c9973c;
+  border-right-color: #ffd54f;
+  animation: spinnerRotate 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner-icon {
+  font-size: 32px;
+  color: #ffd54f;
+  animation: spinnerPulse 1.5s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(255, 213, 79, 0.6);
+}
+
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spinnerPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+/* ---------- متن‌ها ---------- */
+.loader-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffd54f;
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.loader-status {
+  font-size: 13.5px;
+  color: #cfd3dd;
+  text-align: center;
+  line-height: 1.8;
+  min-height: 24px;
+  max-width: 280px;
+}
+
+.loader-hint {
+  font-size: 11.5px;
+  color: #6f7480;
+  text-align: center;
+  line-height: 1.7;
+  max-width: 260px;
+  font-style: italic;
+}
+
+/* ---------- نوار پیشرفت ---------- */
+.loadbar {
+  width: 70%;
+  max-width: 260px;
+  height: 8px;
+  border-radius: 4px;
+  background: #1a1a1a;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.loadbar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #c9973c, #ffd54f, #c9973c);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease-out;
+  animation: loadbarShine 2s linear infinite;
+}
+
+@keyframes loadbarShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ---------- حالت‌های خاص ---------- */
+.loader-overlay.downloading .spinner-ring {
+  border-top-color: #64b5f6;
+  border-right-color: #2196f3;
+  animation-duration: 1.8s;
+}
+
+.loader-overlay.downloading .spinner-icon {
+  color: #64b5f6;
+  text-shadow: 0 0 20px rgba(33, 150, 243, 0.6);
+}
+
+.loader-overlay.downloading .loadbar-fill {
+  background: linear-gradient(90deg, #1976d2, #64b5f6, #1976d2);
+  background-size: 200% 100%;
+}
+
+.loader-overlay.done .spinner-ring {
+  border-color: #4caf50;
+  animation: none;
+}
+
+.loader-overlay.done .spinner-icon {
+  color: #4caf50;
+  animation: none;
+  transform: scale(1.3);
+  transition: transform 0.3s ease-out;
+}
+
+.loader-overlay.error .spinner-ring {
+  border-color: #e57373;
+  animation: none;
+}
+
+.loader-overlay.error .spinner-icon {
+  color: #e57373;
+  animation: none;
+}
+
+.loader-overlay.error .loader-title {
+  color: #e57373;
+}
+
+/* ---------- Fade out ---------- */
+.loader-overlay.fade-out {
+  animation: overlayFadeOut 0.5s ease-out forwards;
+}
+
+@keyframes overlayFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
 #endEmoji{font-size:52px}
 
 #promoBox{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;

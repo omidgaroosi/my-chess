@@ -57,11 +57,17 @@
         </div>
         <div class="board-frame">
           <div id="board"></div>
-          <div class="overlay" id="overlayLoad">
-            <div style="font-size:40px">♟️</div>
-            <div>در حال بارگذاری استاک‌فیش…</div>
-            <div class="loadbar"><div id="loadFill"></div></div>
-            <div id="loadText"></div>
+          <div class="overlay loader-overlay" id="overlayLoad">
+            <div class="loader-spinner">
+              <div class="spinner-ring"></div>
+              <div class="spinner-icon">♞</div>
+            </div>
+            <div class="loader-title">آماده‌سازی میدان نبرد</div>
+            <div class="loader-status" id="loadText">در حال آماده‌سازی…</div>
+            <div class="loadbar">
+              <div id="loadFill" class="loadbar-fill"></div>
+            </div>
+            <div class="loader-hint" id="loaderHint">استاک‌فیش در حال بیدار شدن است…</div>
           </div>
           <div class="overlay hidden" id="overlayEnd">
             <div id="endEmoji">🏆</div>

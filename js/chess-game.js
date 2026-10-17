@@ -238,11 +238,71 @@ function onEngineChange(v){
     sf = null;
   }
 
+  /* 🎨 نمایش فوری Overlay برای بازخورد بصری */
+  showLoaderOverlay(
+    'تعویض موتور',
+    'در حال بارگذاری موتور ' + (v === 'full' ? 'کامل' : 'لایت') + '…',
+    'لطفاً صبر کن'
+  );
+  updateLoaderProgress(0);
+  setLoaderMode(null);
+
   setTimeout(() => {
     initStockfish();
-  }, 200);
+  }, 300);
 }
 let _engineStatusTimer = null;
+/* ============================================================
+   🎨 کنترل Overlay اصلی بارگذاری
+   ============================================================ */
+function showLoaderOverlay(title, status, hint){
+  const overlay = $('overlayLoad');
+  if(!overlay) return;
+  
+  overlay.classList.remove('hidden', 'fade-out', 'downloading', 'done', 'error');
+  
+  const titleEl = overlay.querySelector('.loader-title');
+  if(titleEl && title) titleEl.textContent = title;
+  
+  const statusEl = $('loadText');
+  if(statusEl && status) statusEl.textContent = status;
+  
+  const hintEl = $('loaderHint');
+  if(hintEl && hint) hintEl.textContent = hint;
+}
+
+function updateLoaderProgress(pct){
+  const fill = $('loadFill');
+  if(fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+
+function setLoaderMode(mode){
+  const overlay = $('overlayLoad');
+  if(!overlay) return;
+  overlay.classList.remove('downloading', 'done', 'error');
+  if(mode) overlay.classList.add(mode);
+}
+
+function hideLoaderOverlay(){
+  const overlay = $('overlayLoad');
+  if(!overlay) return;
+  overlay.classList.add('done');
+  setTimeout(() => {
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('fade-out', 'done', 'downloading', 'error');
+    }, 500);
+  }, 400);
+}
+
+function errorLoaderOverlay(status, hint){
+  setLoaderMode('error');
+  const statusEl = $('loadText');
+  if(statusEl && status) statusEl.textContent = status;
+  const hintEl = $('loaderHint');
+  if(hintEl && hint) hintEl.textContent = hint;
+}
 function showEngineLoadStatus(msg, progress, type, autoHide){
   const el = $('engineLoadStatus');
   if(!el) return;
@@ -477,6 +537,15 @@ function newGame(){
   hideEnd();
   closePromo();
   ChessStorage.autoClear();
+    /* 🎨 اگر موتور هنوز آماده نیست، Overlay را نمایش بده */
+  if(!engineReady && engine === 'stockfish'){
+    showLoaderOverlay(
+      'آماده‌سازی میدان نبرد',
+      'در حال بیدار کردن استاک‌فیش…',
+      'چند لحظه صبر کن'
+    );
+    setLoaderMode(null);
+  }
   if(engine === 'stockfish') sfSend('ucinewgame');
   setupClock(timeControl);
   render();
@@ -793,37 +862,70 @@ async function initStockfish(){
 
     console.log('🚀 در حال بارگذاری موتور:', file, '| نوع:', engineType);
 
-    const wasmFile = file.replace(/\.js$/i, '.wasm');
+    /* 🎨 حالت اولیهٔ Overlay */
+    showLoaderOverlay(
+      'آماده‌سازی میدان نبرد',
+      'در حال بررسی موتور شطرنج…',
+      isFull ? 'این اولین بار است — کمی صبر کن' : 'لطفاً صبر کن…'
+    );
+    setLoaderMode(null);
 
-    if(isFull){
-      showEngineLoadStatus('در حال دانلود موتور کامل (۹۴MB) — اولین بار ممکن است چند دقیقه طول بکشد…');
-    }
+    const wasmFile = file.replace(/\.js$/i, '.wasm');
 
     let wasmUrl = null;
     try {
+      /* 🎨 حالت دانلود */
+      if(isFull){
+        showLoaderOverlay(
+          'دانلود موتور حرفه‌ای',
+          'در حال دانلود ۹۴ مگابایت…',
+          'اولین بار ممکن است یک دقیقه طول بکشد'
+        );
+        setLoaderMode('downloading');
+      }
+
       const result = await prefetchWasmWithProgress(wasmFile, (received, total, pct) => {
+        const receivedMB = (received / 1048576).toFixed(1);
+        if(pct >= 0){
+          const totalMB = (total / 1048576).toFixed(1);
+          const statusEl = $('loadText');
+          if(statusEl) statusEl.textContent = `${pct}% — ${receivedMB} از ${totalMB} مگابایت`;
+          updateLoaderProgress(pct);
+        } else {
+          const statusEl = $('loadText');
+          if(statusEl) statusEl.textContent = `${receivedMB} مگابایت دریافت شد…`;
+        }
+
+        /* آپدیت پنل تنظیمات هم */
         if(isFull){
-          const receivedMB = (received / 1048576).toFixed(1);
-          let statusText;
-          if(pct >= 0){
-            const totalMB = (total / 1048576).toFixed(1);
-            statusText = `در حال دانلود موتور کامل — ${pct}% (${receivedMB} از ${totalMB}MB)`;
-          } else {
-            statusText = `در حال دانلود موتور کامل — ${receivedMB}MB دریافت شد`;
-          }
-          showEngineLoadStatus(statusText, pct >= 0 ? pct : null);
+          showEngineLoadStatus(
+            'در حال دانلود موتور کامل — ' + (pct >= 0 ? pct + '%' : receivedMB + 'MB'),
+            pct >= 0 ? pct : null
+          );
         }
       });
+
       wasmUrl = result.blobUrl;
-      showEngineLoadStatus('✅ دانلود کامل شد. در حال راه‌اندازی موتور…', null, 'info');
+
+      /* 🎨 حالت راه‌اندازی */
+      showLoaderOverlay(
+        'راه‌اندازی موتور',
+        'در حال آماده‌سازی برای بازی…',
+        'تقریباً آماده است'
+      );
+      updateLoaderProgress(100);
+      setLoaderMode(null);
+
     } catch(fetchErr){
       console.error('❌ پیش‌دانلود ناموفق، تلاش برای بارگذاری مستقیم:', fetchErr);
-      showEngineLoadStatus(
-        '⚠️ پیش‌دانلود ناموفق. تلاش برای روش جایگزین…',
-        null,
-        'info'
+      
+      /* 🎨 نمایش خطا اما ادامه با روش جایگزین */
+      showLoaderOverlay(
+        'تلاش مجدد',
+        'روش جایگزین را امتحان می‌کنیم…',
+        'لطفاً صبر کن'
       );
-      /* wasmUrl همچنان null می‌ماند و Worker خودش دانلود می‌کند */
+      setLoaderMode(null);
     }
 
     /* ساخت Worker */
@@ -835,21 +937,19 @@ async function initStockfish(){
 
     sf = new Worker(workerUrl);
 
-    /* پیشرفت داخلی Stockfish */
     const ch = new MessageChannel();
     ch.port1.onmessage = ev => {
       const d = ev.data;
       if(d && typeof d.percent === 'number'){
         const pct = Math.round(d.percent * 100);
-        const loadFill = document.getElementById('loadFill');
-        const loadText = document.getElementById('loadText');
+        const loadFill = $('loadFill');
+        const loadText = $('loadText');
         if(loadFill) loadFill.style.width = pct + '%';
-        if(loadText) loadText.textContent = pct + '% — ' + (d.speedText || '') + ' ' + (d.etaText || '');
+        if(loadText) loadText.textContent = 'راه‌اندازی: ' + pct + '%';
       }
     };
     sf.postMessage({ progressPort: ch.port1 }, [ch.port1]);
 
-    /* پیام‌های Worker */
     sf.onmessage = e => {
       if(typeof e.data === 'string') handleLine(e.data.trim());
     };
@@ -857,24 +957,22 @@ async function initStockfish(){
     sf.onerror = e => {
       console.error('❌ stockfish worker error:', e);
       if(!engineReady){
-        showEngineLoadStatus(
-          '⚠️ موتور بارگذاری نشد. تلاش برای موتور ساده…',
-          null,
-          'error'
+        errorLoaderOverlay(
+          '⚠️ موتور بارگذاری نشد',
+          'به موتور ساده سوییچ می‌کنیم…'
         );
-        switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.');
+        setTimeout(() => switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.'), 1500);
       }
     };
 
     sfSend('uci');
   }catch(err){
     console.error('❌ initStockfish failed:', err);
-    showEngineLoadStatus(
-      '⚠️ خطا در بارگذاری موتور: ' + err.message,
-      null,
-      'error'
+    errorLoaderOverlay(
+      '⚠️ خطا در بارگذاری',
+      err.message || 'به موتور ساده سوییچ می‌کنیم'
     );
-    switchToAI('ساخت ورکر ممکن نشد؛ موتور ساده جایگزین شد.');
+    setTimeout(() => switchToAI('ساخت ورکر ممکن نشد؛ موتور ساده جایگزین شد.'), 1500);
   }
 }
 
@@ -884,11 +982,22 @@ function handleLine(line){
   
   if(line === 'readyok'){
     engineReady = true;
-    $('overlayLoad').classList.add('hidden');
     updateBadge();
     Coach.updateStrengthInfo();
     
-    /* ⭐ نمایش پیام موفقیت بارگذاری موتور */
+    /* 🎨 نمایش «آماده شد» و بستن Overlay */
+    showLoaderOverlay(
+      'آماده!',
+      'موتور ' + (engineType === 'full' ? 'کامل' : 'لایت') + ' فعال شد',
+      'بازی شروع می‌شود…'
+    );
+    setLoaderMode('done');
+    updateLoaderProgress(100);
+    
+    setTimeout(() => {
+      hideLoaderOverlay();
+    }, 600);
+
     showEngineLoadStatus(
       '✅ موتور ' + (engineType === 'full' ? 'کامل' : 'لایت') + ' آماده است.',
       null,
