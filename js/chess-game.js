@@ -706,50 +706,159 @@ function switchToAI(msg){
   else if(Coach.pending){ Coach.onEngineReady(); }
 }
 
-function initStockfish(){
+/* ============================================================
+   ⬇️ پیش‌دانلود WASM با پیشرفت و تلاش مجدد
+   ============================================================ */
+async function prefetchWasmWithProgress(wasmFile, onProgress){
+  console.log('⬇️ شروع دانلود WASM:', wasmFile);
+  let lastError = null;
+
+  for(let attempt = 1; attempt <= 3; attempt++){
+    try {
+      const response = await fetch(wasmFile, { cache: 'no-cache' });
+      if(!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText);
+
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+      let lastReport = 0;
+
+      while(true){
+        const { done, value } = await reader.read();
+        if(done) break;
+        chunks.push(value);
+        received += value.length;
+
+        const now = Date.now();
+        if(onProgress && now - lastReport > 150){
+          lastReport = now;
+          const pct = contentLength > 0 ? Math.round((received / contentLength) * 100) : -1;
+          onProgress(received, contentLength, pct);
+        }
+      }
+
+      if(contentLength > 0 && received !== contentLength){
+        throw new Error(`دانلود ناقص: ${received} از ${contentLength} بایت`);
+      }
+
+      /* ترکیب تمام chunkها در یک بافر */
+      const buffer = new Uint8Array(received);
+      let offset = 0;
+      for(const chunk of chunks){
+        buffer.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      /* ساخت Blob URL با MIME type درست */
+      const blob = new Blob([buffer], { type: 'application/wasm' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      console.log('✅ WASM آماده است:', received, 'بایت');
+      return { blobUrl, size: received };
+
+    } catch(err){
+      lastError = err;
+      console.error(`❌ تلاش ${attempt} ناموفق:`, err.message);
+      if(attempt < 3){
+        console.log('⏳ تلاش مجدد در ۲ ثانیه…');
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  }
+
+  throw lastError || new Error('دانلود WASM ناموفق بود');
+}
+
+/* ============================================================
+   🚀 بارگذاری استاک‌فیش با پیش‌دانلود
+   ============================================================ */
+async function initStockfish(){
   try{
     const file = ENGINE_FILES[engineType] || ENGINE_FILES.lite;
     const isFull = engineType === 'full';
+
     console.log('🚀 در حال بارگذاری موتور:', file, '| نوع:', engineType);
 
-    if(isFull) showEngineLoadStatus('در حال بارگذاری موتور کامل (۹۵MB) — اولین بار ممکن است طول بکشد…');
+    /* ۱) پیش‌دانلود WASM با کنترل کامل */
+    const wasmFile = file.replace(/\.js$/i, '.wasm');
 
-    sf = new Worker(file);
+    if(isFull){
+      showEngineLoadStatus('در حال دانلود موتور کامل (۹۴MB) — اولین بار ممکن است چند دقیقه طول بکشد…');
+    }
 
+    let wasmUrl = null;
+    try {
+      const result = await prefetchWasmWithProgress(wasmFile, (received, total, pct) => {
+        if(isFull){
+          const receivedMB = (received / 1048576).toFixed(1);
+          const totalMB = total > 0 ? (total / 1048576).toFixed(1) : '?';
+          const eta = pct > 0 ? '' : '';
+          showEngineLoadStatus(
+            `در حال دانلود موتور کامل — ${pct}% (${receivedMB} از ${totalMB}MB)`,
+            pct
+          );
+        }
+      });
+      wasmUrl = result.blobUrl;
+    } catch(fetchErr){
+      console.error('❌ پیش‌دانلود ناموفق، تلاش برای بارگذاری مستقیم:', fetchErr);
+      showEngineLoadStatus(
+        '⚠️ دانلود مستقیم ناموفق بود. تلاش برای روش جایگزین…',
+        null,
+        'error'
+      );
+    }
+
+    /* ۲) ساخت Worker با یا بدون Blob URL */
+    const workerUrl = wasmUrl
+      ? file + '#' + encodeURIComponent(wasmUrl)
+      : file;
+
+    console.log('🚀 ساخت worker:', workerUrl.substring(0, 120) + (workerUrl.length > 120 ? '…' : ''));
+
+    sf = new Worker(workerUrl);
+
+    /* ۳) پیشرفت داخلی Stockfish (اگر پیش‌دانلود موفق بود، اینجا فقط ۱۰۰% نشان می‌دهد) */
     const ch = new MessageChannel();
     ch.port1.onmessage = ev => {
       const d = ev.data;
       if(d && typeof d.percent === 'number'){
         const pct = Math.round(d.percent * 100);
-        const loadFill = $('loadFill');
-        const loadText = $('loadText');
+        const loadFill = document.getElementById('loadFill');
+        const loadText = document.getElementById('loadText');
         if(loadFill) loadFill.style.width = pct + '%';
         if(loadText) loadText.textContent = pct + '% — ' + (d.speedText || '') + ' ' + (d.etaText || '');
-
-        if(isFull){
-          showEngineLoadStatus(
-            'در حال بارگذاری موتور کامل — ' + pct + '% — ' + (d.etaText || ''),
-            pct
-          );
-        }
       }
     };
-    sf.postMessage({progressPort: ch.port1}, [ch.port1]);
+    sf.postMessage({ progressPort: ch.port1 }, [ch.port1]);
 
-    sf.onmessage = e => { if(typeof e.data === 'string') handleLine(e.data.trim()); };
+    /* ۴) پیام‌های Worker */
+    sf.onmessage = e => {
+      if(typeof e.data === 'string') handleLine(e.data.trim());
+    };
 
     sf.onerror = e => {
-      console.error('stockfish worker error:', e);
+      console.error('❌ stockfish worker error:', e);
       if(!engineReady){
-        showEngineLoadStatus('⚠️ موتور بارگذاری نشد. موتور ساده جایگزین می‌شود.', null, 'error');
+        showEngineLoadStatus(
+          '⚠️ موتور بارگذاری نشد. تلاش برای موتور ساده…',
+          null,
+          'error'
+        );
         switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.');
       }
     };
 
+    /* ۵) شروع UCI */
     sfSend('uci');
   }catch(err){
-    console.error('initStockfish failed:', err);
-    showEngineLoadStatus('⚠️ خطا در بارگذاری موتور.', null, 'error');
+    console.error('❌ initStockfish failed:', err);
+    showEngineLoadStatus(
+      '⚠️ خطا در بارگذاری موتور: ' + err.message,
+      null,
+      'error'
+    );
     switchToAI('ساخت ورکر ممکن نشد؛ موتور ساده جایگزین شد.');
   }
 }

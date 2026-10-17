@@ -47,30 +47,11 @@ function switchTab(name){
    🚀 راه‌اندازی اولیه برنامه
    ============================================================ */
 function initApp(){
-  /* ۱) کتابخانهٔ بازی‌ها */
   GamesViewer.reloadLibrary();
-
-  /* ۲) اندازهٔ صفحه */
   updateBoardSize();
-
-  /* ۳) رندر اولیه */
   render();
 
-  /* ۴) تشخیص استاک‌فیش */
-  const wantSF = (window.crossOriginIsolated === true)
-              && (typeof Worker !== 'undefined')
-              && (!/[?&]ai\b/.test(location.search));
-
-  if(wantSF){
-    engine = 'stockfish';
-    updateBadge();
-    initStockfish();
-  } else {
-    switchToAI();
-    setStatus('در حال آماده‌سازی…');
-  }
-
-  /* ۵) بارگذاری تنظیمات ذخیره‌شده */
+  /* ✅ اول تنظیمات را بارگذاری کن (تا engineType درست باشد) */
   loadSavedOptions();
   if(document.getElementById('selTime')){
     document.getElementById('selTime').value = timeControl;
@@ -80,24 +61,29 @@ function initApp(){
   }
   applyTheme(theme);
 
-  /* ⭐ ست کردن منوی موتور بر اساس تنظیمات ذخیره‌شده */
   const selEngine = document.getElementById('selEngine');
   if(selEngine) selEngine.value = engineType;
 
-  /* ۶) نشان رتبه */
-  refreshRatingBadge();
+  /* ✅ حالا موتور را با engineType درست لود کن */
+  const wantSF = (window.crossOriginIsolated === true)
+              && (typeof Worker !== 'undefined')
+              && (!/[?&]ai\b/.test(location.search));
 
-  /* ۷) راه‌اندازی مربی */
+  if(wantSF){
+    engine = 'stockfish';
+    updateBadge();
+    initStockfish();   /* ← این الان با engineType درست صدا زده می‌شود */
+  } else {
+    switchToAI();
+    setStatus('در حال آماده‌سازی…');
+  }
+
+  refreshRatingBadge();
   Coach.init();
   Coach.updateStrengthInfo();
-
-  /* ۸) تب پیش‌فرض */
   switchTab('game');
 
-  /* ۹) محاسبهٔ مجدد اندازهٔ صفحه بعد از رندر */
   setTimeout(updateBoardSize, 100);
-
-  /* ۱۰) بررسی بازی ذخیره‌شده */
   setTimeout(checkAutoSave, 200);
 }
 
