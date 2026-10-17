@@ -1,13 +1,8 @@
 /* ============================================================
    sw.js — Service Worker برای PWA شطرنج با استاک‌فیش
-   ------------------------------------------------------------
-   تغییرات نسخهٔ v10:
-   - stockfish-19.js و stockfish-19.wasm از precache حذف شدند
-     (چون ۹۴MB حجم دارند و نصب SW را کند می‌کنند)
-   - این فایل‌ها هنگام اولین درخواست، cache-first ذخیره می‌شوند
    ============================================================ */
 
-const CACHE = 'chess-cache-v14';
+const CACHE = 'chess-cache-v16';   /* نسخه به v16 ارتقا یافت */
 
 /* فایل‌های کوچک و ضروری — هنگام نصب SW کش می‌شوند */
 const PRECACHE = [
@@ -19,19 +14,18 @@ const PRECACHE = [
   './pgn.js',
   './games-data.js',
   './pgn-loader.js',
-  './games-coach.js',
+  './coach.js',
   './coach-patterns.js',
   './coach-analyzer.js',
-  './coach.js',
   './learn-data-1.js',
   './learn-data-1-v2.js',
   './learn-data-1-v3.js',
   './learn-data-1-v4.js',
   './learn-data-1-v5.js',
+  './learn-data-2.js',
   './learn-data-2-v2.js',
   './learn-data-2-v3.js',
   './learn-data-2-v4.js',
-  './learn-data-2.js',
   './learn-data-3.js',
   './learn-data-4.js',
   './learn-data-5.js',
@@ -48,30 +42,33 @@ const PRECACHE = [
   './books-et-8.js',
   './books-et-9.js',
   './books-et-10.js',
-  './books-et-11.js', 
-  './books-et-12.js', 
+  './books-et-11.js',
+  './books-et-12.js',
   './books-et-13.js',
   './books-et-14.js',
   './books-et-15.js',
-  './books-et-16.js',        
+  './books-et-16.js',
   './puzzle-editor.js',
   './live-lessons.js',
   './themes.js',
   './pieces.js',
   './rating.js',
+  './games-coach.js',
   './lesson-board.js',
-  './js/chess-core.js',
-  './js/chess-game.js',
-  './js/chess-records.js',
-  './js/chess-tabs.js',
-  './js/chess-app.js',
   './manifest.webmanifest',
   './icon.svg',
+  /* استایل‌ها */
   './styles/base.css',
   './styles/game.css',
   './styles/tabs.css',
   './styles/hotfix.css',
-  './styles/mobile.css'
+  './styles/mobile.css',
+  /* ماژول‌های جاوااسکریپت */
+  './js/chess-core.js',
+  './js/chess-game.js',
+  './js/chess-records.js',
+  './js/chess-tabs.js',
+  './js/chess-app.js'
 ];
 
 /* نصب: کش کردن فایل‌های ضروری */
@@ -116,17 +113,29 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  /* استاک‌فیش و WASM: cache-first (چون حجم بالا و تغییر نمی‌کنند) */
-  if (url.pathname.endsWith('.wasm') || url.pathname.includes('stockfish')) {
+  /* ⭐ موتور Stockfish (Lite و Full) — Cache-First مطلق */
+  if (url.pathname.endsWith('.wasm') ||
+      url.pathname.includes('stockfish-lite') ||
+      url.pathname.includes('stockfish-full') ||
+      url.pathname.includes('stockfish-19')) {
     e.respondWith((async () => {
       const cache = await caches.open(CACHE);
       const hit = await cache.match(req);
-      if (hit) return withCOI(hit);
+      if (hit) {
+        console.log('📦 Stockfish از کش:', url.pathname);
+        return withCOI(hit);
+      }
       try {
+        console.log('⬇️ دانلود Stockfish:', url.pathname);
         const res = await fetch(req);
-        if (res && res.ok) cache.put(req, res.clone());
+        if (res && res.ok) {
+          cache.put(req, res.clone()).catch(err => {
+            console.warn('⚠️ خطا در ذخیرهٔ کش:', err);
+          });
+        }
         return withCOI(res);
       } catch (err) {
+        console.error('❌ خطا در دانلود موتور:', err);
         return new Response('موتور آفلاین در دسترس نیست.', {
           status: 503,
           headers: {'Content-Type': 'text/plain; charset=utf-8'}

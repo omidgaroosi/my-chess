@@ -80,6 +80,10 @@ function initApp(){
   }
   applyTheme(theme);
 
+  /* ⭐ ست کردن منوی موتور بر اساس تنظیمات ذخیره‌شده */
+  const selEngine = document.getElementById('selEngine');
+  if(selEngine) selEngine.value = engineType;
+
   /* ۶) نشان رتبه */
   refreshRatingBadge();
 

@@ -53,6 +53,12 @@ let level = 2;
 let timeControl = 'none';
 let gameMode = 'vs-engine';
 let theme = 'wood';
+let engineType = 'lite';   /* 'lite' یا 'full' */
+
+const ENGINE_FILES = {
+  lite: 'stockfish-19.js',    /* یا 'stockfish-lite.js' */
+  full: 'stockfish-full.js'
+};
 let audioCtx = null;
 
 /* ================= ساعت شطرنج ================= */
@@ -193,6 +199,71 @@ function onThemeChange(id){
   saveOptions();
   setStatus('🎨 تم روی «' + getThemeName(id) + '» تغییر کرد');
 }
+function onEngineChange(v){
+  if(v !== 'lite' && v !== 'full') return;
+  if(v === engineType) return;
+
+  engineType = v;
+  saveOptions();
+
+  if(thinking || Coach.busy){
+    setStatus('⏳ اول صبر کن تا تحلیل فعلی تمام شود، بعد موتور را عوض کن.');
+    const sel = $('selEngine');
+    if(sel) sel.value = engineType;
+    return;
+  }
+
+  if(v === 'full'){
+    if(!confirm(
+      'موتور کامل Stockfish حدود ۹۵ مگابایت حجم دارد.\n\n' +
+      'در اولین بار، دانلود ممکن است چند دقیقه طول بکشد.\n' +
+      'بعد از دانلود، در حافظهٔ مرورگر ذخیره می‌شود و دفعات بعد سریع بارگذاری می‌شود.\n\n' +
+      'ادامه بدهم؟'
+    )){
+      engineType = 'lite';
+      saveOptions();
+      const sel = $('selEngine');
+      if(sel) sel.value = 'lite';
+      return;
+    }
+  }
+
+  showEngineLoadStatus('🔄 در حال بارگذاری موتور ' + (v === 'full' ? 'کامل' : 'لایت') + '…');
+  engine = 'stockfish';
+  engineReady = false;
+  updateBadge();
+
+  if(sf){
+    try { sf.terminate(); } catch(e){}
+    sf = null;
+  }
+
+  setTimeout(() => {
+    initStockfish();
+  }, 200);
+}
+let _engineStatusTimer = null;
+function showEngineLoadStatus(msg, progress, type, autoHide){
+  const el = $('engineLoadStatus');
+  if(!el) return;
+
+  el.classList.remove('hidden', 'error', 'success');
+  if(type === 'error') el.classList.add('error');
+  else if(type === 'success') el.classList.add('success');
+
+  let html = '<div>' + msg + '</div>';
+  if(typeof progress === 'number' && progress >= 0){
+    html += '<div class="bar"><div class="bar-fill" style="width:' + progress + '%"></div></div>';
+  }
+  el.innerHTML = html;
+
+  if(_engineStatusTimer) clearTimeout(_engineStatusTimer);
+  if(autoHide){
+    _engineStatusTimer = setTimeout(() => {
+      el.classList.add('hidden');
+    }, autoHide);
+  }
+}
 
 function engineName(){
   return engine === 'stockfish' ? '🤖 استاک‌فیش ۱۹' : '🧠 موتور ساده';
@@ -294,9 +365,12 @@ function updateEvalBar(){
 function setStatus(t){ $('status').textContent = t; }
 
 function updateBadge(){
-  $('engineBadge').textContent = engine === 'stockfish'
-    ? '🤖 موتور: استاک‌فیش ۱۹ (حریف + مربی)'
-    : '🧠 موتور: سادهٔ داخلی (استاک‌فیش در دسترس نبود)';
+  if(engine === 'stockfish'){
+    const label = engineType === 'full' ? 'استاک‌فیش ۱۹ (کامل)' : 'استاک‌فیش ۱۹ (لایت)';
+    $('engineBadge').textContent = '🤖 موتور: ' + label + ' — حریف + مربی';
+  } else {
+    $('engineBadge').textContent = '🧠 موتور: سادهٔ داخلی (استاک‌فیش در دسترس نبود)';
+  }
 }
 
 /* ================= جریان بازی ================= */
@@ -634,23 +708,48 @@ function switchToAI(msg){
 
 function initStockfish(){
   try{
-    sf = new Worker('stockfish-19.js');
+    const file = ENGINE_FILES[engineType] || ENGINE_FILES.lite;
+    const isFull = engineType === 'full';
+    console.log('🚀 در حال بارگذاری موتور:', file, '| نوع:', engineType);
+
+    if(isFull) showEngineLoadStatus('در حال بارگذاری موتور کامل (۹۵MB) — اولین بار ممکن است طول بکشد…');
+
+    sf = new Worker(file);
+
     const ch = new MessageChannel();
     ch.port1.onmessage = ev => {
       const d = ev.data;
       if(d && typeof d.percent === 'number'){
-        $('loadFill').style.width = Math.round(d.percent * 100) + '%';
-        $('loadText').textContent = Math.round(d.percent * 100) + '% — ' + (d.speedText || '') + ' ' + (d.etaText || '');
+        const pct = Math.round(d.percent * 100);
+        const loadFill = $('loadFill');
+        const loadText = $('loadText');
+        if(loadFill) loadFill.style.width = pct + '%';
+        if(loadText) loadText.textContent = pct + '% — ' + (d.speedText || '') + ' ' + (d.etaText || '');
+
+        if(isFull){
+          showEngineLoadStatus(
+            'در حال بارگذاری موتور کامل — ' + pct + '% — ' + (d.etaText || ''),
+            pct
+          );
+        }
       }
     };
     sf.postMessage({progressPort: ch.port1}, [ch.port1]);
+
     sf.onmessage = e => { if(typeof e.data === 'string') handleLine(e.data.trim()); };
+
     sf.onerror = e => {
-      if(!engineReady) switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.');
       console.error('stockfish worker error:', e);
+      if(!engineReady){
+        showEngineLoadStatus('⚠️ موتور بارگذاری نشد. موتور ساده جایگزین می‌شود.', null, 'error');
+        switchToAI('استاک‌فیش بارگذاری نشد؛ موتور ساده جایگزین شد.');
+      }
     };
+
     sfSend('uci');
   }catch(err){
+    console.error('initStockfish failed:', err);
+    showEngineLoadStatus('⚠️ خطا در بارگذاری موتور.', null, 'error');
     switchToAI('ساخت ورکر ممکن نشد؛ موتور ساده جایگزین شد.');
   }
 }
@@ -658,30 +757,29 @@ function initStockfish(){
 function handleLine(line){
   if(!line) return;
   if(line === 'uciok'){ sfSend('isready'); return; }
+  
   if(line === 'readyok'){
     engineReady = true;
     $('overlayLoad').classList.add('hidden');
     updateBadge();
     Coach.updateStrengthInfo();
+    
+    /* ⭐ نمایش پیام موفقیت بارگذاری موتور */
+    showEngineLoadStatus(
+      '✅ موتور ' + (engineType === 'full' ? 'کامل' : 'لایت') + ' آماده است.',
+      null,
+      'success',
+      2000
+    );
+
     if(pendingGo){ pendingGo = false; sfOpponentGo(); }
     else Coach.onEngineReady();
     if(!pendingGo && S.turn === humanColor && !Coach.busy) setStatus('استاک‌فیش آماده است — نوبت شماست ♙');
     return;
   }
-
+  
   if(line.startsWith('bestmove')){
     const token = line.split(' ')[1];
-
-    /* ✅ اگر این bestmove مربوط به جستجوی متوقف‌شده است، دور بریز */
-    if(_pendingStopResolve){
-      const r = _pendingStopResolve;
-      _pendingStopResolve = null;
-      _engineBusy = false;
-      r();
-      return;
-    }
-    _engineBusy = false;
-
     if(searchRole === 'viewer'){ GamesViewer.onBestmove(token); return; }
     if(searchRole === 'lesson-board'){
       if(window.LessonBoard) LessonBoard.onStockfishBestmove(token);
@@ -695,11 +793,8 @@ function handleLine(line){
     onBestmove(token);
     return;
   }
-
+  
   if(line.startsWith('info')){
-    /* ✅ پاسخ‌های info که در حین stop کردن می‌رسند را نادیده بگیر */
-    if(_pendingStopResolve) return;
-
     if(searchRole === 'lesson-board'){
       if(window.LessonBoard) LessonBoard.onStockfishInfo(line);
       return;
@@ -838,39 +933,45 @@ function saveAutoState(){
   }catch(e){ console.warn('auto-save failed', e); }
 }
 
+
 function loadSavedOptions(){
   const o = ChessStorage.optsLoad();
   if(o.humanColor) humanColor = o.humanColor;
   if(o.level != null) level = +o.level;
   if(o.flipped != null) flipped = !!o.flipped;
+  if(o.theme) theme = o.theme;
+  if(o.engineType === 'lite' || o.engineType === 'full') engineType = o.engineType;
+  
   const selSide = $('selSide'); if(selSide) selSide.value = humanColor;
   const selLvl = $('selLevel'); if(selLvl) selLvl.value = String(level);
-  const chkSound = $('chkSound');
-  if(chkSound && o.sound != null) chkSound.checked = !!o.sound;
-  const chkAutoCoach = $('chkAutoCoach');
-  if(chkAutoCoach && o.autoCoach != null) chkAutoCoach.checked = !!o.autoCoach;
+  const chkSound = $('chkSound'); if(chkSound && o.sound != null) chkSound.checked = !!o.sound;
+  const chkAutoCoach = $('chkAutoCoach'); if(chkAutoCoach && o.autoCoach != null) chkAutoCoach.checked = !!o.autoCoach;
+  
   if(o.timeControl){
     timeControl = o.timeControl;
     const selTime = $('selTime');
     if(selTime) selTime.value = timeControl;
   }
-  if(o.theme) theme = o.theme;
+  
   fillThemeSelect();
-  const selTheme = $('selTheme');
-  if(selTheme) selTheme.value = theme;
+  const selTheme = $('selTheme'); if(selTheme) selTheme.value = theme;
   applyTheme(theme);
+  
+  const selEngine = $('selEngine'); if(selEngine) selEngine.value = engineType;
   setupClock(timeControl);
 }
+
 
 function saveOptions(){
   try{
     ChessStorage.optsSave({
-      humanColor, level, flipped, timeControl, theme,
+      humanColor, level, flipped, timeControl, theme, engineType,
       sound: $('chkSound') ? $('chkSound').checked : true,
       autoCoach: $('chkAutoCoach') ? $('chkAutoCoach').checked : true
     });
   }catch(e){}
 }
+
 
 function checkAutoSave(){
   const banner = $('resumeBanner');

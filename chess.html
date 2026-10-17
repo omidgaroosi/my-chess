@@ -140,6 +140,13 @@
                 <option value="30+0">Classical — ۳۰ دقیقه</option>
               </select>
             </label>
+            <label>🤖 موتور شطرنج
+  <select id="selEngine" onchange="onEngineChange(this.value)">
+    <option value="lite">⚡ Lite — سریع و سبک (پیش‌فرض)</option>
+    <option value="full">🚀 Full — قوی‌ترین (۹۵MB)</option>
+  </select>
+</label>
+<div id="engineLoadStatus" class="engine-load-status hidden"></div>
             <label>🎨 تم صفحه
               <select id="selTheme" onchange="onThemeChange(this.value)">
                 <option value="wood">🪵 کلاسیک چوبی</option>
