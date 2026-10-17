@@ -1,0 +1,765 @@
+/* ============================================================
+   🖥️ desktop.css — بهبود نمایش در دسکتاپ و تبلت بزرگ
+   ============================================================ */
+
+/* ============================================================
+   🖥️ 900px+ (تبلت بزرگ و دسکتاپ کوچک)
+   ============================================================ */
+@media (min-width: 900px) {
+
+  /* ---------- Layout عمومی ---------- */
+  .layout {
+    max-width: 1400px !important;
+    gap: 24px !important;
+  }
+
+  .side {
+    width: 340px !important;
+    padding: 16px !important;
+  }
+
+  .side input[type=text] {
+    font-size: 14px !important;
+    padding: 12px 14px !important;
+    min-height: 46px !important;
+  }
+
+  .prog {
+    font-size: 13px !important;
+  }
+
+  .slist {
+    max-height: 70vh !important;
+    gap: 8px !important;
+  }
+
+  .slist summary {
+    font-size: 14px !important;
+    padding: 8px 0 !important;
+  }
+
+  .lsn, .op-item {
+    font-size: 13.5px !important;
+    padding: 11px 12px !important;
+    min-height: 46px !important;
+    line-height: 1.8 !important;
+  }
+
+  .lsn small, .op-item small {
+    font-size: 11.5px !important;
+  }
+
+  /* ---------- تب بازی (Game) ---------- */
+  .app {
+    gap: 20px !important;
+    max-width: 1320px !important;
+  }
+
+  .side-col {
+    max-width: 480px !important;
+    gap: 16px !important;
+  }
+
+  .stage {
+    max-width: 640px !important;
+  }
+
+  .panel {
+    padding: 18px !important;
+    gap: 14px !important;
+  }
+
+  .panel h3 {
+    font-size: 15px !important;
+  }
+
+  #coachLog {
+    max-height: 420px !important;
+    min-height: 180px !important;
+    padding: 14px !important;
+  }
+
+  .msg {
+    font-size: 13.5px !important;
+    padding: 11px 14px !important;
+    line-height: 2.1 !important;
+  }
+
+  #moves {
+    max-height: 170px !important;
+    font-size: 14px !important;
+    padding: 10px !important;
+  }
+
+  .mrow {
+    padding: 4px 10px !important;
+    font-size: 14px !important;
+  }
+
+  .pbar {
+    font-size: 14px !important;
+    padding: 10px 16px !important;
+    min-height: 52px !important;
+  }
+
+  .pbar .caps {
+    font-size: 20px !important;
+  }
+
+  #status {
+    font-size: 15px !important;
+  }
+
+  .panel .row button {
+    font-size: 14px !important;
+    min-height: 48px !important;
+  }
+
+  /* ---------- آکادمی (Learn) ---------- */
+  .lesson-head {
+    padding: 20px 24px !important;
+  }
+
+  .lesson-head h2 {
+    font-size: 22px !important;
+    line-height: 2 !important;
+  }
+
+  .lesson-head .meta {
+    font-size: 13px !important;
+    margin-top: 8px !important;
+  }
+
+  .sec-badge {
+    font-size: 12.5px !important;
+    padding: 5px 14px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .intro {
+    font-size: 14.5px !important;
+    padding: 18px 22px !important;
+    line-height: 2.3 !important;
+  }
+
+  .part {
+    padding: 18px 22px !important;
+  }
+
+  .part h3 {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .part p {
+    font-size: 14.5px !important;
+    line-height: 2.3 !important;
+  }
+
+  .coach-bubble {
+    font-size: 14.5px !important;
+    padding: 16px 20px !important;
+    line-height: 2.3 !important;
+  }
+
+  .card {
+    padding: 18px 20px !important;
+  }
+
+  .card h3 {
+    font-size: 15.5px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .card ul {
+    font-size: 14px !important;
+    line-height: 2.3 !important;
+  }
+
+  .qtext {
+    font-size: 15.5px !important;
+    line-height: 2.2 !important;
+    margin-bottom: 14px !important;
+  }
+
+  .opt {
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    min-height: 56px !important;
+    line-height: 2.1 !important;
+  }
+
+  .hint-btn {
+    font-size: 13.5px !important;
+    padding: 11px 20px !important;
+    min-height: 44px !important;
+  }
+
+  .hintbox, .explain {
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    line-height: 2.3 !important;
+  }
+
+  .step-text {
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    line-height: 2.2 !important;
+    min-height: 50px !important;
+  }
+
+  .nav-btns button {
+    font-size: 14.5px !important;
+    min-height: 52px !important;
+  }
+
+  .board-card {
+    padding: 20px !important;
+  }
+
+  /* ---------- گشایش (Openings) ---------- */
+  .info-top {
+    padding: 20px 24px !important;
+  }
+
+  .info-top h2 {
+    font-size: 22px !important;
+    line-height: 1.8 !important;
+  }
+
+  .info-top .meta {
+    font-size: 13.5px !important;
+    line-height: 2.2 !important;
+    margin-top: 8px !important;
+  }
+
+  #mini-board {
+    width: min(92vw, 540px) !important;
+  }
+
+  .comment-col {
+    gap: 14px !important;
+    min-width: 280px !important;
+  }
+
+  #openMoves {
+    max-height: 360px !important;
+    font-size: 14.5px !important;
+    padding: 12px !important;
+    gap: 4px !important;
+  }
+
+  .mv {
+    padding: 8px 12px !important;
+    font-size: 14.5px !important;
+    line-height: 2 !important;
+  }
+
+  .mv .n {
+    font-size: 13px !important;
+    min-width: 30px !important;
+  }
+
+  #coachBubble {
+    font-size: 14.5px !important;
+    padding: 16px 20px !important;
+    line-height: 2.3 !important;
+  }
+
+  #opDesc {
+    font-size: 14.5px !important;
+    line-height: 2.3 !important;
+    padding: 18px 22px !important;
+  }
+
+  .cols {
+    gap: 16px !important;
+  }
+
+  .cols .card {
+    padding: 18px 22px !important;
+    min-width: 280px !important;
+  }
+
+  .cols .card h3 {
+    font-size: 15.5px !important;
+  }
+
+  .cols .card ul {
+    font-size: 14px !important;
+    line-height: 2.3 !important;
+  }
+
+  #plans {
+    font-size: 14.5px !important;
+    line-height: 2.3 !important;
+  }
+
+  #opTip {
+    font-size: 14.5px !important;
+    padding: 16px 20px !important;
+    line-height: 2.3 !important;
+  }
+
+  .step-controls {
+    gap: 8px !important;
+  }
+
+  .step-controls button {
+    font-size: 16px !important;
+    min-height: 50px !important;
+  }
+
+  .caption {
+    font-size: 13.5px !important;
+  }
+
+  /* ---------- سینما (Games/Cinema) ---------- */
+  #gvBoard {
+    width: min(92vw, 560px) !important;
+    height: auto !important;
+  }
+
+  .board-col.card {
+    padding: 20px !important;
+  }
+
+  #gvMoves {
+    max-height: 380px !important;
+    font-size: 14.5px !important;
+    padding: 14px !important;
+    gap: 3px !important;
+  }
+
+  .analysis-wrap {
+    padding: 16px !important;
+  }
+
+  .analysis-btn {
+    font-size: 14px !important;
+    padding: 12px 16px !important;
+    min-height: 48px !important;
+  }
+
+  .analysis-output {
+    font-size: 14px !important;
+    line-height: 2.2 !important;
+  }
+
+  #gvCoachBubble {
+    font-size: 14.5px !important;
+    padding: 16px 20px !important;
+    line-height: 2.3 !important;
+  }
+
+  #gvCaption {
+    font-size: 13.5px !important;
+  }
+
+  /* پنل تحلیل کامل بازی */
+  .gv-coach-panel {
+    padding: 16px !important;
+  }
+
+  .gv-coach-head h3 {
+    font-size: 15.5px !important;
+  }
+
+  .gv-coach-progress {
+    font-size: 13.5px !important;
+    padding: 10px 14px !important;
+  }
+
+  .gv-avg {
+    font-size: 28px !important;
+  }
+
+  .gv-lbl {
+    font-size: 15px !important;
+  }
+
+  .gv-q-item {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+
+  .gv-q-count {
+    font-size: 17px !important;
+  }
+
+  .gv-coach-list {
+    max-height: 420px !important;
+    padding: 8px !important;
+  }
+
+  .gv-move-row {
+    grid-template-columns: 52px 82px 36px 64px 1fr !important;
+    font-size: 13.5px !important;
+    padding: 9px 12px !important;
+    gap: 8px !important;
+  }
+
+  .gv-move-lbl {
+    font-size: 13px !important;
+  }
+
+  .gv-move-san {
+    font-size: 13.5px !important;
+  }
+
+  .gv-move-q {
+    font-size: 16px !important;
+  }
+
+  .gv-move-eval {
+    font-size: 12px !important;
+  }
+
+  .gv-suggest {
+    font-size: 12.5px !important;
+    padding-top: 4px !important;
+    padding-inline-start: 52px !important;
+  }
+
+  /* ---------- پازل (Puzzle) ---------- */
+  .puzzle-wrap {
+    max-width: 640px !important;
+    gap: 16px !important;
+  }
+
+  .puzzle-title {
+    font-size: 22px !important;
+  }
+
+  .puzzle-streak {
+    font-size: 14px !important;
+    padding: 6px 16px !important;
+  }
+
+  .puzzle-theme-badge span {
+    font-size: 13px !important;
+    padding: 6px 14px !important;
+  }
+
+  #puzzleBoard {
+    --psize: min(92vw, 520px) !important;
+  }
+
+  .puzzle-feedback {
+    font-size: 14.5px !important;
+    padding: 16px 20px !important;
+    line-height: 2.2 !important;
+    min-height: 56px !important;
+  }
+
+  .puzzle-turn {
+    font-size: 14.5px !important;
+  }
+
+  .puzzle-controls button,
+  .puzzle-nav button {
+    font-size: 14px !important;
+    min-height: 50px !important;
+  }
+
+  .puzzle-stats {
+    font-size: 13px !important;
+    padding: 18px !important;
+    gap: 24px !important;
+  }
+
+  .puzzle-stats b {
+    font-size: 22px !important;
+  }
+
+  .puzzle-explain {
+    font-size: 14.5px !important;
+    padding: 18px 22px !important;
+    line-height: 2.3 !important;
+  }
+
+  /* ---------- آموزش زنده (Books) ---------- */
+  .books-header h2 {
+    font-size: 26px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .books-header p {
+    font-size: 14px !important;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 18px !important;
+  }
+
+  .book-card {
+    padding: 22px !important;
+    gap: 10px !important;
+  }
+
+  .book-icon {
+    font-size: 40px !important;
+  }
+
+  .book-title {
+    font-size: 18px !important;
+  }
+
+  .book-author {
+    font-size: 12px !important;
+  }
+
+  .book-desc {
+    font-size: 14px !important;
+    line-height: 2 !important;
+  }
+
+  .book-header {
+    padding: 26px !important;
+  }
+
+  .book-icon-big {
+    font-size: 56px !important;
+  }
+
+  .book-header h2 {
+    font-size: 24px !important;
+  }
+
+  .book-desc-big {
+    font-size: 14.5px !important;
+    line-height: 2.2 !important;
+  }
+
+  .chapter-card {
+    padding: 20px 22px !important;
+  }
+
+  .chapter-card h3 {
+    font-size: 17px !important;
+  }
+
+  .chapter-card p {
+    font-size: 14px !important;
+    line-height: 2.1 !important;
+  }
+
+  .chapter-title {
+    font-size: 22px !important;
+  }
+
+  .chapter-intro {
+    font-size: 14.5px !important;
+    line-height: 2.2 !important;
+    padding: 16px 20px !important;
+  }
+
+  .lesson-row {
+    padding: 16px 20px !important;
+    min-height: 60px !important;
+  }
+
+  .lesson-title {
+    font-size: 14.5px !important;
+    line-height: 1.9 !important;
+  }
+
+  .lesson-tag {
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+  }
+
+  .read-lesson {
+    padding: 24px 28px !important;
+  }
+
+  .read-lesson h2 {
+    font-size: 22px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .read-lesson p {
+    font-size: 14.5px !important;
+    line-height: 2.3 !important;
+    margin-bottom: 16px !important;
+  }
+
+  .lesson-points {
+    padding: 18px 22px !important;
+    margin-top: 20px !important;
+  }
+
+  .lesson-points h4 {
+    font-size: 15px !important;
+  }
+
+  .lesson-points ul {
+    font-size: 14px !important;
+    line-height: 2.3 !important;
+  }
+
+  .puzzle-lesson {
+    padding: 24px 28px !important;
+  }
+
+  .puzzle-lesson h2 {
+    font-size: 22px !important;
+  }
+
+  .puzzle-text {
+    font-size: 14.5px !important;
+    line-height: 2.3 !important;
+    margin-bottom: 18px !important;
+  }
+
+  /* ---------- صفحهٔ درس تعاملی ---------- */
+  .lesson-board {
+    --lesson-size: min(92vw, 480px) !important;
+  }
+
+  .lesson-mode-tabs {
+    margin-bottom: 12px !important;
+  }
+
+  .mode-btn {
+    font-size: 14px !important;
+    min-height: 46px !important;
+  }
+
+  .lesson-step-controls button {
+    font-size: 16px !important;
+    min-height: 48px !important;
+  }
+
+  .step-counter {
+    font-size: 14px !important;
+    min-width: 70px !important;
+  }
+
+  .lesson-try-controls button {
+    font-size: 14px !important;
+    min-height: 48px !important;
+  }
+
+  #lboard-text {
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    line-height: 2.2 !important;
+    min-height: 50px !important;
+  }
+
+  .lesson-feedback {
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    line-height: 2.2 !important;
+  }
+}
+
+/* ============================================================
+   🖥️ 1280px+ (دسکتاپ بزرگ)
+   ============================================================ */
+@media (min-width: 1280px) {
+
+  /* ---------- Layout ---------- */
+  .layout {
+    max-width: 1560px !important;
+    gap: 28px !important;
+  }
+
+  .side {
+    width: 380px !important;
+  }
+
+  .app {
+    max-width: 1500px !important;
+    gap: 24px !important;
+  }
+
+  .side-col {
+    max-width: 520px !important;
+  }
+
+  .stage {
+    max-width: 700px !important;
+  }
+
+  /* ---------- بردها ---------- */
+  #mini-board {
+    width: min(92vw, 600px) !important;
+  }
+
+  #gvBoard {
+    width: min(92vw, 620px) !important;
+  }
+
+  #puzzleBoard {
+    --psize: min(92vw, 600px) !important;
+  }
+
+  .lesson-board {
+    --lesson-size: min(92vw, 520px) !important;
+  }
+
+  /* ---------- Home Grid ---------- */
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px !important;
+    max-width: 1100px !important;
+    margin: 0 auto !important;
+  }
+
+  .home-card {
+    min-height: 170px !important;
+    padding: 26px 22px !important;
+  }
+
+  .home-card-icon {
+    font-size: 44px !important;
+  }
+
+  .home-card-title {
+    font-size: 17px !important;
+  }
+
+  .home-card-desc {
+    font-size: 13px !important;
+  }
+
+  .home-card-progress {
+    font-size: 11.5px !important;
+    padding: 4px 10px !important;
+  }
+
+  /* ---------- متون و لیست‌ها ---------- */
+  .part p,
+  .intro,
+  .coach-bubble,
+  .read-lesson p,
+  .puzzle-text,
+  .puzzle-explain {
+    font-size: 15px !important;
+  }
+
+  .msg,
+  .analysis-output,
+  .puzzle-feedback,
+  #gvCoachBubble {
+    font-size: 15px !important;
+  }
+
+  .gv-move-row {
+    grid-template-columns: 56px 88px 40px 70px 1fr !important;
+    font-size: 14px !important;
+  }
+
+  /* ---------- صفحهٔ شطرنج بازی ---------- */
+  #coachLog {
+    max-height: 480px !important;
+    min-height: 220px !important;
+  }
+
+  #moves {
+    max-height: 200px !important;
+  }
+}

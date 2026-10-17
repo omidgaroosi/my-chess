@@ -1278,14 +1278,22 @@ function updateBoardSize(){
   if(!frameWrap) return;
   const avail = frameWrap.clientWidth;
   if(avail <= 0) return;
+
   const reserved = 30;
-  const maxSize = 520;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  /* اندازهٔ برد بر اساس اندازهٔ صفحه */
+  let maxSize = 520;
+  if(vw >= 1280 && vh >= 900) maxSize = 680;
+  else if(vw >= 1280) maxSize = 600;
+  else if(vw >= 900) maxSize = 580;
+
   const minSize = 220;
   const size = Math.max(minSize, Math.min(avail - reserved, maxSize));
   document.documentElement.style.setProperty('--size', size + 'px');
   document.documentElement.style.setProperty('--cell', (size / 8) + 'px');
 }
-
 let _sizeTimer = null;
 function scheduleBoardSize(){
   clearTimeout(_sizeTimer);
