@@ -51,8 +51,10 @@ window.GamesCoach = (() => {
       callbacks.onError && callbacks.onError('بازی حرکتی ندارد');
       return;
     }
-    if (typeof engineReady === 'undefined' || !engineReady || typeof sfSend !== 'function') {
-      callbacks.onError && callbacks.onError('استاک‌فیش هنوز آماده نیست. چند ثانیه صبر کن.');
+    if (typeof engineReady === 'undefined' || !engineReady ||
+        typeof engine === 'undefined' || engine !== 'stockfish' ||
+        typeof sfSend !== 'function') {
+      callbacks.onError && callbacks.onError('تحلیل کامل بازی فقط با استاک‌فیش ممکن است. موتور ساده فعال است.');
       return;
     }
 

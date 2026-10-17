@@ -537,11 +537,11 @@ function renderRatingChart(d){
 
 /* ============================================================
    🎯 اتصال رویدادها
+   ------------------------------------------------------------
+   نکته: اتصال ورودی PGN حالا فقط در chess-app.js
+   (تابع bindGlobalEvents) با گارد _bound انجام می‌شود.
+   برای جلوگیری از بایند دوگانه، این IIFE حدف شد.
    ============================================================ */
-(function bindRecordsEvents(){
-  const pgnInp = document.getElementById('pgnFileInput');
-  if(pgnInp) pgnInp.addEventListener('change', handlePGNFile);
-})();
 
 /* ============================================================
    🌐 اتصال به window

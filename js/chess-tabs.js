@@ -806,6 +806,14 @@ const GamesViewer = {
 
   gvAnalyze(){
     if(!this.cur) return;
+
+    /* ✅ اگر تحلیل کامل در حال اجراست، اول متوقفش کن */
+    if (window.GamesCoach && GamesCoach.isActive()) {
+      GamesCoach.stopAnalysis();
+      const cp = document.getElementById('gvCoachPanel');
+      if (cp) cp.classList.add('hidden');
+    }
+
     if(!engineReadyForViewer()){
       document.getElementById('gvAnalysisOutput').textContent = '⚠️ استاک‌فیش هنوز آماده نیست. چند لحظه صبر کن.';
       return;
@@ -1020,6 +1028,14 @@ const GamesViewer = {
     if(!this.cur) return;
     if(!window.GamesCoach){ alert('ماژول تحلیل بارگذاری نشده است.'); return; }
     if(GamesCoach.isActive()){ GamesCoach.stopAnalysis(); return; }
+
+    /* ✅ اگر تحلیل پوزیسیون در جریان است، اول متوقفش کن */
+    if (this.analysisActive) {
+      this.analysisActive = false;
+      try { sfSend('stop'); } catch(e){}
+      const out = document.getElementById('gvAnalysisOutput');
+      if (out) out.textContent = '';
+    }
 
     const panel = document.getElementById('gvCoachPanel');
     if(!panel) return;
