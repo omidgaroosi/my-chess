@@ -719,6 +719,11 @@ async function prefetchWasmWithProgress(wasmFile, onProgress){
       if(!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText);
 
       const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      const contentEncoding = response.headers.get('content-encoding') || '';
+      const isCompressed = /gzip|br|deflate|compress/i.test(contentEncoding);
+
+      console.log(`📦 content-length: ${contentLength} | encoding: ${contentEncoding || 'none'}`);
+
       const reader = response.body.getReader();
       const chunks = [];
       let received = 0;
@@ -733,16 +738,25 @@ async function prefetchWasmWithProgress(wasmFile, onProgress){
         const now = Date.now();
         if(onProgress && now - lastReport > 150){
           lastReport = now;
-          const pct = contentLength > 0 ? Math.round((received / contentLength) * 100) : -1;
+          /* فقط اگر فشرده نیست، درصد قابل اعتماد است */
+          const pct = (!isCompressed && contentLength > 0)
+            ? Math.round((received / contentLength) * 100)
+            : -1;
           onProgress(received, contentLength, pct);
         }
       }
 
-      if(contentLength > 0 && received !== contentLength){
+      /* 🎯 چک نهایی: اگر فشرده نبود، حجم باید برابر باشد
+         اگر فشرده بود، فقط مطمئن شو دیتا دریافت کردیم */
+      if(!isCompressed && contentLength > 0 && received !== contentLength){
         throw new Error(`دانلود ناقص: ${received} از ${contentLength} بایت`);
       }
 
-      /* ترکیب تمام chunkها در یک بافر */
+      if(received === 0){
+        throw new Error('هیچ داده‌ای دریافت نشد');
+      }
+
+      /* ترکیب chunkها */
       const buffer = new Uint8Array(received);
       let offset = 0;
       for(const chunk of chunks){
@@ -750,11 +764,10 @@ async function prefetchWasmWithProgress(wasmFile, onProgress){
         offset += chunk.length;
       }
 
-      /* ساخت Blob URL با MIME type درست */
       const blob = new Blob([buffer], { type: 'application/wasm' });
       const blobUrl = URL.createObjectURL(blob);
 
-      console.log('✅ WASM آماده است:', received, 'بایت');
+      console.log('✅ WASM آماده است:', received, 'بایت', isCompressed ? '(gzip decompressed)' : '');
       return { blobUrl, size: received };
 
     } catch(err){
@@ -780,7 +793,6 @@ async function initStockfish(){
 
     console.log('🚀 در حال بارگذاری موتور:', file, '| نوع:', engineType);
 
-    /* ۱) پیش‌دانلود WASM با کنترل کامل */
     const wasmFile = file.replace(/\.js$/i, '.wasm');
 
     if(isFull){
@@ -792,25 +804,29 @@ async function initStockfish(){
       const result = await prefetchWasmWithProgress(wasmFile, (received, total, pct) => {
         if(isFull){
           const receivedMB = (received / 1048576).toFixed(1);
-          const totalMB = total > 0 ? (total / 1048576).toFixed(1) : '?';
-          const eta = pct > 0 ? '' : '';
-          showEngineLoadStatus(
-            `در حال دانلود موتور کامل — ${pct}% (${receivedMB} از ${totalMB}MB)`,
-            pct
-          );
+          let statusText;
+          if(pct >= 0){
+            const totalMB = (total / 1048576).toFixed(1);
+            statusText = `در حال دانلود موتور کامل — ${pct}% (${receivedMB} از ${totalMB}MB)`;
+          } else {
+            statusText = `در حال دانلود موتور کامل — ${receivedMB}MB دریافت شد`;
+          }
+          showEngineLoadStatus(statusText, pct >= 0 ? pct : null);
         }
       });
       wasmUrl = result.blobUrl;
+      showEngineLoadStatus('✅ دانلود کامل شد. در حال راه‌اندازی موتور…', null, 'info');
     } catch(fetchErr){
       console.error('❌ پیش‌دانلود ناموفق، تلاش برای بارگذاری مستقیم:', fetchErr);
       showEngineLoadStatus(
-        '⚠️ دانلود مستقیم ناموفق بود. تلاش برای روش جایگزین…',
+        '⚠️ پیش‌دانلود ناموفق. تلاش برای روش جایگزین…',
         null,
-        'error'
+        'info'
       );
+      /* wasmUrl همچنان null می‌ماند و Worker خودش دانلود می‌کند */
     }
 
-    /* ۲) ساخت Worker با یا بدون Blob URL */
+    /* ساخت Worker */
     const workerUrl = wasmUrl
       ? file + '#' + encodeURIComponent(wasmUrl)
       : file;
@@ -819,7 +835,7 @@ async function initStockfish(){
 
     sf = new Worker(workerUrl);
 
-    /* ۳) پیشرفت داخلی Stockfish (اگر پیش‌دانلود موفق بود، اینجا فقط ۱۰۰% نشان می‌دهد) */
+    /* پیشرفت داخلی Stockfish */
     const ch = new MessageChannel();
     ch.port1.onmessage = ev => {
       const d = ev.data;
@@ -833,7 +849,7 @@ async function initStockfish(){
     };
     sf.postMessage({ progressPort: ch.port1 }, [ch.port1]);
 
-    /* ۴) پیام‌های Worker */
+    /* پیام‌های Worker */
     sf.onmessage = e => {
       if(typeof e.data === 'string') handleLine(e.data.trim());
     };
@@ -850,7 +866,6 @@ async function initStockfish(){
       }
     };
 
-    /* ۵) شروع UCI */
     sfSend('uci');
   }catch(err){
     console.error('❌ initStockfish failed:', err);
