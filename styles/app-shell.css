@@ -1,0 +1,790 @@
+/* ============================================================
+   📱 app-shell.css — پوستهٔ اصلی اپ (Splash + Home + Nav + Settings)
+   ============================================================ */
+
+/* ---------- مخفی کردن اسکرول هنگام نمایش صفحه‌های تمام‌صفحه ---------- */
+body.app-mode {
+  overflow: hidden;
+  height: 100dvh;
+  padding: 0;
+}
+
+/* ============================================================
+   🌟 Splash Screen (صفحهٔ خوش‌آمد)
+   ============================================================ */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(201, 151, 60, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(25, 118, 210, 0.12) 0%, transparent 50%),
+    linear-gradient(160deg, #14151b 0%, #1a1c24 100%);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  padding: 20px;
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.splash-logo {
+  font-size: 96px;
+  line-height: 1;
+  color: #ffd54f;
+  text-shadow:
+    0 0 30px rgba(255, 213, 79, 0.4),
+    0 4px 20px rgba(0, 0, 0, 0.6);
+  animation: splashFloat 3s ease-in-out infinite;
+}
+
+@keyframes splashFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.splash-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.4;
+  background: linear-gradient(135deg, #ffd54f, #c9973c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.splash-subtitle {
+  font-size: 13.5px;
+  color: #8a8f9c;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.splash-subtitle b {
+  color: #ffd54f;
+  font-weight: 700;
+}
+
+.splash-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #c9973c, transparent);
+  border-radius: 2px;
+  margin: 6px 0;
+}
+
+.splash-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.splash-btn {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 16px 24px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+
+.splash-btn:hover {
+  transform: translateY(-2px);
+}
+
+.splash-btn:active {
+  transform: translateY(0);
+}
+
+.splash-btn.primary {
+  background: linear-gradient(135deg, #c9973c, #ffd54f);
+  color: #1a1a1a;
+  box-shadow: 0 8px 24px rgba(201, 151, 60, 0.4);
+}
+
+.splash-btn.primary:hover {
+  box-shadow: 0 12px 32px rgba(201, 151, 60, 0.5);
+}
+
+.splash-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #cfd3dd;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.splash-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.splash-version {
+  position: absolute;
+  bottom: 20px;
+  font-size: 11px;
+  color: #4a4f5c;
+  font-family: 'Courier New', monospace;
+}
+
+/* ============================================================
+   🏠 App Shell — قاب اصلی برنامه
+   ============================================================ */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background: #14151b;
+}
+
+.app-shell.hidden {
+  display: none;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(20, 22, 30, 0.95);
+  border-bottom: 1px solid #2a2d38;
+  min-height: 56px;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.app-header-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #20222b;
+  border: 1px solid #313444;
+  color: #cfd3dd;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.app-header-btn:hover {
+  background: #2b2e3b;
+  transform: scale(1.05);
+}
+
+.app-header-btn:active {
+  transform: scale(0.95);
+}
+
+.app-header-btn .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #c9973c;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  min-width: 18px;
+  text-align: center;
+}
+
+.app-header-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-header-title .icon {
+  color: #ffd54f;
+  font-size: 22px;
+}
+
+/* ---------- Screen Container ---------- */
+.app-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- Screens ---------- */
+.screen {
+  display: none;
+  padding: 16px;
+  min-height: 100%;
+  animation: screenFadeIn 0.25s ease-out;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   🏠 Home Screen — منوی کارت‌ها
+   ============================================================ */
+.home-welcome {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(201, 151, 60, 0.15), rgba(25, 118, 210, 0.1));
+  border: 1px solid rgba(201, 151, 60, 0.3);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.home-welcome-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffd54f;
+  margin-bottom: 6px;
+}
+
+.home-welcome-sub {
+  font-size: 12.5px;
+  color: #9aa0ae;
+  line-height: 1.8;
+}
+
+.home-continue-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(76, 175, 80, 0.08));
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.home-continue-banner:active {
+  transform: scale(0.98);
+}
+
+.home-continue-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.home-continue-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-continue-text b {
+  display: block;
+  color: #a5d6a7;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
+.home-continue-text small {
+  color: #81c784;
+  font-size: 11.5px;
+}
+
+.home-continue-arrow {
+  color: #81c784;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.home-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 16px;
+  min-height: 140px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  text-align: right;
+  overflow: hidden;
+}
+
+.home-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-color, #c9973c);
+  opacity: 0.7;
+}
+
+.home-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--card-color, #c9973c);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.home-card:active {
+  transform: translateY(-1px);
+}
+
+.home-card-icon {
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.home-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.home-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.home-card-desc {
+  font-size: 11.5px;
+  color: #8a8f9c;
+  line-height: 1.6;
+}
+
+.home-card-progress {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--card-color, #ffd54f);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-family: 'Courier New', monospace;
+  border: 1px solid var(--card-color, #c9973c);
+}
+
+/* ============================================================
+   ⬇️ Bottom Navigation
+   ============================================================ */
+.bottom-nav {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  background: rgba(20, 22, 30, 0.98);
+  border-top: 1px solid #2a2d38;
+  padding: 4px;
+  min-height: 64px;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: #6f7480;
+  font: inherit;
+  font-size: 10px;
+  padding: 6px 4px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: color 0.15s, background 0.15s;
+  min-height: 52px;
+  position: relative;
+}
+
+.bottom-nav-btn .icon {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+
+.bottom-nav-btn .label {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.bottom-nav-btn:hover {
+  color: #cfd3dd;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bottom-nav-btn.active {
+  color: #ffd54f;
+}
+
+.bottom-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  background: #ffd54f;
+  border-radius: 0 0 3px 3px;
+}
+
+.bottom-nav-btn.active .icon {
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   ⚙️ Settings Modal (تمام‌صفحه)
+   ============================================================ */
+.settings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: #14151b;
+  display: flex;
+  flex-direction: column;
+  animation: settingsSlideIn 0.3s ease-out;
+}
+
+.settings-modal.hidden {
+  display: none;
+}
+
+@keyframes settingsSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(20, 22, 30, 0.95);
+  border-bottom: 1px solid #2a2d38;
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.settings-back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #20222b;
+  border: 1px solid #313444;
+  color: #cfd3dd;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.settings-back-btn:hover {
+  background: #2b2e3b;
+}
+
+.settings-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+.settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c9973c;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  padding-inline-start: 4px;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.settings-item-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-item-label b {
+  font-size: 13.5px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.settings-item-label small {
+  font-size: 11px;
+  color: #8a8f9c;
+}
+
+.settings-item select {
+  background: #2b2e3b;
+  border: 1px solid #3a3e50;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 38px;
+  min-width: 130px;
+  cursor: pointer;
+}
+
+.settings-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.settings-action-btn {
+  flex: 1;
+  min-width: 100px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #3a3e50;
+  background: #2b2e3b;
+  color: #fff;
+  cursor: pointer;
+  min-height: 42px;
+  transition: background 0.15s;
+}
+
+.settings-action-btn:hover {
+  background: #3d4157;
+}
+
+.settings-action-btn.primary {
+  background: #c9973c;
+  border-color: #c9973c;
+  color: #1a1a1a;
+}
+
+.settings-action-btn.primary:hover {
+  background: #d9a747;
+}
+
+.settings-action-btn.danger {
+  background: #8d3b3b;
+  border-color: #8d3b3b;
+}
+
+.settings-action-btn.danger:hover {
+  background: #a14848;
+}
+
+.settings-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.settings-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.settings-toggle .slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: #2b2e3b;
+  border: 1px solid #3a3e50;
+  border-radius: 28px;
+  transition: background 0.2s;
+}
+
+.settings-toggle .slider::before {
+  content: '';
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background: #8a8f9c;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.settings-toggle input:checked + .slider {
+  background: #c9973c;
+  border-color: #c9973c;
+}
+
+.settings-toggle input:checked + .slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+.settings-version {
+  text-align: center;
+  font-size: 11px;
+  color: #4a4f5c;
+  font-family: 'Courier New', monospace;
+  padding: 20px 0;
+}
+
+/* ============================================================
+   📱 Responsive
+   ============================================================ */
+@media (min-width: 768px) {
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .screen {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  .splash-logo {
+    font-size: 120px;
+  }
+  
+  .splash-title {
+    font-size: 34px;
+  }
+}
+
+@media (max-height: 600px) {
+  .splash-content {
+    gap: 12px;
+  }
+  
+  .splash-logo {
+    font-size: 60px;
+  }
+  
+  .splash-title {
+    font-size: 22px;
+  }
+  
+  .splash-btn {
+    min-height: 48px;
+    padding: 12px 20px;
+  }
+}
+
+/* ============================================================
+   ✨ انیمیشن‌های عمومی
+   ============================================================ */
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.home-card,
+.home-continue-banner {
+  animation: slideUp 0.4s ease-out backwards;
+}
+
+.home-card:nth-child(1) { animation-delay: 0.05s; }
+.home-card:nth-child(2) { animation-delay: 0.1s; }
+.home-card:nth-child(3) { animation-delay: 0.15s; }
+.home-card:nth-child(4) { animation-delay: 0.2s; }
+.home-card:nth-child(5) { animation-delay: 0.25s; }
+.home-card:nth-child(6) { animation-delay: 0.3s; }

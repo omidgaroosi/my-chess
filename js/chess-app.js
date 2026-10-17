@@ -9,16 +9,52 @@
    ============================================================ */
 
 /* ============================================================
-   🎯 switchTab — مدیریت تب‌ها
+   🧭 ناوبری جدید (Screens)
    ============================================================ */
-function switchTab(name){
-  ['game','learn','open','puzzle','books','games'].forEach(t => {
-    const tabEl = document.getElementById('tab-' + t);
-    const btnEl = document.getElementById('tbtn-' + t);
-    if(tabEl) tabEl.classList.toggle('hidden', t !== name);
-    if(btnEl) btnEl.classList.toggle('active', t === name);
+const SCREEN_TITLES = {
+  home: 'شطرنج',
+  game: 'بازی',
+  learn: 'آکادمی',
+  open: 'گشایش‌ها',
+  puzzle: 'پازل',
+  books: 'آموزش زنده',
+  games: 'سینما'
+};
+
+let currentScreen = 'home';
+
+function showScreen(name){
+  if(!SCREEN_TITLES[name]) return;
+  currentScreen = name;
+
+  /* پنهان کردن همه */
+  ['home','game','learn','open','puzzle','books','games'].forEach(t => {
+    const el = document.getElementById('screen-' + t);
+    if(el) el.classList.toggle('active', t === name);
   });
 
+  /* عنوان بالا */
+  const titleEl = document.getElementById('appTitle');
+  if(titleEl) titleEl.textContent = SCREEN_TITLES[name];
+
+  /* دکمهٔ برگشت */
+  const backBtn = document.getElementById('btnBack');
+  if(backBtn) backBtn.style.display = (name === 'home') ? 'none' : 'flex';
+
+  /* آیکون منو */
+  const menuBtn = document.getElementById('btnMenu');
+  if(menuBtn) menuBtn.textContent = (name === 'home') ? '🏠' : '🏠';
+
+  /* نوار پایین */
+  document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.screen === name);
+  });
+
+  /* اسکرول به بالا */
+  const body = document.querySelector('.app-body');
+  if(body) body.scrollTop = 0;
+
+  /* راه‌اندازی اولیهٔ هر صفحه */
   if(name === 'learn' && !learnInited){
     learnInited = true;
     renderLearnList('');
@@ -33,8 +69,8 @@ function switchTab(name){
     if(!puzzleState) loadTodaysPuzzle();
     else { renderPuzzleBoard(); updatePuzzleStats(); }
   }
-  if(name === 'books'){
-    if(window.LiveLessons) LiveLessons.init();
+  if(name === 'books' && window.LiveLessons){
+    LiveLessons.init();
   }
   if(name === 'games'){
     GamesViewer.reloadLibrary();
@@ -42,6 +78,172 @@ function switchTab(name){
       ? document.getElementById('searchGames').value : '');
   }
 }
+
+/* حفظ سازگاری با کدهای قبلی که switchTab صدا می‌زنند */
+function switchTab(name){
+  showScreen(name);
+}
+
+/* ============================================================
+   🌟 ورود به برنامه از Splash
+   ============================================================ */
+function enterApp(targetScreen){
+  /* مخفی کردن splash */
+  const splash = document.getElementById('splashScreen');
+  if(splash){
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 500);
+  }
+
+  /* نمایش shell */
+  const shell = document.getElementById('appShell');
+  if(shell) shell.classList.remove('hidden');
+
+  /* فعال‌سازی حالت app */
+  document.body.classList.add('app-mode');
+
+  /* رفتن به صفحهٔ هدف */
+  setTimeout(() => {
+    showScreen(targetScreen === 'game' ? 'game' : (targetScreen || 'home'));
+  }, 100);
+}
+
+/* ============================================================
+   🏠 بازگشت به خانه
+   ============================================================ */
+function backToHome(){
+  showScreen('home');
+}
+
+/* ============================================================
+   ⚙️ Settings Modal
+   ============================================================ */
+function openSettings(){
+  const modal = document.getElementById('settingsModal');
+  if(modal) modal.classList.remove('hidden');
+
+  /* بارگذاری مقادیر فعلی */
+  const selSide = document.getElementById('selSide');
+  if(selSide) selSide.value = humanColor;
+
+  const selLevel = document.getElementById('selLevel');
+  if(selLevel) selLevel.value = String(level);
+
+  const selTime = document.getElementById('selTime');
+  if(selTime) selTime.value = timeControl;
+
+  const selEngine = document.getElementById('selEngine');
+  if(selEngine) selEngine.value = engineType;
+
+  const selTheme = document.getElementById('selTheme');
+  if(selTheme) selTheme.value = theme;
+
+  const chkSound = document.getElementById('chkSound');
+  if(chkSound) chkSound.checked = document.getElementById('chkSound')?.checked ?? true;
+
+  /* به‌روزرسانی نشان رتبه در هدر */
+  updateHeaderRating();
+}
+
+function closeSettings(){
+  const modal = document.getElementById('settingsModal');
+  if(modal) modal.classList.add('hidden');
+}
+
+/* ============================================================
+   🏅 نشان رتبه در هدر
+   ============================================================ */
+function updateHeaderRating(){
+  const badge = document.getElementById('headerRatingBadge');
+  if(!badge) return;
+  if(window.ChessRating){
+    const d = ChessRating.load();
+    badge.textContent = d.rating;
+  }
+}
+
+/* ============================================================
+   🔄 بازنویسی initApp
+   ============================================================ */
+function initApp(){
+  GamesViewer.reloadLibrary();
+  updateBoardSize();
+  render();
+
+  loadSavedOptions();
+  applyTheme(theme);
+
+  /* نشان دادن/مخفی کردن بنر ادامه بازی */
+  if(typeof ChessStorage !== 'undefined' && ChessStorage.hasAuto()){
+    const banner = document.getElementById('homeContinueBanner');
+    if(banner) banner.classList.remove('hidden');
+  }
+
+  /* پیشرفت آکادمی */
+  updateHomeProgress();
+
+  /* نشان رتبه در هدر */
+  updateHeaderRating();
+
+  /* اگر splash دیده شده، مستقیم برو به shell */
+  const seenSplash = sessionStorage.getItem('splash-seen');
+  if(seenSplash){
+    const splash = document.getElementById('splashScreen');
+    if(splash) splash.style.display = 'none';
+    const shell = document.getElementById('appShell');
+    if(shell) shell.classList.remove('hidden');
+    document.body.classList.add('app-mode');
+    showScreen('home');
+  } else {
+    sessionStorage.setItem('splash-seen', '1');
+  }
+
+  /* فعال‌سازی موتور فقط بعد از ورود */
+  setTimeout(() => {
+    const wantSF = (window.crossOriginIsolated === true)
+                && (typeof Worker !== 'undefined')
+                && (!/[?&]ai\b/.test(location.search));
+    if(wantSF){
+      engine = 'stockfish';
+      updateBadge();
+      initStockfish();
+    } else {
+      switchToAI();
+    }
+
+    Coach.init();
+    Coach.updateStrengthInfo();
+  }, 300);
+
+  setTimeout(updateBoardSize, 500);
+}
+
+/* ============================================================
+   📊 به‌روزرسانی پیشرفت در خانه
+   ============================================================ */
+function updateHomeProgress(){
+  const el = document.getElementById('homeLearnProgress');
+  if(!el) return;
+
+  try {
+    const completed = JSON.parse(localStorage.getItem('learn-completed') || '[]');
+    const total = LEARN_DB.length;
+    const pct = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+    el.textContent = pct + '%';
+  } catch(e) {}
+}
+
+/* اتصال به window */
+window.showScreen = showScreen;
+window.switchTab = switchTab;
+window.enterApp = enterApp;
+window.backToHome = backToHome;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.updateHeaderRating = updateHeaderRating;
+window.updateHomeProgress = updateHomeProgress;
 
 /* ============================================================
    🚀 راه‌اندازی اولیه برنامه

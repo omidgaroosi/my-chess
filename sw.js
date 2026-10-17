@@ -2,7 +2,7 @@
    sw.js — Service Worker برای PWA شطرنج با استاک‌فیش
    ============================================================ */
 
-const CACHE = 'chess-cache-v16';   /* نسخه به v16 ارتقا یافت */
+const CACHE = 'chess-cache-v17';   /* نسخه به v17 ارتقا یافت */
 
 /* فایل‌های کوچک و ضروری — هنگام نصب SW کش می‌شوند */
 const PRECACHE = [
@@ -63,6 +63,7 @@ const PRECACHE = [
   './styles/tabs.css',
   './styles/hotfix.css',
   './styles/mobile.css',
+  './styles/app-shell.css',
   /* ماژول‌های جاوااسکریپت */
   './js/chess-core.js',
   './js/chess-game.js',

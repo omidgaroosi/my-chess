@@ -13,251 +13,590 @@
 <link rel="stylesheet" href="styles/tabs.css">
 <link rel="stylesheet" href="styles/hotfix.css">
 <link rel="stylesheet" href="styles/mobile.css">
+<link rel="stylesheet" href="styles/app-shell.css">
 <title>♞ شطرنج با استاک‌فیش — امید گروسی</title>
 </head>
 <body>
-<h1>♞ شطرنج با استاک‌فیش 🎓</h1>
-<div class="subtitle">ساخته شده با ❤️ توسط <b>امید گروسی</b></div>
 
-<div class="tabs">
-  <button class="tbtn active" id="tbtn-game" onclick="switchTab('game')">🎮 بازی</button>
-  <button class="tbtn" id="tbtn-learn" onclick="switchTab('learn')">📚 آکادمی</button>
-  <button class="tbtn" id="tbtn-open" onclick="switchTab('open')">📖 گشایش</button>
-  <button class="tbtn" id="tbtn-puzzle" onclick="switchTab('puzzle')">🧩 پازل</button>
-  <button class="tbtn" id="tbtn-books" onclick="switchTab('books')">📖 آموزش زنده</button>
-  <button class="tbtn" id="tbtn-games" onclick="switchTab('games')">📺 سینما</button>
-</div>
-
-<div id="resumeBanner" class="resume-banner hidden">
-  <span>💾 بازی ذخیره‌شده‌ای داری — ادامه بده یا بازی جدید شروع کنی؟</span>
-  <div class="resume-actions">
-    <button class="resume-btn primary" onclick="resumeSavedGame()">▶ ادامه</button>
-    <button class="resume-btn" onclick="discardSavedGame()">✕ بازی جدید</button>
-  </div>
-</div>
-
-<!-- ================= تب بازی ================= -->
-<div id="tab-game">
-  <span id="engineBadge">⏳ در حال شناسایی موتور…</span>
-  <div class="app">
-    <div class="stage">
-      <div class="pbar">
-        <span id="topName">🤖 موتور</span>
-        <span class="clock hidden" id="topClock">--:--</span>
-        <span class="dots" id="topDots"><i></i><i></i><i></i></span>
-        <span class="badge-check" id="topCheck">کیش!</span>
-        <span style="flex:1"></span>
-        <span class="mat" id="topMat"></span>
-        <span class="caps" id="topCaps"></span>
-      </div>
-      <div class="frame-wrap">
-        <div class="evalcol">
-          <div class="evalbar"><div id="evalFill"></div></div>
-          <span id="evalLabel">0.0</span>
-        </div>
-        <div class="board-frame">
-          <div id="board"></div>
-          <div class="overlay loader-overlay" id="overlayLoad">
-            <div class="loader-spinner">
-              <div class="spinner-ring"></div>
-              <div class="spinner-icon">♞</div>
-            </div>
-            <div class="loader-title">آماده‌سازی میدان نبرد</div>
-            <div class="loader-status" id="loadText">در حال آماده‌سازی…</div>
-            <div class="loadbar">
-              <div id="loadFill" class="loadbar-fill"></div>
-            </div>
-            <div class="loader-hint" id="loaderHint">استاک‌فیش در حال بیدار شدن است…</div>
-          </div>
-          <div class="overlay hidden" id="overlayEnd">
-            <div id="endEmoji">🏆</div>
-            <div id="endText" style="font-size:17px;font-weight:700"></div>
-            <div id="ratingChangeBox" style="width:100%;max-width:300px"></div>
-            <div class="row" style="width:auto">
-              <button class="primary" onclick="newGame()">🔄 بازی دوباره</button>
-              <button id="btnAnalysis" onclick="showAnalysis()">📊 تحلیل</button>
-              <button onclick="hideEnd()">بستن</button>
-            </div>
-          </div>
-          <div id="promoBox" class="hidden">
-            <div class="pcard">
-              <div>سرباز به آخر رسید! مهرهٔ جدید را انتخاب کن:</div>
-              <div class="btns" id="promoBtns"></div>
-              <button class="cancelBtn" onclick="closePromo()">انصراف ✖</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="pbar">
-        <span id="botName">🧑 شما</span>
-        <span class="rating-badge" id="ratingBadge">۱۲۰۰</span>
-        <span class="clock hidden" id="botClock">--:--</span>
-        <span class="badge-check" id="botCheck">کیش!</span>
-        <span style="flex:1"></span>
-        <span class="mat" id="botMat"></span>
-        <span class="caps" id="botCaps"></span>
-      </div>
-      <div id="status">در حال آماده‌سازی…</div>
+<!-- ============================================================
+     🌟 Splash Screen
+     ============================================================ -->
+<div id="splashScreen" class="splash-screen">
+  <div class="splash-content">
+    <div class="splash-logo">♞</div>
+    <h1 class="splash-title">شطرنج با استاک‌فیش</h1>
+    <div class="splash-divider"></div>
+    <p class="splash-subtitle">
+      آکادمی، پازل، سینما و بازی در برابر<br>
+      قوی‌ترین موتور شطرنج جهان<br>
+      <b>ساخته شده با ❤️ توسط امید گروسی</b>
+    </p>
+    <div class="splash-buttons">
+      <button class="splash-btn primary" onclick="enterApp('game')">
+        🎮 شروع بازی
+      </button>
+      <button class="splash-btn secondary" onclick="enterApp('home')">
+        🏠 ورود به منو
+      </button>
     </div>
-    <div class="side-col">
-      <!-- 🎓 پنل مربی — نزدیک به صفحه -->
-      <div class="panel coach-panel" id="coachPanel">
-        <div class="coach-head">
-          <h3>🎓 مربی شما</h3>
-          <label class="chk compact"><input type="checkbox" id="chkAutoCoach" checked> خودکار</label>
+  </div>
+  <div class="splash-version">v2.0.0</div>
+</div>
+
+<!-- ============================================================
+     🏠 App Shell
+     ============================================================ -->
+<div id="appShell" class="app-shell hidden">
+
+  <!-- Header -->
+  <header class="app-header">
+    <button class="app-header-btn" id="btnBack" onclick="backToHome()" style="display:none">←</button>
+    <button class="app-header-btn" id="btnMenu" onclick="showScreen('home')">🏠</button>
+    <div class="app-header-title">
+      <span class="icon">♞</span>
+      <span id="appTitle">شطرنج</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="app-header-btn" id="btnHeaderRating" onclick="openRating()" title="رتبه">
+        🏅
+        <span class="badge" id="headerRatingBadge">1200</span>
+      </button>
+      <button class="app-header-btn" onclick="openSettings()" title="تنظیمات">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Body — همهٔ صفحه‌ها -->
+  <div class="app-body">
+
+    <!-- ================= خانه (Home) ================= -->
+    <section id="screen-home" class="screen">
+      <div class="home-welcome">
+        <div class="home-welcome-title">♞ خوش آمدی</div>
+        <div class="home-welcome-sub">
+          قوی‌ترین موتور شطرنج جهان، آکادمی آموزشی، پازل‌های روزانه، و پخش بازی‌های استادان — همه در یک اپلیکیشن.
         </div>
-        <div class="row">
-          <button id="btnCoach" class="coachbtn">🎓 راهنمایی مربی</button>
-        </div>
-        <div id="coachLog"></div>
-        <div class="hint" id="strengthInfo"></div>
       </div>
 
-      <!-- ⚙️ پنل تنظیمات -->
-      <div class="panel" id="settingsPanel">
-        <details class="setting-details" open>
-          <summary>⚙️ تنظیمات</summary>
-          <div class="row">
-            <label>رنگ شما
-              <select id="selSide" onchange="onSideChange(this.value)">
-                <option value="w">⚪ سفید</option>
-                <option value="b">⚫ مشکی</option>
-              </select>
-            </label>
-            <label>سختی حریف
-              <select id="selLevel" onchange="onLevelChange(this.value)">
-                <option value="0">خیلی آسان</option>
-                <option value="1">آسان</option>
-                <option value="2" selected>متوسط</option>
-                <option value="3">سخت</option>
-                <option value="4">خیلی سخت</option>
-              </select>
-            </label>
+      <div id="homeContinueBanner" class="home-continue-banner hidden" onclick="enterApp('game')">
+        <div class="home-continue-icon">▶</div>
+        <div class="home-continue-text">
+          <b>بازی ذخیره‌شده داری</b>
+          <small id="homeContinueSub">برای ادامه کلیک کن</small>
+        </div>
+        <div class="home-continue-arrow">→</div>
+      </div>
+
+      <div class="home-grid">
+        <div class="home-card" style="--card-color:#c9973c" onclick="enterApp('game')">
+          <div class="home-card-icon">🎮</div>
+          <div class="home-card-text">
+            <div class="home-card-title">بازی</div>
+            <div class="home-card-desc">در برابر استاک‌فیش</div>
           </div>
-          <div class="row">
-            <label>⏱ زمان بازی
-              <select id="selTime" onchange="onTimeChange(this.value)">
-                <option value="none">بدون زمان</option>
-                <option value="1+0">Bullet — ۱ دقیقه</option>
-                <option value="3+2">Blitz — ۳+۲</option>
-                <option value="5+0">Blitz — ۵ دقیقه</option>
-                <option value="10+0">Rapid — ۱۰ دقیقه</option>
-                <option value="15+10">Rapid — ۱۵+۱۰</option>
-                <option value="30+0">Classical — ۳۰ دقیقه</option>
-              </select>
-            </label>
-            <label>🤖 موتور شطرنج
-  <select id="selEngine" onchange="onEngineChange(this.value)">
-    <option value="lite">⚡ Lite — سریع و سبک (پیش‌فرض)</option>
-    <option value="full">🚀 Full — قوی‌ترین (۹۵MB)</option>
-  </select>
-</label>
-<div id="engineLoadStatus" class="engine-load-status hidden"></div>
-            <label>🎨 تم صفحه
-              <select id="selTheme" onchange="onThemeChange(this.value)">
-                <option value="wood">🪵 کلاسیک چوبی</option>
-                <option value="green">🌿 سبز</option>
-                <option value="blue">💧 آبی</option>
-                <option value="marble">🪨 مرمر</option>
-                <option value="gray">⬛ خاکستری</option>
-                <option value="night">🌙 شب</option>
-              </select>
-            </label>
+        </div>
+
+        <div class="home-card" style="--card-color:#64b5f6" onclick="enterApp('learn')">
+          <div class="home-card-icon">📚</div>
+          <div class="home-card-text">
+            <div class="home-card-title">آکادمی</div>
+            <div class="home-card-desc">صفر تا صد شطرنج</div>
           </div>
-          <div class="row">
+          <div class="home-card-progress" id="homeLearnProgress">0%</div>
+        </div>
+
+        <div class="home-card" style="--card-color:#81c784" onclick="enterApp('open')">
+          <div class="home-card-icon">📖</div>
+          <div class="home-card-text">
+            <div class="home-card-title">گشایش‌ها</div>
+            <div class="home-card-desc">۲۰+ گشایش معروف</div>
+          </div>
+        </div>
+
+        <div class="home-card" style="--card-color:#ff9800" onclick="enterApp('puzzle')">
+          <div class="home-card-icon">🧩</div>
+          <div class="home-card-text">
+            <div class="home-card-title">پازل</div>
+            <div class="home-card-desc">تاکتیک روزانه</div>
+          </div>
+        </div>
+
+        <div class="home-card" style="--card-color:#e57373" onclick="enterApp('books')">
+          <div class="home-card-icon">📕</div>
+          <div class="home-card-text">
+            <div class="home-card-title">آموزش زنده</div>
+            <div class="home-card-desc">کتاب‌های تعاملی</div>
+          </div>
+        </div>
+
+        <div class="home-card" style="--card-color:#ab47bc" onclick="enterApp('games')">
+          <div class="home-card-icon">🎬</div>
+          <div class="home-card-text">
+            <div class="home-card-title">سینما</div>
+            <div class="home-card-desc">بازی‌های استادان</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= بازی (Game) ================= -->
+    <section id="screen-game" class="screen">
+      <span id="engineBadge">⏳ در حال شناسایی موتور…</span>
+      <div class="app">
+        <div class="stage">
+          <div class="pbar">
+            <span id="topName">🤖 موتور</span>
+            <span class="clock hidden" id="topClock">--:--</span>
+            <span class="dots" id="topDots"><i></i><i></i><i></i></span>
+            <span class="badge-check" id="topCheck">کیش!</span>
+            <span style="flex:1"></span>
+            <span class="mat" id="topMat"></span>
+            <span class="caps" id="topCaps"></span>
+          </div>
+          <div class="frame-wrap">
+            <div class="evalcol">
+              <div class="evalbar"><div id="evalFill"></div></div>
+              <span id="evalLabel">0.0</span>
+            </div>
+            <div class="board-frame">
+              <div id="board"></div>
+              <div class="overlay loader-overlay" id="overlayLoad">
+                <div class="loader-spinner">
+                  <div class="spinner-ring"></div>
+                  <div class="spinner-icon">♞</div>
+                </div>
+                <div class="loader-title">آماده‌سازی میدان نبرد</div>
+                <div class="loader-status" id="loadText">در حال آماده‌سازی…</div>
+                <div class="loadbar">
+                  <div id="loadFill" class="loadbar-fill"></div>
+                </div>
+                <div class="loader-hint" id="loaderHint">استاک‌فیش در حال بیدار شدن است…</div>
+              </div>
+              <div class="overlay hidden" id="overlayEnd">
+                <div id="endEmoji">🏆</div>
+                <div id="endText" style="font-size:17px;font-weight:700"></div>
+                <div id="ratingChangeBox" style="width:100%;max-width:300px"></div>
+                <div class="row" style="width:auto">
+                  <button class="primary" onclick="newGame()">🔄 بازی دوباره</button>
+                  <button id="btnAnalysis" onclick="showAnalysis()">📊 تحلیل</button>
+                  <button onclick="hideEnd()">بستن</button>
+                </div>
+              </div>
+              <div id="promoBox" class="hidden">
+                <div class="pcard">
+                  <div>سرباز به آخر رسید! مهرهٔ جدید را انتخاب کن:</div>
+                  <div class="btns" id="promoBtns"></div>
+                  <button class="cancelBtn" onclick="closePromo()">انصراف ✖</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pbar">
+            <span id="botName">🧑 شما</span>
+            <span class="rating-badge" id="ratingBadge">۱۲۰۰</span>
+            <span class="clock hidden" id="botClock">--:--</span>
+            <span class="badge-check" id="botCheck">کیش!</span>
+            <span style="flex:1"></span>
+            <span class="mat" id="botMat"></span>
+            <span class="caps" id="botCaps"></span>
+          </div>
+          <div id="status">در حال آماده‌سازی…</div>
+
+          <!-- کنترل‌های بازی -->
+          <div class="row" style="width:100%;margin-top:8px">
             <button class="primary" onclick="newGame()">🔄 جدید</button>
             <button onclick="undo()">↩️ برگشت</button>
             <button onclick="flip()">🔃 چرخش</button>
-          </div>
-          <div class="row">
             <button onclick="openHistory()">📜 تاریخچه</button>
-            <button onclick="openRating()">🏅 رتبهٔ من</button>
-            <button id="btnInstall" class="hidden" onclick="installApp()">📲 نصب</button>
           </div>
-          <div class="row">
-            <button onclick="exportCurrentPGN()">📥 PGN جاری</button>
-            <button onclick="importPGNClick()">📤 بارگذاری PGN</button>
-          </div>
-          <input type="file" id="pgnFileInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
-          <label class="chk"><input type="checkbox" id="chkSound" checked> 🔊 صدای حرکت</label>
-        </details>
+        </div>
 
-        <details class="setting-details">
-          <summary>📜 لیست حرکات</summary>
-          <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>
-        </details>
+        <div class="side-col">
+          <div class="panel coach-panel" id="coachPanel">
+            <div class="coach-head">
+              <h3>🎓 مربی شما</h3>
+              <label class="chk compact"><input type="checkbox" id="chkAutoCoach" checked onchange="saveOptions()"> خودکار</label>
+            </div>
+            <div class="row">
+              <button id="btnCoach" class="coachbtn">🎓 راهنمایی مربی</button>
+            </div>
+            <div id="coachLog"></div>
+            <div class="hint" id="strengthInfo"></div>
+          </div>
+
+          <div class="panel">
+            <details class="setting-details" open>
+              <summary>📜 لیست حرکات</summary>
+              <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= آکادمی (Learn) ================= -->
+    <section id="screen-learn" class="screen">
+      <div class="layout">
+        <aside class="side">
+          <div class="prog">
+            <span id="progressText"></span>
+            <div class="pbar2"><div id="progressFill" class="pfill"></div></div>
+          </div>
+          <input id="search" type="text" placeholder="🔍 جستجوی درس…">
+          <div id="lessonList" class="slist"></div>
+          <button class="reset-link" onclick="resetLearn()">🗑 پاک کردن پیشرفت</button>
+        </aside>
+        <main class="content" id="lessonView"></main>
+      </div>
+    </section>
+
+    <!-- ================= گشایش (Openings) ================= -->
+    <section id="screen-open" class="screen">
+      <div class="layout">
+        <aside class="side">
+          <div class="prog">
+            <span id="openProgressText"></span>
+            <div class="pbar2"><div id="openProgressFill" class="pfill"></div></div>
+          </div>
+          <input id="searchOpen" type="text" placeholder="🔍 جستجوی گشایش…">
+          <div id="openList" class="slist"></div>
+        </aside>
+        <main class="content" id="openView">
+          <div class="info-top">
+            <h2 id="opName"></h2>
+            <div class="meta">
+              <span>🌍 <b id="opEn"></b></span> &nbsp;|&nbsp;
+              <span>📋 ECO: <b id="opEco" style="direction:ltr;display:inline-block"></b></span> &nbsp;|&nbsp;
+              <span>🎯 سطح: <b id="opLevel"></b></span>
+            </div>
+          </div>
+          <div class="main-row">
+            <div class="board-col card board-card">
+              <div id="mini-board"></div>
+              <div class="caption" id="openCaption"></div>
+              <div class="step-controls">
+                <button onclick="goTo(0)">⏮</button>
+                <button onclick="goTo(openPly-1)">◀</button>
+                <button id="btnPlayOpen" onclick="togglePlay()">▶️ پخش</button>
+                <button onclick="goTo(openPly+1)">▶</button>
+                <button onclick="goTo(curOp?curOp.moves.length:0)">⏭</button>
+              </div>
+              <div class="step-text" id="openStepText"></div>
+            </div>
+            <div class="comment-col">
+              <div class="coach-bubble" id="coachBubble"></div>
+              <div id="openMoves"></div>
+            </div>
+          </div>
+          <div class="intro" id="opDesc"></div>
+          <div class="cols">
+            <div class="card green"><h3>✅ نقاط قوت</h3><ul id="pros"></ul></div>
+            <div class="card red"><h3>⚠️ نقاط ضعف</h3><ul id="cons"></ul></div>
+          </div>
+          <div class="card blue"><h3>🧭 نقشه‌های معمول</h3>
+            <p id="plans" style="font-size:13px;line-height:2.2;color:#cfd3dd"></p>
+          </div>
+          <div class="coach-bubble" id="opTip"></div>
+          <button class="primary" onclick="practice()">🎮 تمرین این گشایش در بازی</button>
+        </main>
+      </div>
+    </section>
+
+    <!-- ================= پازل (Puzzle) ================= -->
+    <section id="screen-puzzle" class="screen">
+      <div class="puzzle-wrap">
+        <div class="puzzle-header">
+          <div class="puzzle-title">🧩 پازل تاکتیکی</div>
+          <div class="puzzle-streak" id="puzzleStreak">شروع کن!</div>
+        </div>
+
+        <div class="puzzle-theme-badge">
+          <span id="puzzleTheme">—</span>
+          <span id="puzzleDifficulty">—</span>
+        </div>
+
+        <div class="puzzle-board-wrap">
+          <div id="puzzleBoard"></div>
+        </div>
+
+        <div class="puzzle-turn" id="puzzleTurn">—</div>
+        <div class="puzzle-feedback" id="puzzleFeedback">در حال بارگذاری…</div>
+
+        <div class="puzzle-controls">
+          <button onclick="puzzleHint()">💡 راهنمایی</button>
+          <button onclick="puzzleRetry()">🔄 از اول</button>
+          <button class="primary" onclick="puzzleShowSolution()">👁 پاسخ</button>
+        </div>
+
+        <div class="puzzle-nav">
+          <button onclick="loadPuzzleByOffset(-1)">◀ قبلی</button>
+          <button onclick="loadTodaysPuzzle()">📅 امروز</button>
+          <button onclick="loadPuzzleByOffset(1)">بعدی ▶</button>
+        </div>
+
+        <div class="puzzle-stats" id="puzzleStats"></div>
+        <div class="puzzle-explain hidden" id="puzzleExplain"></div>
+      </div>
+    </section>
+
+    <!-- ================= آموزش زنده (Books) ================= -->
+    <section id="screen-books" class="screen">
+      <div id="booksHeader" class="books-header"></div>
+      <div id="booksContent" class="books-content"></div>
+    </section>
+
+    <!-- ================= سینما (Games) ================= -->
+    <section id="screen-games" class="screen">
+      <div class="layout">
+        <aside class="side">
+          <div class="prog">
+            <span id="gamesProgressText"></span>
+          </div>
+          <input id="searchGames" type="text" placeholder="🔍 جستجوی بازی…">
+          <div class="row" style="display:flex;gap:6px;margin:4px 0">
+            <button class="primary" onclick="gvUploadPGN()" style="flex:1;font-size:13px;min-height:42px">📁 بارگذاری PGN</button>
+            <button onclick="gvClearLibrary()" style="flex:0 0 auto;font-size:13px;min-height:42px;min-width:44px" title="پاک کردن کتابخانه">🗑</button>
+          </div>
+          <div id="gvUploadStatus" style="font-size:12px;color:#81c784;text-align:center;min-height:18px;line-height:1.6"></div>
+          <div id="gamesList" class="slist"></div>
+          <input type="file" id="gvPGNInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
+        </aside>
+        <main class="content" id="gamesView">
+          <div id="gamesEmpty" class="info-top" style="text-align:center;padding:40px 20px">
+            <div style="font-size:48px;margin-bottom:12px">🎬</div>
+            <h2>سینما شطرنج</h2>
+            <p style="color:#9aa0ae;margin-top:8px;line-height:2">
+              یک بازی را از سایدبار انتخاب کن تا مثل فیلم پخش شود.<br>
+              استاک‌فیش نقش مربی را دارد و می‌توانی از او تحلیل بخواهی.
+            </p>
+          </div>
+
+          <div id="gamesPlayer" class="hidden">
+            <div class="info-top" style="margin-bottom:12px">
+              <h2 id="gvTitle"></h2>
+              <div class="meta" style="margin-top:6px">
+                <span>⚪ <b id="gvWhite"></b></span> &nbsp;|&nbsp;
+                <span>⚫ <b id="gvBlack"></b></span> &nbsp;|&nbsp;
+                <span>🏆 <b id="gvEvent"></b></span> &nbsp;|&nbsp;
+                <span>📅 <b id="gvDate"></b></span> &nbsp;|&nbsp;
+                <span>📊 <b id="gvResult"></b></span>
+              </div>
+              <p id="gvDesc" style="color:#9aa0ae;font-size:12.5px;line-height:2;margin-top:10px"></p>
+            </div>
+
+            <div class="main-row">
+              <div class="board-col card board-card">
+                <div id="gvBoard" style="display:grid;grid-template-columns:repeat(8,1fr);width:min(92vw,460px);aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
+                <div class="caption" id="gvCaption">—</div>
+                <div class="step-controls">
+                  <button onclick="GamesViewer.goTo(0)" title="شروع">⏮</button>
+                  <button onclick="GamesViewer.goTo(GamesViewer.ply - 1)" title="قبلی">◀</button>
+                  <button id="gvBtnPlay" onclick="GamesViewer.togglePlay()">▶️ پخش</button>
+                  <button onclick="GamesViewer.goTo(GamesViewer.ply + 1)" title="بعدی">▶</button>
+                  <button onclick="GamesViewer.goTo(GamesViewer.allBoards.length - 1)" title="پایان">⏭</button>
+                </div>
+                <div class="step-controls" style="margin-top:8px">
+                  <button onclick="GamesViewer.speed(-1)" title="کندتر">🐢 کندتر</button>
+                  <span id="gvSpeedLabel" style="display:flex;align-items:center;padding:0 12px;color:#9aa0ae;font-size:12px">۱.۰x</span>
+                  <button onclick="GamesViewer.speed(1)" title="سریع‌تر">🐇 سریع‌تر</button>
+                </div>
+              </div>
+
+              <div class="comment-col">
+                <div class="coach-bubble" id="gvCoachBubble">
+                  🎓 <b>مربی:</b> برای شروع، دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ حرکت‌به‌حرکت جلو برو.
+                </div>
+                <div id="gvMoves" style="background:#191b22;border-radius:12px;padding:10px;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px"></div>
+                <div class="analysis-wrap">
+                  <button type="button" class="analysis-btn" onclick="GamesViewer.gvAnalyze()">🐟 تحلیل این پوزیسیون</button>
+                  <button type="button" class="analysis-btn full-game-btn" onclick="GamesViewer.gvAnalyzeFull()">🎓 تحلیل کامل بازی (هر حرکت)</button>
+                  <div class="analysis-output" id="gvAnalysisOutput"></div>
+                </div>
+
+                <div id="gvCoachPanel" class="gv-coach-panel hidden">
+                  <div class="gv-coach-head">
+                    <h3>🎓 تحلیل کامل بازی</h3>
+                    <button class="gv-coach-close" onclick="GamesViewer.closeCoachPanel()">✕</button>
+                  </div>
+                  <div id="gvCoachProgress" class="gv-coach-progress"></div>
+                  <div id="gvCoachSummary" class="gv-coach-summary"></div>
+                  <div id="gvCoachList" class="gv-coach-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============================================================
+       ⬇️ Bottom Navigation
+       ============================================================ -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-btn active" data-screen="home" onclick="showScreen('home')">
+      <span class="icon">🏠</span>
+      <span class="label">خانه</span>
+    </button>
+    <button class="bottom-nav-btn" data-screen="game" onclick="showScreen('game')">
+      <span class="icon">🎮</span>
+      <span class="label">بازی</span>
+    </button>
+    <button class="bottom-nav-btn" data-screen="learn" onclick="showScreen('learn')">
+      <span class="icon">📚</span>
+      <span class="label">آکادمی</span>
+    </button>
+    <button class="bottom-nav-btn" data-screen="puzzle" onclick="showScreen('puzzle')">
+      <span class="icon">🧩</span>
+      <span class="label">پازل</span>
+    </button>
+    <button class="bottom-nav-btn" data-screen="games" onclick="showScreen('games')">
+      <span class="icon">🎬</span>
+      <span class="label">سینما</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ============================================================
+     ⚙️ Settings Modal (تمام‌صفحه)
+     ============================================================ -->
+<div id="settingsModal" class="settings-modal hidden">
+  <div class="settings-header">
+    <button class="settings-back-btn" onclick="closeSettings()">←</button>
+    <div class="settings-title">تنظیمات</div>
+  </div>
+  <div class="settings-body">
+
+    <!-- گروه ۱: بازی -->
+    <div class="settings-group">
+      <div class="settings-group-title">🎮 بازی</div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>رنگ شما</b>
+          <small>سفید یا مشکی</small>
+        </div>
+        <select id="selSide" onchange="onSideChange(this.value)">
+          <option value="w">⚪ سفید</option>
+          <option value="b">⚫ مشکی</option>
+        </select>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>سختی حریف</b>
+          <small>سطح موتور استاک‌فیش</small>
+        </div>
+        <select id="selLevel" onchange="onLevelChange(this.value)">
+          <option value="0">خیلی آسان</option>
+          <option value="1">آسان</option>
+          <option value="2" selected>متوسط</option>
+          <option value="3">سخت</option>
+          <option value="4">خیلی سخت</option>
+        </select>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>⏱ زمان بازی</b>
+          <small>کنترل زمان</small>
+        </div>
+        <select id="selTime" onchange="onTimeChange(this.value)">
+          <option value="none">بدون زمان</option>
+          <option value="1+0">Bullet — ۱ دقیقه</option>
+          <option value="3+2">Blitz — ۳+۲</option>
+          <option value="5+0">Blitz — ۵ دقیقه</option>
+          <option value="10+0">Rapid — ۱۰ دقیقه</option>
+          <option value="15+10">Rapid — ۱۵+۱۰</option>
+          <option value="30+0">Classical — ۳۰ دقیقه</option>
+        </select>
       </div>
     </div>
+
+    <!-- گروه ۲: موتور -->
+    <div class="settings-group">
+      <div class="settings-group-title">🤖 موتور شطرنج</div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>نسخهٔ موتور</b>
+          <small>Lite سریع، Full حرفه‌ای (۹۵MB)</small>
+        </div>
+        <select id="selEngine" onchange="onEngineChange(this.value)">
+          <option value="lite">⚡ Lite</option>
+          <option value="full">🚀 Full</option>
+        </select>
+      </div>
+
+      <div id="engineLoadStatus" class="engine-load-status hidden"></div>
+    </div>
+
+    <!-- گروه ۳: ظاهر -->
+    <div class="settings-group">
+      <div class="settings-group-title">🎨 ظاهر و صدا</div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>تم صفحه</b>
+          <small>رنگ خانه‌ها</small>
+        </div>
+        <select id="selTheme" onchange="onThemeChange(this.value)">
+          <option value="wood">🪵 چوبی</option>
+          <option value="green">🌿 سبز</option>
+          <option value="blue">💧 آبی</option>
+          <option value="marble">🪨 مرمر</option>
+          <option value="gray">⬛ خاکستری</option>
+          <option value="night">🌙 شب</option>
+        </select>
+      </div>
+
+      <div class="settings-item">
+        <div class="settings-item-label">
+          <b>صدای حرکت</b>
+          <small>پخش صدا هنگام حرکت</small>
+        </div>
+        <label class="settings-toggle">
+          <input type="checkbox" id="chkSound" checked onchange="saveOptions()">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- گروه ۴: داده‌ها -->
+    <div class="settings-group">
+      <div class="settings-group-title">💾 داده‌ها و PGN</div>
+
+      <div class="settings-item-actions">
+        <button class="settings-action-btn" onclick="openHistory()">📜 تاریخچه</button>
+        <button class="settings-action-btn" onclick="openRating()">🏅 رتبه</button>
+      </div>
+
+      <div class="settings-item-actions">
+        <button class="settings-action-btn" onclick="exportCurrentPGN()">📥 PGN جاری</button>
+        <button class="settings-action-btn" onclick="importPGNClick()">📤 بارگذاری PGN</button>
+      </div>
+
+      <input type="file" id="pgnFileInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
+    </div>
+
+    <!-- گروه ۵: نصب -->
+    <div class="settings-group" id="installGroup">
+      <div class="settings-group-title">📲 نصب</div>
+      <div class="settings-item-actions">
+        <button class="settings-action-btn primary" id="btnInstall" class="hidden" onclick="installApp()">📲 نصب اپلیکیشن</button>
+      </div>
+    </div>
+
+    <!-- نسخه -->
+    <div class="settings-version">v2.0.0 — ساخته شده توسط امید گروسی</div>
+
   </div>
 </div>
 
-<!-- ================= تب آکادمی ================= -->
-<div id="tab-learn" class="hidden">
-  <div class="layout">
-    <aside class="side">
-      <div class="prog">
-        <span id="progressText"></span>
-        <div class="pbar2"><div id="progressFill" class="pfill"></div></div>
-      </div>
-      <input id="search" type="text" placeholder="🔍 جستجوی درس…">
-      <div id="lessonList" class="slist"></div>
-      <button class="reset-link" onclick="resetLearn()">🗑 پاک کردن پیشرفت</button>
-    </aside>
-    <main class="content" id="lessonView"></main>
-  </div>
-</div>
-
-<!-- ================= تب گشایش‌ها ================= -->
-<div id="tab-open" class="hidden">
-  <div class="layout">
-    <aside class="side">
-      <div class="prog">
-        <span id="openProgressText"></span>
-        <div class="pbar2"><div id="openProgressFill" class="pfill"></div></div>
-      </div>
-      <input id="searchOpen" type="text" placeholder="🔍 جستجوی گشایش…">
-      <div id="openList" class="slist"></div>
-    </aside>
-    <main class="content" id="openView">
-      <div class="info-top">
-        <h2 id="opName"></h2>
-        <div class="meta">
-          <span>🌍 <b id="opEn"></b></span> &nbsp;|&nbsp;
-          <span>📋 ECO: <b id="opEco" style="direction:ltr;display:inline-block"></b></span> &nbsp;|&nbsp;
-          <span>🎯 سطح: <b id="opLevel"></b></span>
-        </div>
-      </div>
-      <div class="main-row">
-        <div class="board-col card board-card">
-          <div id="mini-board"></div>
-          <div class="caption" id="openCaption"></div>
-          <div class="step-controls">
-            <button onclick="goTo(0)">⏮</button>
-            <button onclick="goTo(openPly-1)">◀</button>
-            <button id="btnPlayOpen" onclick="togglePlay()">▶️ پخش</button>
-            <button onclick="goTo(openPly+1)">▶</button>
-            <button onclick="goTo(curOp?curOp.moves.length:0)">⏭</button>
-          </div>
-          <div class="step-text" id="openStepText"></div>
-        </div>
-        <div class="comment-col">
-          <div class="coach-bubble" id="coachBubble"></div>
-          <div id="openMoves"></div>
-        </div>
-      </div>
-      <div class="intro" id="opDesc"></div>
-      <div class="cols">
-        <div class="card green"><h3>✅ نقاط قوت</h3><ul id="pros"></ul></div>
-        <div class="card red"><h3>⚠️ نقاط ضعف</h3><ul id="cons"></ul></div>
-      </div>
-      <div class="card blue"><h3>🧭 نقشه‌های معمول</h3>
-        <p id="plans" style="font-size:13px;line-height:2.2;color:#cfd3dd"></p>
-      </div>
-      <div class="coach-bubble" id="opTip"></div>
-      <button class="primary" onclick="practice()">🎮 تمرین این گشایش در بازی</button>
-    </main>
-  </div>
-</div>
+<!-- ================= مودال‌ها ================= -->
 <div id="historyModal" class="hidden">
   <div class="hist-card">
     <div class="hist-head">
@@ -273,44 +612,7 @@
     </div>
   </div>
 </div>
-<!-- ================= تب پازل ================= -->
-<div id="tab-puzzle" class="hidden">
-  <div class="puzzle-wrap">
-    <div class="puzzle-header">
-      <div class="puzzle-title">🧩 پازل تاکتیکی</div>
-      <div class="puzzle-streak" id="puzzleStreak">شروع کن!</div>
-    </div>
 
-    <div class="puzzle-theme-badge">
-      <span id="puzzleTheme">—</span>
-      <span id="puzzleDifficulty">—</span>
-    </div>
-
-    <div class="puzzle-board-wrap">
-      <div id="puzzleBoard"></div>
-    </div>
-
-    <div class="puzzle-turn" id="puzzleTurn">—</div>
-
-    <div class="puzzle-feedback" id="puzzleFeedback">در حال بارگذاری…</div>
-
-    <div class="puzzle-controls">
-      <button onclick="puzzleHint()">💡 راهنمایی</button>
-      <button onclick="puzzleRetry()">🔄 از اول</button>
-      <button class="primary" onclick="puzzleShowSolution()">👁 پاسخ</button>
-    </div>
-
-    <div class="puzzle-nav">
-      <button onclick="loadPuzzleByOffset(-1)">◀ قبلی</button>
-      <button onclick="loadTodaysPuzzle()">📅 پازل امروز</button>
-      <button onclick="loadPuzzleByOffset(1)">بعدی ▶</button>
-    </div>
-
-    <div class="puzzle-stats" id="puzzleStats"></div>
-
-    <div class="puzzle-explain hidden" id="puzzleExplain"></div>
-  </div>
-</div>
 <div id="ratingModal" class="hidden">
   <div class="rat-card">
     <div class="rat-head">
@@ -341,104 +643,12 @@
     </div>
   </div>
 </div>
-<!-- ================= تب آموزش زنده ================= -->
-<div id="tab-books" class="hidden">
-  <div id="booksHeader" class="books-header"></div>
-  <div id="booksContent" class="books-content"></div>
-</div>
-<!-- ================= تب سینما (بازی‌های استادان) ================= -->
-<div id="tab-games" class="hidden">
-  <div class="layout">
-    <aside class="side">
-      <div class="prog">
-        <span id="gamesProgressText"></span>
-      </div>
-      <input id="searchGames" type="text" placeholder="🔍 جستجوی بازی…">
-      <div class="row" style="display:flex;gap:6px;margin:4px 0">
-        <button class="primary" onclick="gvUploadPGN()" style="flex:1;font-size:13px;min-height:42px">📁 بارگذاری PGN</button>
-        <button onclick="gvClearLibrary()" style="flex:0 0 auto;font-size:13px;min-height:42px;min-width:44px" title="پاک کردن کتابخانهٔ آپلودشده">🗑</button>
-      </div>
-      <div id="gvUploadStatus" style="font-size:12px;color:#81c784;text-align:center;min-height:18px;line-height:1.6"></div>
-      <div id="gamesList" class="slist"></div>
-      <input type="file" id="gvPGNInput" accept=".pgn,text/plain,application/x-chess-pgn" style="display:none">
-    </aside>
-    <main class="content" id="gamesView">
-      <!-- پیام خالی -->
-      <div id="gamesEmpty" class="info-top" style="text-align:center;padding:40px 20px">
-        <div style="font-size:48px;margin-bottom:12px">🎬</div>
-        <h2>سینما شطرنج</h2>
-        <p style="color:#9aa0ae;margin-top:8px;line-height:2">
-          یک بازی را از سایدبار انتخاب کن تا مثل فیلم پخش شود.<br>
-          استاک‌فیش نقش مربی را دارد و می‌توانی از او تحلیل بخواهی.
-        </p>
-      </div>
 
-      <!-- پخش‌کننده (پیش‌فرض مخفی) -->
-      <div id="gamesPlayer" class="hidden">
-        <div class="info-top" style="margin-bottom:12px">
-          <h2 id="gvTitle"></h2>
-          <div class="meta" style="margin-top:6px">
-            <span>⚪ <b id="gvWhite"></b></span>
-            &nbsp;|&nbsp;
-            <span>⚫ <b id="gvBlack"></b></span>
-            &nbsp;|&nbsp;
-            <span>🏆 <b id="gvEvent"></b></span>
-            &nbsp;|&nbsp;
-            <span>📅 <b id="gvDate"></b></span>
-            &nbsp;|&nbsp;
-            <span>📊 <b id="gvResult"></b></span>
-          </div>
-          <p id="gvDesc" style="color:#9aa0ae;font-size:12.5px;line-height:2;margin-top:10px"></p>
-        </div>
-
-        <div class="main-row">
-          <div class="board-col card board-card">
-            <div id="gvBoard" style="display:grid;grid-template-columns:repeat(8,1fr);width:min(92vw,460px);aspect-ratio:1;border-radius:10px;overflow:hidden;direction:ltr;user-select:none;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
-            <div class="caption" id="gvCaption">—</div>
-          <div class="step-controls">
-              <button onclick="GamesViewer.goTo(0)" title="شروع">⏮</button>
-              <button onclick="GamesViewer.goTo(GamesViewer.ply - 1)" title="قبلی">◀</button>
-              <button id="gvBtnPlay" onclick="GamesViewer.togglePlay()">▶️ پخش</button>
-              <button onclick="GamesViewer.goTo(GamesViewer.ply + 1)" title="بعدی">▶</button>
-              <button onclick="GamesViewer.goTo(GamesViewer.allBoards.length - 1)" title="پایان">⏭</button>
-            </div>
-            <div class="step-controls" style="margin-top:8px">
-              <button onclick="GamesViewer.speed(-1)" title="کندتر">🐢 کندتر</button>
-              <span id="gvSpeedLabel" style="display:flex;align-items:center;padding:0 12px;color:#9aa0ae;font-size:12px">۱.۰x</span>
-              <button onclick="GamesViewer.speed(1)" title="سریع‌تر">🐇 سریع‌تر</button>
-            </div>
-          </div>
-
-          <div class="comment-col">
-            <div class="coach-bubble" id="gvCoachBubble">
-              🎓 <b>مربی:</b> برای شروع، دکمهٔ «▶️ پخش» را بزن یا با ◀ ▶ حرکت‌به‌حرکت جلو برو.
-            </div>
-            <div id="gvMoves" style="background:#191b22;border-radius:12px;padding:10px;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:2px;font-size:13.5px"></div>
-            <div class="analysis-wrap">
-              <button type="button" class="analysis-btn" onclick="GamesViewer.gvAnalyze()">🐟 تحلیل این پوزیسیون</button>
-              <button type="button" class="analysis-btn full-game-btn" onclick="GamesViewer.gvAnalyzeFull()">🎓 تحلیل کامل بازی (هر حرکت)</button>
-              <div class="analysis-output" id="gvAnalysisOutput"></div>
-            </div>
-
-            <div id="gvCoachPanel" class="gv-coach-panel hidden">
-              <div class="gv-coach-head">
-                <h3>🎓 تحلیل کامل بازی</h3>
-                <button class="gv-coach-close" onclick="GamesViewer.closeCoachPanel()">✕</button>
-              </div>
-              <div id="gvCoachProgress" class="gv-coach-progress"></div>
-              <div id="gvCoachSummary" class="gv-coach-summary"></div>
-              <div id="gvCoachList" class="gv-coach-list"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-<footer class="credit">
-  ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b><br>
-  موتور: Stockfish 19 Lite &nbsp;|&nbsp; طراحی و توسعه: ۱۴۰۳
+<footer class="credit" style="display:none">
+  ♟️ <b>شطرنج با استاک‌فیش</b> — ساخته شده با ❤️ توسط <b>امید گروسی</b>
 </footer>
+
+<!-- ... بقیهٔ اسکریپت‌ها بدون تغییر ... -->
 
 <!-- فایل‌های داده و مربی -->
 <script src="storage.js"></script>
