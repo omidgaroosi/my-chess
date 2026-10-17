@@ -2,9 +2,11 @@
 /* ============================================================
    🚀 chess-app.js — راه‌اندازی و مدیریت نهایی برنامه
    ------------------------------------------------------------
-   - switchTab (تب‌گردانی)
-   - init code (راه‌اندازی اولیه)
-   - PWA (Service Worker + Install Prompt)
+   - ناوبری صفحه‌ها (Screens)
+   - Splash و ورود به اپ
+   - Settings Modal
+   - Init code
+   - PWA
    ساخته شده توسط امید گروسی
    ============================================================ */
 
@@ -41,10 +43,6 @@ function showScreen(name){
   const backBtn = document.getElementById('btnBack');
   if(backBtn) backBtn.style.display = (name === 'home') ? 'none' : 'flex';
 
-  /* آیکون منو */
-  const menuBtn = document.getElementById('btnMenu');
-  if(menuBtn) menuBtn.textContent = (name === 'home') ? '🏠' : '🏠';
-
   /* نوار پایین */
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === name);
@@ -55,24 +53,36 @@ function showScreen(name){
   if(body) body.scrollTop = 0;
 
   /* راه‌اندازی اولیهٔ هر صفحه */
-  if(name === 'learn' && !learnInited){
+  if(name === 'learn' && typeof learnInited !== 'undefined' && !learnInited){
     learnInited = true;
-    renderLearnList('');
-    openLesson(0);
+    if(typeof renderLearnList === 'function') {
+      renderLearnList('');
+      openLesson(0);
+    }
   }
-  if(name === 'open' && !openInited){
+  if(name === 'open' && typeof openInited !== 'undefined' && !openInited){
     openInited = true;
-    renderOpenList('');
-    selectOpening(OPENINGS_DB[0].id);
+    if(typeof renderOpenList === 'function') {
+      renderOpenList('');
+      if(typeof OPENINGS_DB !== 'undefined' && OPENINGS_DB[0]) {
+        selectOpening(OPENINGS_DB[0].id);
+      }
+    }
   }
   if(name === 'puzzle'){
-    if(!puzzleState) loadTodaysPuzzle();
-    else { renderPuzzleBoard(); updatePuzzleStats(); }
+    if(typeof puzzleState !== 'undefined' && !puzzleState) {
+      if(typeof loadTodaysPuzzle === 'function') loadTodaysPuzzle();
+    } else {
+      if(typeof renderPuzzleBoard === 'function') {
+        renderPuzzleBoard();
+        if(typeof updatePuzzleStats === 'function') updatePuzzleStats();
+      }
+    }
   }
   if(name === 'books' && window.LiveLessons){
-    LiveLessons.init();
+    if(typeof LiveLessons.init === 'function') LiveLessons.init();
   }
-  if(name === 'games'){
+  if(name === 'games' && window.GamesViewer){
     GamesViewer.reloadLibrary();
     GamesViewer.renderList(document.getElementById('searchGames')
       ? document.getElementById('searchGames').value : '');
@@ -126,25 +136,30 @@ function openSettings(){
 
   /* بارگذاری مقادیر فعلی */
   const selSide = document.getElementById('selSide');
-  if(selSide) selSide.value = humanColor;
+  if(selSide && typeof humanColor !== 'undefined') selSide.value = humanColor;
 
   const selLevel = document.getElementById('selLevel');
-  if(selLevel) selLevel.value = String(level);
+  if(selLevel && typeof level !== 'undefined') selLevel.value = String(level);
 
   const selTime = document.getElementById('selTime');
-  if(selTime) selTime.value = timeControl;
+  if(selTime && typeof timeControl !== 'undefined') selTime.value = timeControl;
 
   const selEngine = document.getElementById('selEngine');
-  if(selEngine) selEngine.value = engineType;
+  if(selEngine && typeof engineType !== 'undefined') selEngine.value = engineType;
 
   const selTheme = document.getElementById('selTheme');
-  if(selTheme) selTheme.value = theme;
+  if(selTheme && typeof theme !== 'undefined') selTheme.value = theme;
 
   const chkSound = document.getElementById('chkSound');
-  if(chkSound) chkSound.checked = document.getElementById('chkSound')?.checked ?? true;
+  if(chkSound) {
+    try {
+      const o = ChessStorage.optsLoad();
+      if(o.sound != null) chkSound.checked = !!o.sound;
+    } catch(e) {}
+  }
 
   /* به‌روزرسانی نشان رتبه در هدر */
-  updateHeaderRating();
+  if(typeof updateHeaderRating === 'function') updateHeaderRating();
 }
 
 function closeSettings(){
@@ -165,29 +180,50 @@ function updateHeaderRating(){
 }
 
 /* ============================================================
-   🔄 بازنویسی initApp
+   📊 به‌روزرسانی پیشرفت در خانه
+   ============================================================ */
+function updateHomeProgress(){
+  const el = document.getElementById('homeLearnProgress');
+  if(!el) return;
+
+  try {
+    const completed = JSON.parse(localStorage.getItem('learn-completed') || '[]');
+    const total = (typeof LEARN_DB !== 'undefined') ? LEARN_DB.length : 0;
+    const pct = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+    el.textContent = pct + '%';
+  } catch(e) {}
+}
+
+/* ============================================================
+   🚀 راه‌اندازی اولیه برنامه
    ============================================================ */
 function initApp(){
-  GamesViewer.reloadLibrary();
-  updateBoardSize();
-  render();
+  /* ۱) کتابخانهٔ بازی‌ها */
+  if(window.GamesViewer) GamesViewer.reloadLibrary();
 
-  loadSavedOptions();
-  applyTheme(theme);
+  /* ۲) اندازهٔ صفحه */
+  if(typeof updateBoardSize === 'function') updateBoardSize();
 
-  /* نشان دادن/مخفی کردن بنر ادامه بازی */
+  /* ۳) رندر اولیه */
+  if(typeof render === 'function') render();
+
+  /* ۴) بارگذاری تنظیمات */
+  if(typeof loadSavedOptions === 'function') loadSavedOptions();
+  if(typeof theme !== 'undefined') applyTheme(theme);
+
+  /* ۵) بنر ادامه بازی */
   if(typeof ChessStorage !== 'undefined' && ChessStorage.hasAuto()){
     const banner = document.getElementById('homeContinueBanner');
     if(banner) banner.classList.remove('hidden');
   }
 
-  /* پیشرفت آکادمی */
+  /* ۶) پیشرفت آکادمی */
   updateHomeProgress();
 
-  /* نشان رتبه در هدر */
+  /* ۷) نشان رتبه در هدر */
   updateHeaderRating();
 
-  /* اگر splash دیده شده، مستقیم برو به shell */
+  /* ۸) بررسی Splash */
   const seenSplash = sessionStorage.getItem('splash-seen');
   if(seenSplash){
     const splash = document.getElementById('splashScreen');
@@ -200,109 +236,45 @@ function initApp(){
     sessionStorage.setItem('splash-seen', '1');
   }
 
-  /* فعال‌سازی موتور فقط بعد از ورود */
+  /* ۹) فعال‌سازی موتور و مربی */
   setTimeout(() => {
     const wantSF = (window.crossOriginIsolated === true)
                 && (typeof Worker !== 'undefined')
                 && (!/[?&]ai\b/.test(location.search));
-    if(wantSF){
-      engine = 'stockfish';
-      updateBadge();
+    if(wantSF && typeof initStockfish === 'function'){
+      if(typeof engine !== 'undefined') engine = 'stockfish';
+      if(typeof updateBadge === 'function') updateBadge();
       initStockfish();
-    } else {
+    } else if(typeof switchToAI === 'function') {
       switchToAI();
     }
 
-    Coach.init();
-    Coach.updateStrengthInfo();
+    if(window.Coach){
+      if(typeof Coach.init === 'function') Coach.init();
+      if(typeof Coach.updateStrengthInfo === 'function') Coach.updateStrengthInfo();
+    }
   }, 300);
 
-  setTimeout(updateBoardSize, 500);
-}
-
-/* ============================================================
-   📊 به‌روزرسانی پیشرفت در خانه
-   ============================================================ */
-function updateHomeProgress(){
-  const el = document.getElementById('homeLearnProgress');
-  if(!el) return;
-
-  try {
-    const completed = JSON.parse(localStorage.getItem('learn-completed') || '[]');
-    const total = LEARN_DB.length;
-    const pct = total > 0 ? Math.round((completed.length / total) * 100) : 0;
-    el.textContent = pct + '%';
-  } catch(e) {}
-}
-
-/* اتصال به window */
-window.showScreen = showScreen;
-window.switchTab = switchTab;
-window.enterApp = enterApp;
-window.backToHome = backToHome;
-window.openSettings = openSettings;
-window.closeSettings = closeSettings;
-window.updateHeaderRating = updateHeaderRating;
-window.updateHomeProgress = updateHomeProgress;
-
-/* ============================================================
-   🚀 راه‌اندازی اولیه برنامه
-   ============================================================ */
-function initApp(){
-  GamesViewer.reloadLibrary();
-  updateBoardSize();
-  render();
-
-  /* ✅ اول تنظیمات را بارگذاری کن (تا engineType درست باشد) */
-  loadSavedOptions();
-  if(document.getElementById('selTime')){
-    document.getElementById('selTime').value = timeControl;
-  }
-  if(document.getElementById('selTheme')){
-    document.getElementById('selTheme').value = theme;
-  }
-  applyTheme(theme);
-
-  const selEngine = document.getElementById('selEngine');
-  if(selEngine) selEngine.value = engineType;
-
-  /* ✅ حالا موتور را با engineType درست لود کن */
-  const wantSF = (window.crossOriginIsolated === true)
-              && (typeof Worker !== 'undefined')
-              && (!/[?&]ai\b/.test(location.search));
-
-  if(wantSF){
-    engine = 'stockfish';
-    updateBadge();
-    initStockfish();   /* ← این الان با engineType درست صدا زده می‌شود */
-  } else {
-    switchToAI();
-    setStatus('در حال آماده‌سازی…');
-  }
-
-  refreshRatingBadge();
-  Coach.init();
-  Coach.updateStrengthInfo();
-  switchTab('game');
-
-  setTimeout(updateBoardSize, 100);
-  setTimeout(checkAutoSave, 200);
+  setTimeout(() => {
+    if(typeof updateBoardSize === 'function') updateBoardSize();
+  }, 500);
 }
 
 /* ============================================================
    🎯 اتصال رویدادهای کلی
    ============================================================ */
 function bindGlobalEvents(){
-  /* ورودی PGN در تب بازی */
   const pgnInp = document.getElementById('pgnFileInput');
   if(pgnInp && !pgnInp._bound){
     pgnInp._bound = true;
-    pgnInp.addEventListener('change', handlePGNFile);
+    if(typeof handlePGNFile === 'function') {
+      pgnInp.addEventListener('change', handlePGNFile);
+    }
   }
 }
 
 /* ============================================================
-   🌐 PWA — Service Worker و Install Prompt
+   🌐 PWA
    ============================================================ */
 function initPWA(){
   if('serviceWorker' in navigator && window.isSecureContext){
@@ -327,7 +299,6 @@ function initPWA(){
     }).catch(() => {});
   }
 
-  /* BeforeInstallPrompt */
   let deferredPrompt = null;
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
@@ -351,13 +322,20 @@ function initPWA(){
 /* ============================================================
    🌐 اتصال به window (برای دسترسی از HTML)
    ============================================================ */
+window.showScreen = showScreen;
 window.switchTab = switchTab;
+window.enterApp = enterApp;
+window.backToHome = backToHome;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.updateHeaderRating = updateHeaderRating;
+window.updateHomeProgress = updateHomeProgress;
 window.initApp = initApp;
 window.bindGlobalEvents = bindGlobalEvents;
 window.initPWA = initPWA;
 
 /* ============================================================
-   🚀 Auto-Init — بعد از بارگذاری DOM
+   🚀 Auto-Init
    ============================================================ */
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', () => {
