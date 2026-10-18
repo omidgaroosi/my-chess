@@ -146,15 +146,25 @@
       <span id="engineBadge">⏳ در حال شناسایی موتور…</span>
       <div class="app">
         <div class="stage">
-          <div class="pbar">
-            <span id="topName">🤖 موتور</span>
-            <span class="clock hidden" id="topClock">--:--</span>
-            <span class="dots" id="topDots"><i></i><i></i><i></i></span>
-            <span class="badge-check" id="topCheck">کیش!</span>
-            <span style="flex:1"></span>
-            <span class="mat" id="topMat"></span>
-            <span class="caps" id="topCaps"></span>
+          
+          <!-- پنل بازیکن حریف (بالا) -->
+          <div class="player-panel top-player">
+            <div class="player-avatar">
+              <span class="avatar-icon">🤖</span>
+            </div>
+            <div class="player-info">
+              <div class="player-name" id="topName">موتور استاک‌فیش</div>
+              <div class="player-rating" id="topRating">—</div>
+            </div>
+            <div class="player-caps" id="topCaps"></div>
+            <div class="player-clock-wrap">
+              <span class="clock hidden" id="topClock">--:--</span>
+              <span class="badge-check hidden" id="topCheck">کیش!</span>
+              <span class="dots" id="topDots"><i></i><i></i><i></i></span>
+            </div>
           </div>
+
+          <!-- صفحه شطرنج -->
           <div class="frame-wrap">
             <div class="evalcol">
               <div class="evalbar"><div id="evalFill"></div></div>
@@ -162,6 +172,8 @@
             </div>
             <div class="board-frame">
               <div id="board"></div>
+              
+              <!-- Overlay بارگذاری (همان کد قبلی) -->
               <div class="overlay loader-overlay" id="overlayLoad">
                 <div class="loader-spinner">
                   <div class="spinner-ring"></div>
@@ -169,11 +181,11 @@
                 </div>
                 <div class="loader-title">آماده‌سازی میدان نبرد</div>
                 <div class="loader-status" id="loadText">در حال آماده‌سازی…</div>
-                <div class="loadbar">
-                  <div id="loadFill" class="loadbar-fill"></div>
-                </div>
+                <div class="loadbar"><div id="loadFill" class="loadbar-fill"></div></div>
                 <div class="loader-hint" id="loaderHint">استاک‌فیش در حال بیدار شدن است…</div>
               </div>
+              
+              <!-- Overlay پایان بازی (همان کد قبلی) -->
               <div class="overlay hidden" id="overlayEnd">
                 <div id="endEmoji">🏆</div>
                 <div id="endText" style="font-size:17px;font-weight:700"></div>
@@ -184,6 +196,8 @@
                   <button onclick="hideEnd()">بستن</button>
                 </div>
               </div>
+              
+              <!-- Promotion (همان کد قبلی) -->
               <div id="promoBox" class="hidden">
                 <div class="pcard">
                   <div>سرباز به آخر رسید! مهرهٔ جدید را انتخاب کن:</div>
@@ -193,27 +207,38 @@
               </div>
             </div>
           </div>
-          <div class="pbar">
-            <span id="botName">🧑 شما</span>
-            <span class="rating-badge" id="ratingBadge">۱۲۰۰</span>
-            <span class="clock hidden" id="botClock">--:--</span>
-            <span class="badge-check" id="botCheck">کیش!</span>
-            <span style="flex:1"></span>
-            <span class="mat" id="botMat"></span>
-            <span class="caps" id="botCaps"></span>
+
+          <!-- پنل بازیکن شما (پایین) -->
+          <div class="player-panel bottom-player">
+            <div class="player-avatar">
+              <span class="avatar-icon">🧑</span>
+            </div>
+            <div class="player-info">
+              <div class="player-name" id="botName">شما</div>
+              <div class="player-rating">
+                <span class="rating-badge" id="ratingBadge">۱۲۰۰</span>
+              </div>
+            </div>
+            <div class="player-caps" id="botCaps"></div>
+            <div class="player-clock-wrap">
+              <span class="clock hidden" id="botClock">--:--</span>
+              <span class="badge-check hidden" id="botCheck">کیش!</span>
+            </div>
           </div>
+
           <div id="status">در حال آماده‌سازی…</div>
 
           <!-- کنترل‌های بازی -->
-          <div class="row" style="width:100%;margin-top:8px">
-            <button class="primary" onclick="newGame()">🔄 جدید</button>
-            <button onclick="undo()">↩️ برگشت</button>
-            <button onclick="flip()">🔃 چرخش</button>
-            <button onclick="openHistory()">📜 تاریخچه</button>
+          <div class="game-controls">
+            <button class="primary" onclick="newGame()"><span>🔄</span><span>جدید</span></button>
+            <button onclick="undo()"><span>↩️</span><span>برگشت</span></button>
+            <button onclick="flip()"><span>🔃</span><span>چرخش</span></button>
+            <button onclick="openHistory()"><span>📜</span><span>تاریخچه</span></button>
           </div>
         </div>
 
         <div class="side-col">
+          <!-- پنل مربی -->
           <div class="panel coach-panel" id="coachPanel">
             <div class="coach-head">
               <h3>🎓 مربی شما</h3>
@@ -226,7 +251,8 @@
             <div class="hint" id="strengthInfo"></div>
           </div>
 
-          <div class="panel">
+          <!-- لیست حرکات -->
+          <div class="panel moves-panel">
             <details class="setting-details" open>
               <summary>📜 لیست حرکات</summary>
               <div id="moves"><div class="empty">هنوز حرکتی ثبت نشده</div></div>

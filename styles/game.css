@@ -562,3 +562,265 @@
 }
 .engine-load-status.error{background:#3a1e1e;border-color:#8d3b3b;color:#e57373}
 .engine-load-status.success{background:#1e3325;border-color:#2e7d32;color:#a5d6a7}
+
+/* ============================================================
+   ♟️ Game Screen UI — بازطراحی پنل بازیکنان و برد
+   ============================================================ */
+
+/* --- پنل بازیکنان (شبیه Chess.com) --- */
+.player-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-radius: 12px;
+  padding: 10px 14px;
+  width: 100%;
+  min-height: 64px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.player-panel.top-player {
+  margin-bottom: 8px;
+}
+
+.player-panel.bottom-player {
+  margin-top: 8px;
+}
+
+.player-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #14151b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  border: 1px solid #3a3e50;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.player-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-rating {
+  font-size: 12px;
+  color: #8a8f9c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.player-caps {
+  font-size: 16px;
+  letter-spacing: -2px;
+  color: #8a8f9c;
+  direction: ltr;
+  margin-right: auto;
+  padding: 0 10px;
+}
+
+.player-clock-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* --- ساعت بزرگ و خوانا --- */
+.clock {
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #14151b;
+  border: 1px solid #313444;
+  color: #8a8f9c;
+  direction: ltr;
+  min-width: 86px;
+  text-align: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.clock.active {
+  color: #fff;
+  background: #2b2e3b;
+  border-color: #ffd54f;
+  box-shadow: 0 0 10px rgba(255,213,79,0.2);
+}
+
+.clock.low {
+  color: #fff;
+  background: #e53935;
+  border-color: #e53935;
+  animation: clockPulse 1s infinite;
+}
+
+.badge-check {
+  background: #e53935;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  animation: pulseCheck 1s infinite;
+}
+
+@keyframes pulseCheck {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* --- انیمیشن ظاهر شدن مهره --- */
+@keyframes pieceDrop {
+  0% { transform: scale(0.5) translateY(-20px); opacity: 0; }
+  60% { transform: scale(1.05) translateY(2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.piece {
+  animation: pieceDrop 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* --- بهبود برد و حاشیه --- */
+.board-frame {
+  padding: 8px;
+  background: linear-gradient(135deg, #2c2f3a, #1f2129);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+#board {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* --- دکمه‌های کنترل بازی --- */
+.game-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.game-controls button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-radius: 12px;
+  color: #cfd3dd;
+  font-size: 12px;
+  padding: 10px 8px;
+  min-height: 56px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.game-controls button span:first-child {
+  font-size: 18px;
+}
+
+.game-controls button.primary {
+  background: #c9973c;
+  border-color: #c9973c;
+  color: #fff;
+}
+
+.game-controls button:hover {
+  background: #2b2e3b;
+  transform: translateY(-2px);
+}
+
+.game-controls button.primary:hover {
+  background: #d9a747;
+}
+
+/* --- بهبود پنل مربی --- */
+.coach-panel {
+  background: #1a1c24;
+  border: 1px solid #2a2d38;
+}
+
+#coachLog {
+  background: #14151b;
+  border: 1px solid #2a2d38;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13.5px;
+  line-height: 2;
+}
+
+.msg {
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #20222b;
+  border: 1px solid #313444;
+  border-inline-start: none;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.msg b {
+  color: #ffd54f;
+}
+
+.msg.sys {
+  background: #1a2332;
+  border-color: #1976d2;
+}
+
+.msg.analyst {
+  background: #1e3325;
+  border-color: #2e7d32;
+}
+
+/* --- لوگو و هدر بازی --- */
+#engineBadge {
+  background: #1a1c24;
+  border: 1px solid #313444;
+  color: #cfd3dd;
+  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  display: inline-block;
+  margin: 0 auto 12px;
+}
+
+/* --- Media Query برای دسکتاپ --- */
+@media (min-width: 900px) {
+  .player-panel {
+    padding: 12px 20px;
+    min-height: 72px;
+  }
+  .player-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+  }
+  .player-name { font-size: 16px; }
+  .clock { font-size: 26px; padding: 6px 16px; min-width: 100px; }
+  .game-controls button { min-height: 64px; font-size: 13px; }
+  .game-controls button span:first-child { font-size: 22px; }
+}

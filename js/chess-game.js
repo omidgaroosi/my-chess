@@ -380,19 +380,37 @@ function capsBy(color){
 
 function renderPlayers(){
   const eng = humanColor === 'w' ? 'b' : 'w';
-  $('topName').textContent = engineName() + ' (حریف) — ' + (eng === 'w' ? '⚪ سفید' : '⚫ مشکی');
-  $('botName').textContent = '🧑 شما + 🎓 مربی — ' + (humanColor === 'w' ? '⚪ سفید' : '⚫ مشکی');
-  $('topCaps').textContent = capsBy(eng).map(p => GLYPH[p.toLowerCase()]).join('');
-  $('botCaps').textContent = capsBy(humanColor).map(p => GLYPH[p.toLowerCase()]).join('');
-  const VAL = {p:1, n:3, b:3, r:5, q:9};
-  const diff = capsBy('w').reduce((a, p) => a + VAL[p.toLowerCase()], 0)
-             - capsBy('b').reduce((a, p) => a + VAL[p.toLowerCase()], 0);
-  const topAdv = eng === 'w' ? diff : -diff;
-  $('topMat').textContent = topAdv > 0 ? '+' + topAdv : '';
-  $('botMat').textContent = topAdv > 0 ? '+' + topAdv : '';
-  $('topDots').classList.toggle('on', thinking);
-  $('topCheck').style.display = inCheck(S, eng) ? 'inline-block' : 'none';
-  $('botCheck').style.display = inCheck(S, humanColor) ? 'inline-block' : 'none';
+  
+  // نام‌ها
+  const topNameEl = $('topName');
+  const botNameEl = $('botName');
+  if(topNameEl) topNameEl.textContent = engineName() + (eng === 'w' ? ' (سفید)' : ' (مشکی)');
+  if(botNameEl) botNameEl.textContent = 'شما' + (humanColor === 'w' ? ' (سفید)' : ' (مشکی)');
+
+  // ریتینگ حریف (شبیه‌سازی شده بر اساس سطح)
+  const topRatingEl = $('topRating');
+  if (topRatingEl) {
+    const oppRating = typeof ChessRating !== 'undefined' ? ChessRating.OPPONENT_RATING[level] : '?';
+    topRatingEl.textContent = oppRating;
+  }
+
+  // مهره‌های گرفته‌شده
+  const topCapsEl = $('topCaps');
+  const botCapsEl = $('botCaps');
+  if(topCapsEl) topCapsEl.textContent = capsBy(eng).map(p => GLYPH[p.toLowerCase()]).join('');
+  if(botCapsEl) botCapsEl.textContent = capsBy(humanColor).map(p => GLYPH[p.toLowerCase()]).join('');
+
+  // کیش
+  const topCheckEl = $('topCheck');
+  const botCheckEl = $('botCheck');
+  if(topCheckEl) topCheckEl.style.display = inCheck(S, eng) ? 'inline-block' : 'none';
+  if(botCheckEl) botCheckEl.style.display = inCheck(S, humanColor) ? 'inline-block' : 'none';
+
+  // نقطه‌های فکر کردن
+  const topDots = $('topDots');
+  if(topDots) topDots.classList.toggle('on', thinking);
+
+  // ساعت‌ها
   renderClocks();
 }
 
