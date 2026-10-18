@@ -43,10 +43,19 @@ function showScreen(name){
   const backBtn = document.getElementById('btnBack');
   if(backBtn) backBtn.style.display = (name === 'home') ? 'none' : 'flex';
 
-  /* نوار پایین */
+  /* نوار پایین موبایل */
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === name);
   });
+
+  /* 🆕 نوار کناری دسکتاپ */
+  document.querySelectorAll('.side-btn').forEach(btn => {
+    // فقط دکمه‌هایی که ویژگی data-screen دارند
+    if(btn.dataset.screen) {
+      btn.classList.toggle('active', btn.dataset.screen === name);
+    }
+  });
+
 
   /* اسکرول به بالا */
   const body = document.querySelector('.app-body');

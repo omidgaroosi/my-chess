@@ -1129,3 +1129,136 @@ body.app-mode {
     padding: 14px 16px;
   }
 }
+/* ============================================================
+   🖥️ Desktop Layout (Sidebar + Main)
+   ============================================================ */
+
+/* تنظیمات پایه */
+.app-shell {
+  display: flex !important;
+  flex-direction: row !important;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background: #14151b;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0; /* جلوگیری از سرریز */
+  overflow: hidden;
+}
+
+/* سایدبار - پیش‌فرض مخفی در موبایل */
+.app-sidebar {
+  display: none;
+  width: 250px;
+  background: #1a1c24;
+  border-right: 1px solid #2a2d38;
+  flex-direction: column;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+/* --- استایل‌های داخل سایدبار --- */
+.sidebar-logo {
+  padding: 20px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #2a2d38;
+}
+.sidebar-logo .icon {
+  color: #ffd54f;
+  font-size: 28px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.side-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #9aa0ae;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: right;
+  width: 100%;
+}
+
+.side-btn .icon { font-size: 20px; width: 24px; text-align: center; }
+
+.side-btn:hover {
+  background: #2b2e3b;
+  color: #cfd3dd;
+}
+
+.side-btn.active {
+  background: rgba(201, 151, 60, 0.15);
+  color: #ffd54f;
+}
+
+.sidebar-bottom {
+  padding: 12px 8px;
+  border-top: 1px solid #2a2d38;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ============================================================
+   🖥️ نمایش دسکتاپ (بیشتر از 900px)
+   ============================================================ */
+@media (min-width: 900px) {
+  /* نمایش سایدبار */
+  .app-sidebar { display: flex; }
+  
+  /* مخفی کردن نوار پایین موبایل */
+  .bottom-nav { display: none !important; }
+  
+  /* حذف دکمه‌های اضافی هدر در دسکتاپ (چون در سایدبار هستند) */
+  #btnBack, #btnMenu { display: none !important; }
+  #btnHeaderRating { display: none !important; } /* رتبه در سایدبار است */
+  
+  /* استایل هدر */
+  .app-header {
+    padding: 0 24px;
+    min-height: 64px;
+    background: transparent;
+    border-bottom: none;
+  }
+  .app-header-title { font-size: 20px; }
+  
+  /* فاصله محتوا در دسکتاپ */
+  .app-body { padding: 24px; }
+}
+
+/* ============================================================
+   📱 موبایل (کمتر از 900px)
+   ============================================================ */
+@media (max-width: 899px) {
+  .app-shell { flex-direction: column !important; }
+  .app-sidebar { display: none !important; }
+  .app-main { height: calc(100dvh - 64px); /* ارتفاع با احتساب هدر */ }
+  .app-header { display: flex !important; } /* هدر موبایل فعال */
+  .bottom-nav { display: flex !important; } /* نوار پایین فعال */
+}
