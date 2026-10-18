@@ -363,7 +363,7 @@ function render(){
     html += '<div class="' + cls + '" data-sq="' + sq + '">'
       + (c === (flipped ? 7 : 0) ? '<span class="coord rank">' + (8 - r) + '</span>' : '')
       + (r === (flipped ? 0 : 7) ? '<span class="coord file">' + FILES[c] + '</span>' : '')
-      + (p ? '<span class="piece ' + (isW(p) ? 'w' : 'b') + '">' + pieceSvg(p, isW(p)) + '</span>' : '')
+      +(p ? '<span class="piece ' + (isW(p) ? 'w' : 'b') + (last && sq === last.to ? ' just-moved' : '') + '">' + pieceSvg(p, isW(p)) + '</span>' : '')
       + (hint ? '<span class="dot' + (p ? ' cap' : '') + '"></span>' : '')
       + '</div>';
   }

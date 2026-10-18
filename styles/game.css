@@ -689,15 +689,16 @@
   50% { transform: scale(1.1); }
 }
 
-/* --- انیمیشن ظاهر شدن مهره --- */
+/* --- انیمیشن ظاهر شدن مهره (فقط برای مهره‌ای که حرکت کرده) --- */
 @keyframes pieceDrop {
-  0% { transform: scale(0.5) translateY(-20px); opacity: 0; }
-  60% { transform: scale(1.05) translateY(2px); opacity: 1; }
+  0% { transform: scale(0.8) translateY(-5px); opacity: 0.5; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-.piece {
-  animation: pieceDrop 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+
+/* فقط مهره‌ای که تازه حرکت کرده انیمیشن می‌گیرد */
+.piece.just-moved {
+  animation: pieceDrop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 /* --- بهبود برد و حاشیه --- */
