@@ -702,5 +702,56 @@
 <script src="js/chess-records.js"></script>
 <script src="js/chess-tabs.js"></script>
 <script src="js/chess-app.js"></script>
+<!-- ============================================================
+     📊 Game Review Modal (بازبینی حرفه‌ای بازی)
+     ============================================================ -->
+<div id="gameReviewModal" class="game-review-modal hidden">
+  <div class="gr-header">
+    <button class="gr-back-btn" onclick="closeGameReview()">←</button>
+    <div class="gr-title">📊 بازبینی بازی</div>
+    <div class="gr-subtitle" id="grGameResult">—</div>
+  </div>
+
+  <div class="gr-body">
+    <!-- ۱. کارت خلاصه (دقت و آمار) -->
+    <div class="gr-summary-card">
+      <div class="gr-accuracy-circle">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" class="gr-acc-bg"></circle>
+          <circle cx="50" cy="50" r="45" class="gr-acc-fill" id="grAccCircle"></circle>
+        </svg>
+        <div class="gr-acc-text">
+          <b id="grAccValue">0%</b>
+          <small>دقت</small>
+        </div>
+      </div>
+      
+      <div class="gr-quality-stats">
+        <div class="gr-q-item brilliant"><span>!!</span><b id="grCntBrilliant">0</b><small>درخشان</small></div>
+        <div class="gr-q-item best"><span>★</span><b id="grCntBest">0</b><small>بهترین</small></div>
+        <div class="gr-q-item inaccuracy"><span>?!</span><b id="grCntInaccuracy">0</b><small>بی‌دقتی</small></div>
+        <div class="gr-q-item mistake"><span>?</span><b id="grCntMistake">0</b><small>اشتباه</small></div>
+        <div class="gr-q-item blunder"><span>??</span><b id="grCntBlunder">0</b><small>فاجعه</small></div>
+      </div>
+    </div>
+
+    <!-- ۲. نمودار ارزیابی (Evaluation Graph) -->
+    <div class="gr-chart-container">
+      <div class="gr-chart-labels">
+        <span>+10</span>
+        <span>0</span>
+        <span>-10</span>
+      </div>
+      <div class="gr-chart-wrap" id="grChartWrap">
+        <!-- SVG اینجا با JS ساخته می‌شود -->
+      </div>
+    </div>
+
+    <!-- ۳. لیست حرکات -->
+    <div class="gr-moves-list" id="grMovesList">
+      <!-- لیست با JS پر می‌شود -->
+    </div>
+  </div>
+</div>
 </body>
 </html>
