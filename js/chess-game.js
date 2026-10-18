@@ -381,10 +381,10 @@ function capsBy(color){
 function renderPlayers(){
   const eng = humanColor === 'w' ? 'b' : 'w';
   
-  // نام‌ها
   const topNameEl = $('topName');
-  const botNameEl = $('botName');
   if(topNameEl) topNameEl.textContent = engineName() + (eng === 'w' ? ' (سفید)' : ' (مشکی)');
+  
+  const botNameEl = $('botName');
   if(botNameEl) botNameEl.textContent = 'شما' + (humanColor === 'w' ? ' (سفید)' : ' (مشکی)');
 
   // ریتینگ حریف (شبیه‌سازی شده بر اساس سطح)
@@ -394,23 +394,28 @@ function renderPlayers(){
     topRatingEl.textContent = oppRating;
   }
 
-  // مهره‌های گرفته‌شده
   const topCapsEl = $('topCaps');
-  const botCapsEl = $('botCaps');
   if(topCapsEl) topCapsEl.textContent = capsBy(eng).map(p => GLYPH[p.toLowerCase()]).join('');
+  
+  const botCapsEl = $('botCaps');
   if(botCapsEl) botCapsEl.textContent = capsBy(humanColor).map(p => GLYPH[p.toLowerCase()]).join('');
+  
+  // آپدیت امن برای مهره‌های اضافی (اگر در HTML وجود نداشتند، خطا ندهد)
+  const topMatEl = $('topMat');
+  if(topMatEl) topMatEl.textContent = ''; 
+  
+  const botMatEl = $('botMat');
+  if(botMatEl) botMatEl.textContent = '';
 
-  // کیش
-  const topCheckEl = $('topCheck');
-  const botCheckEl = $('botCheck');
-  if(topCheckEl) topCheckEl.style.display = inCheck(S, eng) ? 'inline-block' : 'none';
-  if(botCheckEl) botCheckEl.style.display = inCheck(S, humanColor) ? 'inline-block' : 'none';
-
-  // نقطه‌های فکر کردن
   const topDots = $('topDots');
   if(topDots) topDots.classList.toggle('on', thinking);
+  
+  const topCheckEl = $('topCheck');
+  if(topCheckEl) topCheckEl.style.display = inCheck(S, eng) ? 'inline-block' : 'none';
+  
+  const botCheckEl = $('botCheck');
+  if(botCheckEl) botCheckEl.style.display = inCheck(S, humanColor) ? 'inline-block' : 'none';
 
-  // ساعت‌ها
   renderClocks();
 }
 
