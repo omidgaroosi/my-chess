@@ -351,21 +351,28 @@ function render(){
   const last = hist.length ? hist[hist.length - 1].m : null;
   const checkSq = inCheck(S, S.turn) ? kingSq(S, S.turn === 'w') : -1;
   let html = '';
-  for(let i = 0; i < 64; i++){
-    const sq = flipped ? 63 - i : i, r = sq >> 3, c = sq & 7;
-    let cls = 'cell ' + (((r + c) % 2 === 1) ? 'dark' : 'light');
-    if(sq === selected) cls += ' sel';
-    if(last && (sq === last.from || sq === last.to)) cls += ' last';
-    if(sq === checkSq) cls += ' check';
-    if(Coach.move && (sq === Coach.move.from || sq === Coach.move.to)) cls += ' coach';
-    const p = S.board[sq];
-    const hint = selected != null && legal.some(m => m.from === selected && m.to === sq);
-    html += '<div class="' + cls + '" data-sq="' + sq + '">'
-      + (c === (flipped ? 7 : 0) ? '<span class="coord rank">' + (8 - r) + '</span>' : '')
-      + (r === (flipped ? 0 : 7) ? '<span class="coord file">' + FILES[c] + '</span>' : '')
-      +(p ? '<span class="piece ' + (isW(p) ? 'w' : 'b') + (last && sq === last.to ? ' just-moved' : '') + '">' + pieceSvg(p, isW(p)) + '</span>' : '')
-      + (hint ? '<span class="dot' + (p ? ' cap' : '') + '"></span>' : '')
-      + '</div>';
+  for(let i=0;i<64;i++){
+    const sq=flipped?63-i:i,r=sq>>3,c=sq&7;
+    let cls='cell '+(((r+c)%2===1)?'dark':'light');
+    if(sq===selected)cls+=' sel';
+    if(last&&(sq===last.from||sq===last.to))cls+=' last';
+    if(sq===checkSq)cls+=' check';
+    if(Coach.move&&(sq===Coach.move.from||sq===Coach.move.to))cls+=' coach';
+    const p=S.board[sq];
+    const hint=selected!=null&&legal.some(m=>m.from===selected&&m.to===sq);
+    
+    // بررسی اینکه آیا این مهره تازه به این خانه آمده است یا نه
+    let pieceAnimClass = '';
+    if (last && last.to === sq && p) {
+      pieceAnimClass = ' just-moved';
+    }
+
+    html+='<div class="'+cls+'" data-sq="'+sq+'">'
+      +(c===(flipped?7:0)?'<span class="coord rank">'+(8-r)+'</span>':'')
+      +(r===(flipped?0:7)?'<span class="coord file">'+FILES[c]+'</span>':'')
+      +(p?'<span class="piece '+(isW(p)?'w':'b')+pieceAnimClass+'">'+pieceSvg(p, isW(p))+'</span>':'')
+      +(hint?'<span class="dot'+(p?' cap':'')+'"></span>':'')
+      +'</div>';
   }
   $('board').innerHTML = html;
   renderPlayers();
