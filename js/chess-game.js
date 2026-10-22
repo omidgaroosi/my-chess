@@ -53,6 +53,7 @@ let level = 2;
 let timeControl = 'none';
 let gameMode = 'vs-engine';
 let theme = 'wood';
+let animMode = 'standard'; /* 'standard' یا '3d' */
 let engineType = 'lite';   /* 'lite' یا 'full' */
 
 const ENGINE_FILES = {
@@ -1204,7 +1205,17 @@ function loadSavedOptions(){
   if(o.flipped != null) flipped = !!o.flipped;
   if(o.theme) theme = o.theme;
   if(o.engineType === 'lite' || o.engineType === 'full') engineType = o.engineType;
+    if(o.animMode === 'standard' || o.animMode === '3d') animMode = o.animMode;
   
+  // اعمال کلاس به body برای فعال/غیرفعال کردن CSS
+  if (animMode === '3d') {
+    document.body.classList.add('anim-3d');
+  } else {
+    document.body.classList.remove('anim-3d');
+  }
+  
+  const selAnim = document.getElementById('selAnimMode');
+  if(selAnim) selAnim.value = animMode;
   const selSide = $('selSide'); if(selSide) selSide.value = humanColor;
   const selLvl = $('selLevel'); if(selLvl) selLvl.value = String(level);
   const chkSound = $('chkSound'); if(chkSound && o.sound != null) chkSound.checked = !!o.sound;
@@ -1224,11 +1235,24 @@ function loadSavedOptions(){
   setupClock(timeControl);
 }
 
-
+function onAnimModeChange(v) {
+  if (v !== 'standard' && v !== '3d') return;
+  animMode = v;
+  
+  if (animMode === '3d') {
+    document.body.classList.add('anim-3d');
+  } else {
+    document.body.classList.remove('anim-3d');
+  }
+  
+  saveOptions();
+  setStatus('✨ حالت انیمیشن به ' + (v === '3d' ? 'سه‌بعدی' : 'کلاسیک') + ' تغییر کرد');
+}
+window.onAnimModeChange = onAnimModeChange; // برای دسترسی از HTML
 function saveOptions(){
   try{
     ChessStorage.optsSave({
-      humanColor, level, flipped, timeControl, theme, engineType,
+      humanColor, level, flipped, timeControl, theme, engineType,    animMode, // <--- این را اضافه کنید
       sound: $('chkSound') ? $('chkSound').checked : true,
       autoCoach: $('chkAutoCoach') ? $('chkAutoCoach').checked : true
     });

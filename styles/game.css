@@ -829,3 +829,53 @@
   .game-controls button { min-height: 64px; font-size: 13px; }
   .game-controls button span:first-child { font-size: 22px; }
 }
+/* ============================================================
+   ✨ انیمیشن‌های سه‌بعدی مهره‌ها (3D Jump)
+   ============================================================ */
+
+/* ایجاد عمق سه‌بعدی برای صفحه شطرنج */
+#board, #lboard, #mini-board, #gvBoard, #puzzleBoard {
+  perspective: 1200px;
+}
+
+/* تنظیمات پایه مهره برای پشتیبانی از 3D */
+.piece {
+  transform-style: preserve-3d;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s ease;
+  will-change: transform, filter;
+}
+
+/* --- افکت انتخاب مهره (پرش به بیرون) --- */
+/* وقتی روی مهره کلیک می‌شود، به سمت کاربر می‌آید و بزرگ می‌شود */
+.cell.sel .piece {
+  transform: translateZ(45px) scale(1.15) translateY(-10px);
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
+  z-index: 100;
+}
+
+/* --- انیمیشن حالت سه‌بعدی هنگام حرکت --- */
+/* فقط در صورتی که حالت 3d فعال باشد اجرا می‌شود */
+body.anim-3d .piece.just-moved {
+  animation: pieceJump3D 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes pieceJump3D {
+  0% {
+    /* شروع از بالا با چرخش و بزرگنمایی */
+    transform: translateZ(150px) translateY(-60px) scale(1.4) rotateZ(45deg) rotateY(180deg);
+    opacity: 0;
+    filter: drop-shadow(0 30px 20px rgba(0,0,0,0.7));
+  }
+  50% {
+    /* اوج پرش */
+    transform: translateZ(80px) translateY(-20px) scale(1.2) rotateZ(0deg) rotateY(90deg);
+    opacity: 1;
+    filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5));
+  }
+  100% {
+    /* فرود در خانه مقصد */
+    transform: translateZ(0) translateY(0) scale(1) rotateZ(0deg) rotateY(0deg);
+    opacity: 1;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.45));
+  }
+}
